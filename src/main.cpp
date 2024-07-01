@@ -1,7 +1,8 @@
 #include <iostream>
+#include "WebServ.hpp"
 
-int	main( void )
+int main(void)
 {
-	std::cout << "Hello, World!" << std::endl;
+	WebServ server;
 	return 0;
 }

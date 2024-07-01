@@ -1,15 +1,15 @@
 S = src
 BUILD = build
 
-SRCS = $(S)/main.cpp \
+SRCS = $(S)/main.cpp $(S)/WebServ.cpp
 
-INCDIR = includes
+INCDIR = inc
 
 CXX = c++
 
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR)
 
-TARGET = target
+TARGET = WebServ
 
 OBJS = $(SRCS:$(S)/%.cpp=$(BUILD)/%.o)
 
