@@ -1,8 +1,9 @@
 #include <iostream>
-#include "WebServ.hpp"
+#include "Server.hpp"
 
 int main(void)
 {
-	WebServ server;
+	Server server("0.0.0.0", 8080);
+	server.startListen();
 	return 0;
 }
