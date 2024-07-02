@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
+#include "Request.hpp"
 
 #define BUFFER_SIZE 30720
 

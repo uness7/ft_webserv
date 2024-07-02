@@ -103,12 +103,10 @@ void Server::startListen()
 
 std::string Server::buildResponse(std::string req)
 {
-    std::stringstream request(req);
-    std::string method;
-    request >> method;
+    Request r(req);
 
     std::ostringstream html;
-    html << "<!DOCTYPE html><html lang=\"en\"><body><h1> HOME </h1><p> Hello from your Server :)</p><p>You requested our server with method -> " << method << "</p></body></html>";
+    html << "<!DOCTYPE html><html lang=\"en\"><body><h1> HOME </h1><p> Hello from your Server :)</p><p>You requested our server with method -> " << r.getMethod() << "</p> <p>Your requested path is " << r.getPath() << " </p></body></html>";
     std::string htmlFile = html.str();
     std::ostringstream ss;
     ss << "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: " << htmlFile.size() << "\n\n"
