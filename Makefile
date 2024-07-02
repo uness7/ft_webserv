@@ -1,7 +1,7 @@
 S = src
 BUILD = build
 
-SRCS = $(S)/main.cpp $(S)/WebServ.cpp $(S)/Server.cpp
+SRCS = $(S)/main.cpp $(S)/Server.cpp
 
 INCDIR = inc
 
