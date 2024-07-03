@@ -1,4 +1,6 @@
 #include "Server.hpp"
+#include <cstring>
+#include <cstdlib>
 
 void log(const std::string &message)
 {
