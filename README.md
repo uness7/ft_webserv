@@ -3,6 +3,7 @@
 ## Table of Contents
 - [Requirements](#requirements)
 - [TCP/IP Model](#tcp/ipmodel)
+- [Project Overview](#project-overview)
 
 ## Requirements
 
@@ -15,6 +16,14 @@
 7. It should work with one CGI
 8. It should never hang forever
 9. HTTP res status codes must be accurate
+
+## Project Overview
+
+
+
+If you want deep dive into this project, feel free to read until the end of this readme file!
+
+-----------------------------------------------------------------------------------------
 
 ## TCP/IP Model 
 
@@ -85,4 +94,15 @@ BODY 	   ----> [The file/resource requested]
 
 ### What are sockets? And how are they used?
 
+- It is, in general, a software abstraction used in networking.
 
+- It's an endpoint for communication. So, a pair of proccesses communicating over a network, each of them needs a socket. It's logical! 
+
+- A socket is id'ed by a combination of a source IP address, a source port number, a destination IP address, a destination port number, and a Transport Protocol.
+
+	For example:		
+		- Source IP Address: 192.168.1.2
+		- Source Port Number: 54321
+		- Destination IP Address: 192.168.1.1
+		- Destination Port Number: 80
+		- Transport Protocol: TCP
