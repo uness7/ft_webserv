@@ -42,4 +42,8 @@ UDP is an alternative protocol to TCP, each one of them has advantages and disad
 To better understand data transmission, and the minute details of each layer of TCP/IP Model refer to this video :
 [TCP/IP MODEL EXPLAINED](https://www.youtube.com/watch?v=2QGgEk20RXM&t=75s)
 
+### What is localhost? What is a PORT? What is HTTP?
+### What is a Web Server?
+### What are sockets? And how are they used?
+
 
