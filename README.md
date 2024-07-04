@@ -1,9 +1,20 @@
 # 42 ft_webserv 
 
 ## Table of Contents
+- [STATUS](status)
 - [Requirements](#requirements)
 - [TCP/IP Model](#tcp/ipmodel)
 - [Project Overview](#project-overview)
+
+
+
+--------------------------------------------------------------------------------------------
+
+# STATUS:
+
+Project is still underdevlepment :cyclone: 
+
+--------------------------------------------------------------------------------------------
 
 ## Requirements
 
@@ -23,7 +34,7 @@
 
 If you want deep dive into this project, feel free to read until the end of this readme file!
 
------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------
 
 ## TCP/IP Model 
 
