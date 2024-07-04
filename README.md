@@ -43,7 +43,46 @@ To better understand data transmission, and the minute details of each layer of 
 [TCP/IP MODEL EXPLAINED](https://www.youtube.com/watch?v=2QGgEk20RXM&t=75s)
 
 ### What is localhost? What is a PORT? What is HTTP?
-### What is a Web Server?
+
+- LOCALHOST: It's a term that is used to refer to the local machine that you are currently using.
+- PORT: It's a virtual point where network connections start and end. It is used to distinguish different kinds of traffic coming to the same IP address. There are 65,536 possible ports for different uses.
+- HTTP: As we've already seen, it's a protocol used in the application layer. It is considered the language used by machines to communicate. TCP, in this case, is considered as the phone line that carries the voice. 
+
+### HTTP Basics :
+
+HyperText Transfer Protocol : resides in the application layer in TCP/IP Model. 
+It connects two machines, a client machine and a server. The client machine makes a request. If the server has the data requested by the client machine, it returns the data and it returns 404 status code otherwise.
+
+#### What is a Web Server?
+
+A Web Server is a piece of software that listens on a PORT via a transport protocol and sends a response that holds the requested resources.
+
+#### HTTP STATUS CODES: 
+
+- 1xx => informational
+- 2xx => Success
+- 3xx => Redirection
+- 4xx => Client Error
+- 5xx => Server Error
+
+#### HTTP REQUEST:
+
+Start Line ----> GET /index.html HTTP/1.1
+
+Headers    ----> User-Agent: Mozilla/5.0
+
+BODY 	   ----> [For a GET req, there is no body]
+
+
+#### HTTP RESPONSE:
+
+Start Line ----> HTTP/1.1 404 NOT FOUND
+
+Headers    ----> Content-Type: Image/Png
+
+BODY 	   ----> [The file/resource requested]
+
+
 ### What are sockets? And how are they used?
 
 
