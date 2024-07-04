@@ -12,7 +12,7 @@
 
 # STATUS:
 
-Project is still underdevlepment :cyclone: 
+Project is still under development :cyclone: 
 
 --------------------------------------------------------------------------------------------
 
