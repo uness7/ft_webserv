@@ -1,0 +1,32 @@
+.fonctionnement {
+    height: 27.5rem;
+    @include container;
+    @include desktop_max;
+
+    &__title {
+        @include text-title(1.8rem);
+    }
+
+    &__container {
+        display: flex;
+        flex-direction: column;
+        gap: $gap;
+        width: 100%;
+        padding: 0 0.5rem;
+
+        &__item {
+            @include badge;
+        }
+    }
+}
+
+@media screen and (min-width: map-get($breakpoints, tablette)) {
+    .fonctionnement {
+        height: 15rem;
+
+        &__container {
+            padding: 0;
+            flex-direction: row;
+        }
+    }
+}

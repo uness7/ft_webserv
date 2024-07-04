@@ -1,0 +1,103 @@
+.restaurants {
+    background-color: $color-light-gray;
+
+    &__wrapper {
+        height: 77rem;
+        @include container;
+        @include desktop_max;
+    }
+
+
+    &__title {
+        @include text-title(1.8rem);
+    }
+
+    &__container {
+        display: flex;
+        flex-direction: column;
+        gap: $gap;
+
+        &__item {
+            height: 15.75rem;
+            border-radius: $radius;
+            background: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            @include shadow;
+
+            &>img {
+                width: 100%;
+                height: 11rem;
+                object-fit: cover;
+            }
+
+            &>div {
+                flex: 1;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 1.5rem 0.5rem 1rem;
+            }
+
+            &__info {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                justify-content: space-evenly;
+
+                &>h2 {
+                    @include text_title(1.2rem);
+                }
+
+                &>p {
+                    @include text_info;
+                }
+            }
+
+            &__sticker {
+                position: absolute;
+                font-size: 1rem;
+                font-weight: 700;
+                background: $color-tertiary;
+                color: darken($color: $color-tertiary, $amount: 40);
+                padding: 0.5rem 1rem;
+                border-radius: 0.25rem;
+                right: 1rem;
+                top: 1rem;
+            }
+        }
+    }
+}
+
+@media screen and (min-width: map-get($breakpoints, tablette)) {
+    .restaurants {
+        &__wrapper {
+            height: 40rem;
+        }
+
+        &__container {
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-between;
+
+            &__item {
+                flex-basis: 48%;
+            }
+        }
+    }
+}
+
+@media screen and (min-width: map-get($breakpoints, desktop)) {
+    .restaurants {
+
+        &__container {
+            align-content: center;
+
+            &__item {
+                flex: 0 31.5%;
+            }
+        }
+    }
+}

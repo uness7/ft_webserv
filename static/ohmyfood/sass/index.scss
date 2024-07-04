@@ -1,0 +1,21 @@
+@import "./utils/variables";
+@import "./utils/mixins";
+
+@import "./base/base";
+@import "./base/typography";
+
+@import "./animations/menu_fade";
+@import "./animations/spinner";
+@import "./animations/fill_icon";
+
+@import "./components/badge";
+@import "./components/container";
+@import "./components/btn_grad";
+@import "./components/like_icon";
+@import "./components/reservation";
+@import "./components/fonctionnement";
+@import "./components/restaurants";
+
+@import "./layout/header";
+@import "./layout/loader";
+@import "./layout/footer";

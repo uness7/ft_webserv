@@ -1,0 +1,14 @@
+{
+  "name": "P3_OCR",
+  "version": "1.0.0",
+  "description": "Oh My Food",
+  "scripts": {
+    "sass": "sass --watch ./sass/index.scss:./public/css/index.css ./sass/menu.scss:./public/css/menu.css"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "sass": "^1.57.1"
+  }
+}
