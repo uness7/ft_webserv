@@ -2,13 +2,14 @@
 
 #include <iostream>
 #include <sstream>
+#include "Request.hpp"
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include "Request.hpp"
-
+#include <cstdlib>
+#include <poll.h>
 #define BUFFER_SIZE 30720
 
 class Server
