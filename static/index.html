@@ -9,9 +9,14 @@
             Oops! The page you are looking for cannot be found. Please check the URL or try navigating back to the homepage.
         </h2>
         <p>
-            Try <a href="http://localhost:8080/static/ohmyfood/index.html">Oh my food</a>
+            Try <a id="redirect" >Oh my food</a>
         </p>
     </div>
+<script>
+const target = document.getElementById("redirect");
+const full = location.protocol + '//' + location.host;
+target.href =  full + "/static/ohmyfood/index.html";
+</script>
 </body>
 </html>
 
