@@ -1,0 +1,17 @@
+@mixin btn_grad($padding_X: 1.5rem) {
+    cursor: pointer;
+    padding: 1rem $padding_X;
+    font-size: 1rem;
+    border-radius: 1.5rem;
+    font-weight: 300;
+    color: white;
+    border: none;
+    @include shadow;
+    @include gradient($color-secondary, $color-primary);
+    transition: box-shadow 200ms;
+
+    &:hover {
+        @include gradient(lighten($color-secondary, 6%), lighten($color-primary, 6%));
+        box-shadow: 5px 10px 15px -5px grey;
+    }
+}

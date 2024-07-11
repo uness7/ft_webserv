@@ -1,0 +1,13 @@
+@mixin fill_icon {
+    @keyframes fill_icon {
+        0% {
+            background: transparent;
+            @include background_heart;
+        }
+
+        100% {
+            background: $color-secondary;
+            @include background_heart;
+        }
+    }
+}

@@ -1,0 +1,12 @@
+@mixin container($padding_Y: 0rem, $padding_X: 1rem, $gap: $gap) {
+    padding: $padding_Y $padding_X;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: $gap;
+
+    @media (min-width: map-get($breakpoints, tablette)) {
+        padding: $padding_Y calc($padding_X * 2);
+    }
+
+}

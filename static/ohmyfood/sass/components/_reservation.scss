@@ -1,0 +1,59 @@
+.reservation {
+    width: 100%;
+    background: $color-light-gray;
+    height: 20rem;
+
+    &__location {
+        &__wrapper {
+            background: $color-gray;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        @include desktop_max;
+        height: 3rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        & input {
+            height: 100%;
+            width: 8rem;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            padding-left: .5rem;
+        }
+    }
+
+    &__info {
+        &__wrapper {
+            @include desktop_max;
+        }
+
+        height: 17rem;
+        @include container;
+        align-items: center;
+
+        &__text {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+
+            & h1 {
+                @include text_title(1.8rem);
+            }
+
+            & p {
+                @include text_info(1.2rem);
+            }
+        }
+
+        &__btn {
+            @include btn_grad;
+        }
+    }
+}

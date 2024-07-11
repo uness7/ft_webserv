@@ -1,0 +1,46 @@
+@mixin badge {
+    position: relative;
+    background: $color-light-gray;
+    border-radius: $radius;
+    height: 4rem;
+    width: 100%;
+    @include shadow;
+    display: flex;
+    align-items: center;
+    padding-left: 2.5rem;
+    gap: $gap;
+
+    &>span {
+        position: absolute;
+        font-size: 0.8rem;
+        left: -0.8rem;
+        top: 1.3rem;
+        border-radius: 50%;
+        width: 1.5rem;
+        height: 1.5rem;
+        color: white;
+        background-color: $color-primary;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &:hover {
+        background-color: lighten($color-primary, 36%);
+
+        &>i {
+            color: $color-primary;
+        }
+    }
+
+    @media screen and (min-width: map-get($breakpoints, tablette)) {
+        padding: 0;
+        justify-content: center;
+        gap: .5rem;
+    }
+
+    @media screen and (min-width: map-get($breakpoints, desktop)) {
+        gap: 1.5rem;
+        padding-right: 5%;
+    }
+}

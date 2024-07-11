@@ -1,0 +1,19 @@
+@import "./utils/variables";
+@import "./utils/mixins";
+
+@import "./base/base";
+@import "./base/typography";
+
+@import "./animations/menu_fade";
+@import "./animations/spinner";
+@import "./animations/fill_icon";
+
+@import "./components/badge_menu";
+@import "./components/container";
+@import "./components/btn_grad";
+@import "./components/like_icon";
+@import "./components/section_menu";
+
+@import "./layout/header";
+@import "./layout/footer";
+@import "./layout/restaurant_container";

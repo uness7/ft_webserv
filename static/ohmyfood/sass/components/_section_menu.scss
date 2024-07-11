@@ -1,0 +1,49 @@
+@mixin section_menu {
+    &__section {
+        @include container($padding_X: 0.5rem, $gap: 1rem);
+        @include menu_fade;
+
+        @for $i from 1 through 3 {
+            &:nth-child(#{$i}) {
+                animation-name: menu_fade;
+                animation-duration: #{$i * 0.5}s;
+                animation-iteration-count: 1;
+            }
+        }
+
+        &>h2 {
+            font-size: 0.9rem;
+            width: 100%;
+            @include text-info;
+
+            &::after {
+                content: "";
+                display: block;
+                margin-top: .3rem;
+                width: 2.5rem;
+                height: .2rem;
+                background-color: $color-tertiary;
+            }
+        }
+
+
+        @include badge_menu;
+    }
+
+    @media screen and (min-width: map-get($breakpoints, tablette)) {
+
+        &__section {
+            flex: 0 49.5%;
+            max-width: 49.5%;
+            padding: 0;
+        }
+
+    }
+
+    @media screen and (min-width: map-get($breakpoints, desktop)) {
+
+        &__section {
+            max-width: 32%;
+        }
+    }
+}
