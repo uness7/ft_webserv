@@ -1,6 +1,8 @@
 #include "../inc/Server.hpp"
 #include <csignal>
 #include <cstddef>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 
 static volatile bool stopListening = false;
@@ -107,6 +109,9 @@ std::string get_mime_type(const std::string &file_path) {
   } else if (file_path.length() >= 4 &&
              file_path.substr(file_path.length() - 4) == ".jpg") {
     return "image/jpg";
+  } else if (file_path.length() >= 3 &&
+             file_path.substr(file_path.length() - 3) == ".js") {
+    return "application/javascript";
   } else {
     return "text/plain";
   }
