@@ -7,7 +7,7 @@ INCDIR = inc
 
 CXX = c++
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR)
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR) -g
 
 TARGET = WebServ
 

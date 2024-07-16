@@ -15,15 +15,16 @@
 
 class Server {
 private:
-  std::vector<TCPSocket> _sockets;
-  std::string buildResponse(std::string);
-  void sendResponse(const TCPSocket s, std::string response);
-  void initToListen();
-  void acceptConnection(TCPSocket &s);
+  std::vector<TCPSocket *> _sockets;
+  std::string buildResponse(const Request);
+  void sendResponse(int, std::string response);
+  void startToListenClients();
+  void acceptConnection(TCPSocket *s);
   void closeAllSockets() const;
+  bool isServerSocketFD(int);
 
 public:
-  Server(std::vector<TCPSocket> &);
+  Server(std::vector<TCPSocket *> &);
   ~Server();
-  void startListen();
+  void runServers();
 };

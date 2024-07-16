@@ -1,4 +1,5 @@
 #include "../inc/TCPSocket.hpp"
+#include <algorithm>
 
 void exitWithFailure(std::string s, int port) {
   std::cerr << port << " -> " << s << std::endl;
@@ -6,7 +7,7 @@ void exitWithFailure(std::string s, int port) {
 }
 
 TCPSocket::TCPSocket(std::string ipAddress, unsigned int port)
-    : _ipAddress(ipAddress), _port(port), _newSocket(), _socketAddress(),
+    : _ipAddress(ipAddress), _port(port), _clientsFD(), _socketAddress(),
       _socketAddressLength(sizeof(_socketAddress)) {
   _socketAddress.sin_family = AF_INET;
   _socketAddress.sin_port = htons(_port);
@@ -19,8 +20,8 @@ TCPSocket::TCPSocket(const TCPSocket &cp) { *this = cp; }
 TCPSocket &TCPSocket::operator=(const TCPSocket &rhs) {
   if (this != &rhs) {
     _ipAddress = rhs._ipAddress;
-    _newSocket = rhs._newSocket;
-    _socket = rhs._socket;
+    _clientsFD = rhs._clientsFD;
+    _socketFD = rhs._socketFD;
     _port = rhs._port;
     _socketAddress = rhs._socketAddress;
     _socketAddressLength = rhs._socketAddressLength;
@@ -29,31 +30,51 @@ TCPSocket &TCPSocket::operator=(const TCPSocket &rhs) {
 }
 
 TCPSocket::~TCPSocket() {
-  // std::cout << "Server closed " << _port << std::endl;
+  std::cout << "Server closed " << _port << std::endl;
+  closeServer();
 }
 
-void TCPSocket::closeServer() const {
-  close(_socket);
-  close(_newSocket);
+int TCPSocket::getSocketFD() const { return this->_socketFD; }
+const std::vector<int> &TCPSocket::getClientsFD() const {
+  return this->_clientsFD;
 }
+int TCPSocket::getPort() const { return this->_port; }
+std::string TCPSocket::getIpAddress() const { return this->_ipAddress; }
+struct sockaddr_in &TCPSocket::getSocketAdress() {
+  return this->_socketAddress;
+}
+unsigned int &TCPSocket::getSocketAddressLength() {
+  return this->_socketAddressLength;
+}
+
+// SETTERS
+void TCPSocket::addClient(int client) { this->_clientsFD.push_back(client); }
+void TCPSocket::removeClient(int client) {
+  std::vector<int>::iterator it =
+      std::find(_clientsFD.begin(), _clientsFD.end(), client);
+  if (it != _clientsFD.end())
+    _clientsFD.erase(it);
+}
+
+void TCPSocket::closeServer() const { close(_socketFD); }
 
 bool TCPSocket::initSocket() {
-  _socket = socket(AF_INET, SOCK_STREAM, 0);
-  if (_socket < 0) {
+  _socketFD = socket(AF_INET, SOCK_STREAM, 0);
+  if (_socketFD < 0) {
     exitWithFailure("Cannot create socket", _port);
     return false;
   }
   int opt = 1;
-  if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+  if (setsockopt(_socketFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
     exitWithFailure("Setsockopt SO_REUSEADDR failed", _port);
     return false;
   }
 
-  if (setsockopt(_socket, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
+  if (setsockopt(_socketFD, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
     exitWithFailure("Setsockopt SO_REUSEPORT failed", _port);
     return false;
   }
-  if (bind(_socket, (sockaddr *)&_socketAddress, _socketAddressLength) < 0) {
+  if (bind(_socketFD, (sockaddr *)&_socketAddress, _socketAddressLength) < 0) {
     exitWithFailure("Cannot connect socket to address", _port);
     return false;
   }

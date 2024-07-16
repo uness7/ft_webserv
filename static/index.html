@@ -11,11 +11,15 @@
         <p>
             Try <a id="redirect" >Oh my food</a>
         </p>
+        <p>
+            Try <a id="redirect" >Fisheye</a>
+        </p>
     </div>
 <script>
-const target = document.getElementById("redirect");
+const target = document.querySelectorAll("#redirect");
 const full = location.protocol + '//' + location.host;
-target.href =  full + "/static/ohmyfood/index.html";
+target[0].href =  full + "/static/ohmyfood/index.html";
+target[1].href =  full + "/static/fisheye/index.html";
 </script>
 </body>
 </html>
