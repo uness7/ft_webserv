@@ -1,4 +1,5 @@
 #include "../inc/Server.hpp"
+#include "../inc/Config.hpp"
 #include <csignal>
 #include <cstddef>
 #include <cstdlib>

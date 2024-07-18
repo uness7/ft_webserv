@@ -1,7 +1,7 @@
 S = src
 BUILD = build
 
-SRCS = $(S)/main.cpp $(S)/Server.cpp $(S)/Request.cpp $(S)/TCPSocket.cpp
+SRCS = $(S)/main.cpp $(S)/Server.cpp $(S)/Request.cpp $(S)/TCPSocket.cpp $(S)/Config.cpp
 
 INCDIR = inc
 

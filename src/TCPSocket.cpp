@@ -1,4 +1,5 @@
 #include "../inc/TCPSocket.hpp"
+#include <vector>
 
 void exitWithFailure(std::string s, int port) {
   std::cerr << port << " -> " << s << std::endl;
@@ -58,4 +59,15 @@ bool TCPSocket::initSocket() {
     return false;
   }
   return true;
+}
+
+// Function to create sockets based on the server configurations
+std::vector<TCPSocket> TCPSocket::createSockets(const std::vector<ServerConfig>& serverConfigs) {
+    std::vector<TCPSocket> sockets;
+    for (std::vector<ServerConfig>::const_iterator it = serverConfigs.begin(); it != serverConfigs.end(); ++it)
+    {
+        const ServerConfig& serverConfig = *it;
+        sockets.push_back(TCPSocket(serverConfig.listen, serverConfig.port));
+    }
+    return sockets;
 }

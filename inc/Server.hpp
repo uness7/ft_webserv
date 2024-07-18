@@ -25,5 +25,6 @@ private:
 public:
   Server(std::vector<TCPSocket> &);
   ~Server();
+
   void startListen();
 };
