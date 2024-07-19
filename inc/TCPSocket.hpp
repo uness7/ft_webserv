@@ -14,7 +14,6 @@ private:
   int _socketFD;
   std::string _ipAddress;
   int _port;
-  std::vector<int> _clientsFD;
   struct sockaddr_in _socketAddress;
   unsigned int _socketAddressLength;
   TCPSocket();
@@ -29,13 +28,8 @@ public:
 
   // GETTERS
   int getSocketFD() const;
-  const std::vector<int> &getClientsFD() const;
   int getPort() const;
   std::string getIpAddress() const;
   struct sockaddr_in &getSocketAdress();
   unsigned int &getSocketAddressLength();
-
-  // SETTERS
-  void addClient(int);
-  void removeClient(int);
 };

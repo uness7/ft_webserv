@@ -1,10 +1,12 @@
 #include "../inc/Server.hpp"
+#include <algorithm>
 #include <csignal>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
 #include <sys/poll.h>
+#include <utility>
 #include <vector>
 
 static volatile bool stopListening = false;
@@ -21,7 +23,7 @@ void handleSignal(int sig) {
     stopListening = true;
 }
 
-Server::Server(std::vector<TCPSocket *> &s) : _sockets(s) {
+Server::Server(std::vector<TCPSocket *> &s) : _sockets(s), _clients() {
   std::signal(SIGINT, handleSignal);
 }
 
@@ -40,9 +42,10 @@ void Server::acceptConnection(TCPSocket *s) {
        << "; PORT: " << ntohs(s->getSocketAdress().sin_port);
     exitWithFailure(ss.str());
   }
-  s->addClient(newClient);
   if (fcntl(newClient, F_SETFL, O_NONBLOCK) < 0)
     exitWithFailure("Failed to set non-blocking mode for client socket");
+  Client *n = new Client(newClient, READING);
+  _clients.insert(std::make_pair(newClient, n));
 }
 
 /*
@@ -91,7 +94,6 @@ void Server::runServers(void) {
   std::vector<pollfd> pollfds;
 
   while (true) {
-    log("====== Waiting for a new connection ======\n");
     if (stopListening)
       break;
 
@@ -99,13 +101,15 @@ void Server::runServers(void) {
     for (size_t i = 0; i < _sockets.size(); i++) {
       struct pollfd pfd = {.fd = _sockets[i]->getSocketFD(), .events = POLLIN};
       pollfds.push_back(pfd);
-      const std::vector<int> &clients = _sockets[i]->getClientsFD();
-      for (size_t j = 0; j < clients.size(); j++) {
-        struct pollfd cpfd = {.fd = clients[j], .events = POLLIN};
-        pollfds.push_back(cpfd);
-      }
     }
-    int ret = poll(pollfds.data(), pollfds.size(), -1);
+    std::map<unsigned short, Client *>::const_iterator it;
+    for (it = _clients.begin(); it != _clients.end(); it++) {
+      const short ev =
+          it->second->getWaitingStatus() == READING ? POLLIN : POLLOUT;
+      struct pollfd cpfd = {.fd = it->first, .events = ev};
+      pollfds.push_back(cpfd);
+    }
+    int ret = poll(pollfds.data(), pollfds.size(), 500);
     if (stopListening)
       break;
     if (ret < 0)
@@ -113,42 +117,57 @@ void Server::runServers(void) {
 
     for (size_t i = 0; i < pollfds.size(); i++) {
       if (pollfds[i].revents & POLLIN) {
-        if (isServerSocketFD(
-                pollfds[i]
-                    .fd)) { // If the current socket is from server and
-                            // has an event POLLIN (Incomming
-                            // connection), we accept connections from clients
+        if (isServerSocketFD(pollfds[i].fd)) {
           acceptConnection(_sockets[i]);
-        } else { // We respond to the new client stored and ready for read and
-                 // write function.
-          int clientFD = pollfds[i].fd;
-          char buffer[BUFFER_SIZE];
-          memset(&buffer, 0, BUFFER_SIZE);
-          byteReceived = read(clientFD, buffer, BUFFER_SIZE);
-          if (byteReceived > 0) {
-            Request req(buffer);
-            sendResponse(clientFD, buildResponse(req));
-            std::cout << req << std::endl;
-            if (req.getConnection() != "keep-alive") {
-              close(clientFD);
-              for (size_t i = 0; i < _sockets.size(); i++) {
-                _sockets[i]->removeClient(clientFD);
-              }
-            }
-          } else if (byteReceived == 0) {
-            close(clientFD);
-            for (size_t i = 0; i < _sockets.size(); i++) {
-              _sockets[i]->removeClient(clientFD);
-            }
+        } else if (_clients.count(pollfds[i].fd)) {
+          Client *client = _clients.at(pollfds[i].fd);
+          if (!client)
+            exitWithFailure("Client doesn't exist !");
+          byteReceived = readRequest(client);
+          if (byteReceived == 0) {
+            this->removeClient(pollfds[i].fd);
           } else if (byteReceived < 0 && errno != EWOULDBLOCK) {
-            exitWithFailure(
-                "Failed to read bytes from client socket connection");
+            log(strerror(errno));
+            log("Failed to read bytes from client socket connection");
+            this->removeClient(pollfds[i].fd);
           }
         }
+      } else if (pollfds[i].revents & POLLOUT) {
+        Client *client = _clients.at(pollfds[i].fd);
+        if (!client)
+          exitWithFailure("Client doesn't exist !");
+        handleResponse(client);
+      } else if (_clients.count(pollfds[i].fd) &&
+                 (pollfds[i].revents & POLLERR ||
+                  pollfds[i].revents & POLLHUP ||
+                  pollfds[i].revents & POLLNVAL)) {
+        log("This fd has error !");
+        removeClient(pollfds[i].fd);
+      } else {
+        log("Unknown");
+        std::cout << pollfds[i].fd << " -> " << pollfds[i].events << " -> "
+                  << pollfds[i].revents << std::endl;
       }
     }
   }
   closeAllSockets();
+}
+
+void Server::handleResponse(Client *client) {
+  sendResponse(client);
+  if (client->getDataSent() == 0
+      /* && client->getRequest().getConnection().compare("keep-alive") == 0*/) {
+    removeClient(client->getFd());
+  }
+}
+
+int Server::readRequest(Client *client) {
+  char buffer[BUFFER_SIZE];
+  memset(&buffer, 0, BUFFER_SIZE);
+  int byteReceived = read(client->getFd(), buffer, BUFFER_SIZE);
+  client->setRequest(buffer);
+  client->setWaitingStatus(WRITING);
+  return byteReceived;
 }
 
 void Server::closeAllSockets() const {
@@ -177,38 +196,28 @@ std::string Server::buildResponse(const Request r) {
   return ss.str();
 }
 
-ssize_t writeAll(int fd, const char *buf, size_t count) {
-  size_t totalWritten = 0;
-  struct pollfd pfd = {.fd = fd, .events = POLLOUT, .revents = 0};
-  poll(&pfd, 1, -1);
-  while (totalWritten < count) {
-    if (pfd.revents & POLLOUT) {
-      ssize_t bytesWritten =
-          write(fd, buf + totalWritten, count - totalWritten);
-      if (bytesWritten < 0) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-          std::cout << "Write function wait until the fd is ready to send datas"
-                    << std::endl;
-          poll(&pfd, 1, -1);
-        } else {
-          std::cerr << "error on write func -> " << strerror(errno)
-                    << std::endl;
-          return -1;
-        }
-      } else {
-        totalWritten += bytesWritten;
-      }
-    }
+void Server::sendResponse(Client *client) {
+  long bytesSent;
+  std::string response = buildResponse(client->getRequest());
+
+  bytesSent = write(client->getFd(), response.c_str() + client->getDataSent(),
+                    response.size() - client->getDataSent());
+  if (bytesSent + client->getDataSent() == static_cast<long>(response.size())) {
+    log("------ Server Response sent to client ------\n");
+    client->setWaitingStatus(READING);
+    client->setDataSent(0);
+  } else {
+    log("---- Server need multiple time to send fully response ----");
+    client->setDataSent(client->getDataSent() + bytesSent);
+    client->setWaitingStatus(WRITING);
   }
-  return totalWritten;
 }
 
-void Server::sendResponse(int clientFD, std::string response) {
-  long bytesSent;
-
-  bytesSent = writeAll(clientFD, response.c_str(), response.size());
-  if (bytesSent == static_cast<long>(response.size()))
-    log("------ Server Response sent to client ------\n");
-  else
-    log("Error sending response to client");
+void Server::removeClient(int keyFD) {
+  std::map<unsigned short, Client *>::iterator element = _clients.find(keyFD);
+  if (element == _clients.end())
+    return;
+  close(keyFD);
+  _clients.erase(element);
+  delete element->second;
 }

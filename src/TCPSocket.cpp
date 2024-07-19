@@ -7,7 +7,7 @@ void exitWithFailure(std::string s, int port) {
 }
 
 TCPSocket::TCPSocket(std::string ipAddress, unsigned int port)
-    : _ipAddress(ipAddress), _port(port), _clientsFD(), _socketAddress(),
+    : _ipAddress(ipAddress), _port(port), _socketAddress(),
       _socketAddressLength(sizeof(_socketAddress)) {
   _socketAddress.sin_family = AF_INET;
   _socketAddress.sin_port = htons(_port);
@@ -20,7 +20,6 @@ TCPSocket::TCPSocket(const TCPSocket &cp) { *this = cp; }
 TCPSocket &TCPSocket::operator=(const TCPSocket &rhs) {
   if (this != &rhs) {
     _ipAddress = rhs._ipAddress;
-    _clientsFD = rhs._clientsFD;
     _socketFD = rhs._socketFD;
     _port = rhs._port;
     _socketAddress = rhs._socketAddress;
@@ -35,9 +34,6 @@ TCPSocket::~TCPSocket() {
 }
 
 int TCPSocket::getSocketFD() const { return this->_socketFD; }
-const std::vector<int> &TCPSocket::getClientsFD() const {
-  return this->_clientsFD;
-}
 int TCPSocket::getPort() const { return this->_port; }
 std::string TCPSocket::getIpAddress() const { return this->_ipAddress; }
 struct sockaddr_in &TCPSocket::getSocketAdress() {
@@ -45,15 +41,6 @@ struct sockaddr_in &TCPSocket::getSocketAdress() {
 }
 unsigned int &TCPSocket::getSocketAddressLength() {
   return this->_socketAddressLength;
-}
-
-// SETTERS
-void TCPSocket::addClient(int client) { this->_clientsFD.push_back(client); }
-void TCPSocket::removeClient(int client) {
-  std::vector<int>::iterator it =
-      std::find(_clientsFD.begin(), _clientsFD.end(), client);
-  if (it != _clientsFD.end())
-    _clientsFD.erase(it);
 }
 
 void TCPSocket::closeServer() const { close(_socketFD); }

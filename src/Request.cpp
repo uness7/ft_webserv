@@ -10,6 +10,20 @@ Request::Request(std::string entireRequest)
 }
 
 Request::~Request() {}
+Request::Request(const Request &cp) { *this = cp; }
+Request &Request::operator=(const Request &rhs) {
+  if (this != &rhs)
+  {
+    this->_path = rhs.getPath();
+    this->_method = rhs.getMethod();
+    this->_mimetype = rhs.getMimeType();
+    this->_connection = rhs.getConnection();
+    this->_host = rhs._host;
+    this->_version = rhs._version;
+    this->_userAgent = rhs._userAgent;
+  }
+  return *this;
+}
 
 void Request::parseData() {
   std::stringstream request(_data);
