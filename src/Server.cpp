@@ -116,6 +116,8 @@ void Server::runServers(void) {
       exitWithFailure("Poll error");
 
     for (size_t i = 0; i < pollfds.size(); i++) {
+      // std::cout << "FD: " << pollfds[i].fd << " -> " << pollfds[i].events
+      //           << " -> " << pollfds[i].revents << std::endl;
       if (pollfds[i].revents & POLLIN) {
         if (isServerSocketFD(pollfds[i].fd)) {
           acceptConnection(_sockets[i]);
@@ -123,7 +125,7 @@ void Server::runServers(void) {
           Client *client = _clients.at(pollfds[i].fd);
           if (!client)
             exitWithFailure("Client doesn't exist !");
-          byteReceived = readRequest(client);
+          byteReceived = client->readRequest();
           if (byteReceived == 0) {
             this->removeClient(pollfds[i].fd);
           } else if (byteReceived < 0 && errno != EWOULDBLOCK) {
@@ -141,7 +143,7 @@ void Server::runServers(void) {
                  (pollfds[i].revents & POLLERR ||
                   pollfds[i].revents & POLLHUP ||
                   pollfds[i].revents & POLLNVAL)) {
-        log("This fd has error !");
+        log("This fd has an error !");
         removeClient(pollfds[i].fd);
       } else {
         log("Unknown");
@@ -150,67 +152,27 @@ void Server::runServers(void) {
       }
     }
   }
+  std::cout << "Clients:" << std::endl;
+  std::map<unsigned short, Client *>::iterator it;
+  for (it = _clients.begin(); it != _clients.end(); it++) {
+    std::cout << it->second->getFd() << std::endl;
+    std::cout << it->second->getDataSent() << std::endl;
+    std::cout << it->second->getRequest() << std::endl;
+  }
   closeAllSockets();
 }
 
 void Server::handleResponse(Client *client) {
-  sendResponse(client);
+  client->sendResponse();
   if (client->getDataSent() == 0
       /* && client->getRequest().getConnection().compare("keep-alive") == 0*/) {
     removeClient(client->getFd());
   }
 }
 
-int Server::readRequest(Client *client) {
-  char buffer[BUFFER_SIZE];
-  memset(&buffer, 0, BUFFER_SIZE);
-  int byteReceived = read(client->getFd(), buffer, BUFFER_SIZE);
-  client->setRequest(buffer);
-  client->setWaitingStatus(WRITING);
-  return byteReceived;
-}
-
 void Server::closeAllSockets() const {
   for (size_t i = 0; i < _sockets.size(); i++)
     delete _sockets[i];
-}
-
-std::string Server::buildResponse(const Request r) {
-  std::string path = r.getPath();
-  std::ifstream inFile(
-      std::string("." + path)
-          .c_str()); // Problem when path is a directory ("/" | "/static")
-  std::stringstream buffer;
-  if (inFile.is_open()) {
-    buffer << inFile.rdbuf();
-    inFile.close();
-  } else {
-    std::cerr << "Unable to open file " << path << std::endl;
-    return "HTTP/1.1 302 Found\nLocation: /static/index.html\n\n";
-  }
-  std::string fileRequested = buffer.str();
-  std::ostringstream ss;
-  ss << "HTTP/1.1 200 OK\nContent-Type: " << r.getMimeType()
-     << "\nContent-Length: " << fileRequested.size() << "\n\n"
-     << fileRequested;
-  return ss.str();
-}
-
-void Server::sendResponse(Client *client) {
-  long bytesSent;
-  std::string response = buildResponse(client->getRequest());
-
-  bytesSent = write(client->getFd(), response.c_str() + client->getDataSent(),
-                    response.size() - client->getDataSent());
-  if (bytesSent + client->getDataSent() == static_cast<long>(response.size())) {
-    log("------ Server Response sent to client ------\n");
-    client->setWaitingStatus(READING);
-    client->setDataSent(0);
-  } else {
-    log("---- Server need multiple time to send fully response ----");
-    client->setDataSent(client->getDataSent() + bytesSent);
-    client->setWaitingStatus(WRITING);
-  }
 }
 
 void Server::removeClient(int keyFD) {

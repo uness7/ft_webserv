@@ -1,15 +1,19 @@
 #pragma once
 
 #include "Request.hpp"
+#include "Response.hpp"
+#include <unistd.h>
 
 enum FD_WAITING_FOR { READING, WRITING };
+#define BUFFER_SIZE 30720
 
 class Client {
 private:
   unsigned short _fd;
-  Request _request;
   FD_WAITING_FOR _waitFor;
   int _dataSent;
+  Request _request;
+  Response _response;
 
 public:
   Client(unsigned short, FD_WAITING_FOR);
@@ -24,7 +28,12 @@ public:
   void setDataSent(int);
 
   const Request &getRequest() const;
-  void setRequest(std::string buffer);
+  int readRequest();
+
+  void buildResponse();
+  const std::string getResponseToString() const;
+  const Response &getResponse() const;
+  void sendResponse();
 
   FD_WAITING_FOR getWaitingStatus() const;
   void setWaitingStatus(FD_WAITING_FOR);

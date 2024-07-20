@@ -13,19 +13,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-#define BUFFER_SIZE 30720
 
 class Server {
 private:
   std::vector<TCPSocket *> _sockets;
 
-  std::string buildResponse(const Request);
-  void sendResponse(Client *);
   void startToListenClients();
   void acceptConnection(TCPSocket *s);
   void closeAllSockets() const;
   bool isServerSocketFD(int);
-  int readRequest(Client *);
   void handleResponse(Client *);
   void removeClient(int keyFD);
 

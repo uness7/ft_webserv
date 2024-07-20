@@ -1,7 +1,7 @@
 #include "../inc/Client.hpp"
 
 Client::Client(unsigned short fd, FD_WAITING_FOR status)
-    : _fd(fd), _request(""), _waitFor(status), _dataSent(0) {}
+    : _fd(fd), _waitFor(status), _dataSent(0), _request(""), _response() {}
 Client::Client(const Client &cp) : _fd(0), _request("") { *this = cp; }
 Client &Client::operator=(const Client &rhs) {
   if (this != &rhs) {
@@ -18,8 +18,48 @@ unsigned short Client::getFd() const { return this->_fd; }
 void Client::setFd(unsigned short fd) { this->_fd = fd; }
 
 const Request &Client::getRequest() const { return this->_request; }
-void Client::setRequest(std::string buffer) {
-  this->_request = Request(buffer);
+int Client::readRequest() {
+  char buffer[BUFFER_SIZE];
+  memset(&buffer, 0, BUFFER_SIZE);
+  int byteReceived = read(getFd(), buffer, BUFFER_SIZE);
+  setWaitingStatus(WRITING);
+  if (byteReceived > 0) {
+    _request = Request(buffer);
+    buildResponse();
+  }
+  return byteReceived;
+}
+
+void Client::buildResponse() {
+  if (getRequest().getMethod().empty()) {
+    std::cout << ("Try to create the response but the request class is empty")
+              << std::endl;
+    exit(1);
+  }
+  _response.build(this->getRequest());
+}
+const std::string Client::getResponseToString() const {
+  return _response.getResponse();
+}
+const Response &Client::getResponse() const { return _response; }
+
+void Client::sendResponse() {
+  long bytesSent;
+  std::string response = getResponseToString();
+
+  bytesSent = write(getFd(), response.c_str() + getDataSent(),
+                    response.size() - getDataSent());
+  if (bytesSent + getDataSent() == static_cast<long>(response.size())) {
+    std::cout << ("------ Server Response sent to client ------\n")
+              << std::endl;
+    setWaitingStatus(READING);
+    setDataSent(0);
+  } else {
+    std::cout << ("---- Server need multiple time to send fully response ----")
+              << std::endl;
+    setDataSent(getDataSent() + bytesSent);
+    setWaitingStatus(WRITING);
+  }
 }
 
 int Client::getDataSent() const { return _dataSent; }
