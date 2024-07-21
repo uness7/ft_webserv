@@ -17,7 +17,7 @@ def send_request(url):
 
 if __name__ == "__main__":
     urls = [
-        ["POST", "http://localhost:8010/testjdhsjvhkj"],
+        ["GET", "http://localhost:8010/static/fisheye/assets/medias/527/Travel_Bridge_into_Forest.jpg"],
         ["GET", "http://localhost:8020/static/ohmyfood/index.html"],
         ["DELETE", "http://localhost:8000/static/ohmyfood/index.html"],
         ["GET", "http://localhost:8000/static/ohmyfood/la_note_enchantee.html"],

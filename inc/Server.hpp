@@ -17,9 +17,11 @@
 class Server {
 private:
   std::vector<TCPSocket *> _sockets;
+  int _kqueue_fd;
 
   void startToListenClients();
   void acceptConnection(TCPSocket *s);
+  TCPSocket *getSocketByFD(int) const;
   void closeAllSockets() const;
   bool isServerSocketFD(int);
   void handleResponse(Client *);

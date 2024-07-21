@@ -65,5 +65,9 @@ bool TCPSocket::initSocket() {
     exitWithFailure("Cannot connect socket to address", _port);
     return false;
   }
+  if (fcntl(_socketFD, F_SETFL, O_NONBLOCK) < 0) {
+    exitWithFailure("Failed to set non-blocking mode for client socket", _port);
+    return false;
+  }
   return true;
 }

@@ -1,13 +1,13 @@
 #pragma once
 #include <arpa/inet.h>
 #include <cstdlib>
+#include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
 #include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <vector>
 
 class TCPSocket {
 private:

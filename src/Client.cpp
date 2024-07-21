@@ -49,14 +49,17 @@ void Client::sendResponse() {
 
   bytesSent = write(getFd(), response.c_str() + getDataSent(),
                     response.size() - getDataSent());
-  if (bytesSent + getDataSent() == static_cast<long>(response.size())) {
+  std::cout << "ByteSent : " << bytesSent << std::endl;
+  if (bytesSent < 0) {
+    setWaitingStatus(READING);
+    setDataSent(-1);
+  } else if (bytesSent + getDataSent() == static_cast<long>(response.size()) ||
+             bytesSent < 0) {
     std::cout << ("------ Server Response sent to client ------\n")
               << std::endl;
     setWaitingStatus(READING);
     setDataSent(0);
   } else {
-    std::cout << ("---- Server need multiple time to send fully response ----")
-              << std::endl;
     setDataSent(getDataSent() + bytesSent);
     setWaitingStatus(WRITING);
   }

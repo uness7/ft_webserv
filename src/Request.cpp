@@ -6,7 +6,6 @@ Request::Request(std::string entireRequest)
     : _data(entireRequest), _method(""), _path(""), _mimetype(""), _version(""),
       _host(""), _userAgent("") {
   this->parseData();
-  std::cout << entireRequest << std::endl;
 }
 
 Request::~Request() {}
