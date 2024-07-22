@@ -16,7 +16,8 @@
 
 class Server {
 private:
-  std::vector<TCPSocket *> _sockets;
+  std::vector<TCPSocket *> _sockets;  // Vector to store pointers to TCPSocket instances
+  std::map<unsigned short, Client *> _clients;  // Map to store connected clients
 
   void startToListenClients();
   void acceptConnection(TCPSocket *s);
@@ -26,9 +27,7 @@ private:
   void removeClient(int keyFD);
 
 public:
-  std::map<unsigned short, Client *> _clients;
-
-  Server(std::vector<TCPSocket *> &);
+  Server(std::vector<TCPSocket *> sockets);
   ~Server();
   void runServers();
 };

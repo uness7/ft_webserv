@@ -5,44 +5,48 @@
 #include <stdexcept>
 #include <map>
 
-struct LocationConfig
-{
-    std::string root;
-    std::string index;
-    bool autoindex;
-    std::vector<std::string> limit_except;
-    std::string upload_store;
+// Struct to store location-specific configurations
+struct LocationConfig {
+    std::string root; // Root directory for the location
+    std::string index; // Index file for the location
+    bool autoindex; // Autoindex flag
+    std::vector<std::string> limit_except; // HTTP methods to limit
+    std::string upload_store; // Directory to store uploads
 };
 
-struct ServerConfig
-{
-    std::string listen;
-    unsigned int port;
-    std::string server_name;
-    std::string error_page;
-    std::string client_max_body_size;
-    std::map<std::string, LocationConfig> locations;
+// Struct to store server-specific configurations
+struct ServerConfig {
+    std::string listen; // IP address to listen on
+    unsigned int port; // Port number
+    std::string server_name; // Server name
+    std::string error_page; // Default error page
+    std::string client_max_body_size; // Maximum client body size
+    std::map<std::string, LocationConfig> locations; // Map of locations
 };
 
-class Config
-{
+// Class that parses and stores the configuration file
+class Config {
 public:
+    // Constructor and Destructor
     Config(const std::string &fileName);
     ~Config();
 
-    std::vector<ServerConfig> getServerConfigs() const;
-    static void printConfigs(const std::vector<ServerConfig>& serverConfigs);
-private:
-    std::vector<ServerConfig> serverConfigs;
+    // Member functions
+    std::vector<ServerConfig> getServerConfigs() const; // Function to get server configurations
+    static void printConfigs(const std::vector<ServerConfig>& serverConfigs); // Function to print configurations
 
-    void parseConfigFile(const std::string &fileName);
-    void parseServer(std::ifstream &configFile, ServerConfig &serverConfig);
-    void parseServerLine(std::ifstream &configFile, const std::string &line, ServerConfig &serverConfig);
-    std::string extractValue(const std::string &line, const std::string &key);
-    std::string extractLocationPath(const std::string &line);
-    void parseListen(const std::string &line, ServerConfig &serverConfig);
-    void parseLocation(std::ifstream &configFile, LocationConfig &locationConfig);
-    void parseLocationLine(const std::string &line, LocationConfig &locationConfig);
-    static void printServerConfig(const ServerConfig& serverConfig);
-    static void printLocationConfig(const std::string& locationPath, const LocationConfig& locationConfig);
+private:
+    std::vector<ServerConfig> serverConfigs; // Vector to store server configurations
+
+    // Private member functions
+    void parseConfigFile(const std::string &fileName); // Function to parse the configuration file
+    void parseServer(std::ifstream &configFile, ServerConfig &serverConfig); // Function to parse a server block
+    void parseServerLine(std::ifstream &configFile, const std::string &line, ServerConfig &serverConfig); // Function to parse a server line
+    std::string extractValue(const std::string &line, const std::string &key); // Function to extract value from a line
+    std::string extractLocationPath(const std::string &line); // Function to extract location path
+    void parseListen(const std::string &line, ServerConfig &serverConfig); // Function to parse listen directive
+    void parseLocation(std::ifstream &configFile, LocationConfig &locationConfig); // Function to parse a location block
+    void parseLocationLine(const std::string &line, LocationConfig &locationConfig); // Function to parse a location line
+    static void printServerConfig(const ServerConfig& serverConfig); // Function to print server configuration
+    static void printLocationConfig(const std::string& locationPath, const LocationConfig& locationConfig); // Function to print location configuration
 };

@@ -12,24 +12,29 @@
 #include <unistd.h>
 #include <vector>
 
-class TCPSocket {
+// Class that manages the TCP socket operations
+class TCPSocket
+{
 private:
-  int _socketFD;
-  std::string _ipAddress;
-  int _port;
-  struct sockaddr_in _socketAddress;
-  unsigned int _socketAddressLength;
-  TCPSocket();
+  int _socketFD; // File descriptor for the socket
+  std::string _ipAddress; // IP address of the socket
+  int _port; // Port number of the socket
+  struct sockaddr_in _socketAddress; // Socket address structure
+  unsigned int _socketAddressLength; // Length of the socket address structure
+  TCPSocket(); // Default constructor (private to prevent use)
 
 public:
+  // Constructors and Destructor
   TCPSocket(std::string, unsigned int);
   TCPSocket(const TCPSocket &);
   TCPSocket &operator=(const TCPSocket &);
   ~TCPSocket();
-  bool initSocket();
-  void closeServer() const;
 
-  // GETTERS
+  // Member functions
+  bool initSocket(); // Function to initialize the socket
+  void closeServer() const; // Function to close the socket
+
+  // Getters
   int getSocketFD() const;
   int getPort() const;
   std::string getIpAddress() const;
@@ -37,4 +42,5 @@ public:
   unsigned int &getSocketAddressLength();
 };
 
+// Function to create sockets based on server configurations
 std::vector<TCPSocket*> createSockets(const std::vector<ServerConfig>& serverConfigs);
