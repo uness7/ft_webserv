@@ -3,6 +3,8 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include <unistd.h>
+#include <cstdlib>
+#include <cstring>
 
 enum FD_WAITING_FOR { READING, WRITING };
 #define BUFFER_SIZE 30720

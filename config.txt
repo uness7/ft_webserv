@@ -1,0 +1,34 @@
+server {
+    listen 127.0.0.1:8080;
+    server_name example.com;
+    error_page 404 /404.html;
+    client_max_body_size 1M;
+
+    location / {
+        root /var/www/html;
+        index index.html;
+    }
+
+    location /images/ {
+        root /var/www/images;
+        autoindex on;
+    }
+
+    location /uploads/ {
+        root /var/www/uploads;
+        limit_except GET POST;
+        upload_store /var/www/uploads;
+    }
+}
+
+server {
+    listen 0.0.0.0:8010;
+    server_name another.com;
+    error_page 404 /404.html;
+    client_max_body_size 2M;
+
+    location / {
+        root /var/www/html;
+        index index.html;
+    }
+}

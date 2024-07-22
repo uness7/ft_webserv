@@ -1,4 +1,7 @@
 #pragma once
+
+#include "../inc/Config.hpp"
+
 #include <arpa/inet.h>
 #include <cstdlib>
 #include <iostream>
@@ -33,3 +36,5 @@ public:
   struct sockaddr_in &getSocketAdress();
   unsigned int &getSocketAddressLength();
 };
+
+std::vector<TCPSocket*> createSockets(const std::vector<ServerConfig>& serverConfigs);
