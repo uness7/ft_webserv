@@ -22,12 +22,14 @@ private:
 
   void startToListenClients();
   void acceptConnection(TCPSocket *s);
-  void closeAllSockets() const;
+  void handleClientRequest(int fd, struct epoll_event *ev);
+  void closeAllSockets() ;
   bool isServerSocketFD(int);
   void handleResponse(Client *);
   void removeClient(int keyFD);
   TCPSocket *getSocketByFD(int targetFD) const;
 
+  static void updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev);
 public:
   Server(std::vector<TCPSocket *> sockets);
   ~Server();

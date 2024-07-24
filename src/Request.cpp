@@ -6,7 +6,6 @@ Request::Request(std::string entireRequest)
     : _data(entireRequest), _method(""), _path(""), _mimetype(""), _version(""),
       _host(""), _userAgent("") {
   this->parseData();
-  std::cout << entireRequest << std::endl;
 }
 
 Request::~Request() {}
@@ -85,6 +84,7 @@ std::string Request::getMethod() const { return this->_method; }
 std::string Request::getPath() const { return this->_path; }
 std::string Request::getMimeType() const { return this->_mimetype; }
 std::string Request::getConnection() const { return this->_connection; }
+std::string Request::getHost() const { return this->_host; }
 
 std::ostream &operator<<(std::ostream &out, const Request &req) {
   out << "Request: " << std::endl;

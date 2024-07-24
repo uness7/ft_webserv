@@ -28,6 +28,7 @@ public:
   std::string getPath() const;
   std::string getMimeType() const;
   std::string getConnection() const;
+  std::string getHost() const;
 
   // SETTERS
   void setMethod(std::string);
