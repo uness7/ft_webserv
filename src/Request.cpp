@@ -3,8 +3,8 @@
 #include <sstream>
 
 Request::Request(std::string entireRequest)
-    : _data(entireRequest), _method(""), _path(""), _mimetype(""), _version(""),
-      _host(""), _userAgent("") {
+    :  _method(""), _path(""), _mimetype(""), _version(""),
+      _host(""), _userAgent(""), _data(entireRequest) {
   this->parseData();
 }
 
@@ -87,10 +87,6 @@ std::string Request::getConnection() const { return this->_connection; }
 std::string Request::getHost() const { return this->_host; }
 
 std::ostream &operator<<(std::ostream &out, const Request &req) {
-  out << "Request: " << std::endl;
-  out << " -> Method: " << req.getMethod() << std::endl;
-  out << " -> Path: " << req.getPath() << std::endl;
-  out << " -> Mimetype: " << req.getMimeType() << std::endl;
-  out << " -> Connection: " << req.getConnection() << std::endl;
+  out << req._data << std::endl;
   return out;
 }
