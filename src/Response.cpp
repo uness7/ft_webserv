@@ -1,6 +1,17 @@
 #include "../inc/Response.hpp"
 
 Response::Response() : _value("") {}
+Response::Response(const Request &request) : _value("") {
+  this->build(request);
+}
+Response::Response(const Response &cp) { *this = cp;}
+Response &Response::operator=(const Response &rhs) {
+  if (this != &rhs)
+  {
+    this->_value = rhs._value;
+  }
+  return *this;
+}
 Response::~Response() {}
 
 void Response::build(const Request &request) {

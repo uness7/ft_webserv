@@ -53,15 +53,10 @@ void Server::acceptConnection(TCPSocket *s) {
 	}
 	if (fcntl(newClient, F_SETFL, O_NONBLOCK) < 0)
 	  exitWithFailure("Failed to set non-blocking mode for client socket");
-	Client *n = new Client(newClient, READING);
+	Client *n = new Client(newClient);
 	_clients.insert(std::make_pair(newClient, n));
 	std::cout << "[NEW CLIENT]: FD -> " << newClient << " on " << s->getIpAddress() << ":" << s->getPort() << std::endl;
-	struct  epoll_event ev;
-	ev.data.fd = newClient;
-	ev.events = EPOLLIN;
-	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, newClient, &ev) == -1) {
-		exitWithFailure("epoll ctl problem");
-	}
+	Server::updateEpoll(_epoll_fd, EPOLL_CTL_ADD, newClient, NULL);
 }
 
 void Server::updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev) {
@@ -124,12 +119,8 @@ void Server::handleClientRequest(int fd, struct epoll_event *ev) {
 	int byteReceived = client->readRequest();
 	if (byteReceived > 0)
 	{
-        Server::updateEpoll(_epoll_fd, EPOLL_CTL_MOD, fd, ev);
-	} else if (byteReceived == 0){
-		this->removeClient(fd);
-	} else if (byteReceived < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
-		log(strerror(errno));
-		log("Failed to read bytes from client socket connection");
+    Server::updateEpoll(_epoll_fd, EPOLL_CTL_MOD, fd, ev);
+	} else {
 		this->removeClient(fd);
 	}
 }
@@ -152,34 +143,31 @@ void Server::runServers(void)
 	    if (stopListening)
 	      break;
 
-	    // Poll the sockets to check for events
 	    int nfds = epoll_wait(_epoll_fd, events, MAX_EVENT, -1);
 	    if (stopListening)
 	      break;
 	    if (nfds == -1)
 	          exitWithFailure("Error with epoll_wait");
 
-	    // Iterate over pollfds to handle events
     	for (int i = 0; i < nfds; i++) {
     		int fd_triggered = events[i].data.fd;
     		short ev = events[i].events;
-            if (ev & EPOLLHUP || ev & EPOLLERR)
-      		this->removeClient(fd_triggered);
-            else if (ev & EPOLLIN)
-            {
+        if (ev & EPOLLHUP || ev & EPOLLERR)
+       	  this->removeClient(fd_triggered);
+        else if (ev & EPOLLIN)
+        {
     			if (_clients.count(fd_triggered)) {
-                    handleClientRequest(fd_triggered, &events[i]);
+              handleClientRequest(fd_triggered, &events[i]);
       		} else {
-     			TCPSocket *server = getSocketByFD(fd_triggered);
-     			acceptConnection(server);
+       			  TCPSocket *server = getSocketByFD(fd_triggered);
+         			acceptConnection(server);
       		}
        	} else if (_clients.count(fd_triggered) && ev & EPOLLOUT) {
-      		Client *client = _clients.at(fd_triggered);
-      		handleResponse(client);
-            }
+        		Client *client = _clients.at(fd_triggered);
+        		handleResponse(client);
+        }
     	}
 	}
-	// Close all server sockets
 	closeAllSockets();
 }
 
