@@ -149,23 +149,27 @@ void Server::runServers(void)
 	    if (nfds == -1)
 	          exitWithFailure("Error with epoll_wait");
 
-    	for (int i = 0; i < nfds; i++) {
+    	for (int i = 0; i < nfds; i++)
+		{
     		int fd_triggered = events[i].data.fd;
     		short ev = events[i].events;
-        if (ev & EPOLLHUP || ev & EPOLLERR)
-       	  this->removeClient(fd_triggered);
-        else if (ev & EPOLLIN)
-        {
-    			if (_clients.count(fd_triggered)) {
-              handleClientRequest(fd_triggered, &events[i]);
-      		} else {
-       			  TCPSocket *server = getSocketByFD(fd_triggered);
-         			acceptConnection(server);
-      		}
-       	} else if (_clients.count(fd_triggered) && ev & EPOLLOUT) {
-        		Client *client = _clients.at(fd_triggered);
-        		handleResponse(client);
-        }
+			if (ev & EPOLLHUP || ev & EPOLLERR)
+				this->removeClient(fd_triggered);
+			else if (ev & EPOLLIN)
+			{
+				if (_clients.count(fd_triggered))
+					handleClientRequest(fd_triggered, &events[i]);
+				else
+				{
+					TCPSocket *server = getSocketByFD(fd_triggered);
+					acceptConnection(server);
+				}
+			} 
+			else if (_clients.count(fd_triggered) && ev & EPOLLOUT)
+			{
+					Client *client = _clients.at(fd_triggered);
+					handleResponse(client);
+			}
     	}
 	}
 	closeAllSockets();

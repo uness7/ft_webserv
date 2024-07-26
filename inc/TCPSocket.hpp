@@ -16,6 +16,7 @@
 class TCPSocket
 {
 private:
+  ServerConfig _serverConfig; // Server configuration
   int _socketFD; // File descriptor for the socket
   std::string _ipAddress; // IP address of the socket
   int _port; // Port number of the socket
@@ -25,7 +26,7 @@ private:
 
 public:
   // Constructors and Destructor
-  TCPSocket(std::string, unsigned int);
+  TCPSocket(const ServerConfig&);
   TCPSocket(const TCPSocket &);
   TCPSocket &operator=(const TCPSocket &);
   ~TCPSocket();
@@ -40,6 +41,7 @@ public:
   std::string getIpAddress() const;
   struct sockaddr_in &getSocketAdress();
   unsigned int &getSocketAddressLength();
+  ServerConfig &getServerConfig();
 };
 
 // Function to create sockets based on server configurations

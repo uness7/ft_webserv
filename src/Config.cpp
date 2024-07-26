@@ -24,7 +24,7 @@ void Config::parseConfigFile(const std::string &fileName)
         {
             ServerConfig serverConfig;
             parseServer(configFile, serverConfig);
-            serverConfigs.push_back(serverConfig);
+            _serverConfigs.push_back(serverConfig);
         }
     }
 }
@@ -126,7 +126,7 @@ void Config::parseLocationLine(const std::string &line, LocationConfig &location
 }
 
 // Function to return the server configurations
-std::vector<ServerConfig> Config::getServerConfigs() const { return serverConfigs; }
+std::vector<ServerConfig> Config::getServerConfigs() const { return _serverConfigs; }
 
 // Function to print the configuration details of each server
 void Config::printConfigs(const std::vector<ServerConfig>& serverConfigs)

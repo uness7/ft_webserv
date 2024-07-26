@@ -36,7 +36,7 @@ public:
     static void printConfigs(const std::vector<ServerConfig>& serverConfigs); // Function to print configurations
 
 private:
-    std::vector<ServerConfig> serverConfigs; // Vector to store server configurations
+    std::vector<ServerConfig> _serverConfigs; // Vector to store server configurations
 
     // Private member functions
     void parseConfigFile(const std::string &fileName); // Function to parse the configuration file

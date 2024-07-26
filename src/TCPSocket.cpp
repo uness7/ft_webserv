@@ -7,13 +7,13 @@ void exitWithFailure(std::string s, int port) {
 }
 
 // Constructor for TCPSocket
-TCPSocket::TCPSocket(std::string ipAddress, unsigned int port)
-    : _ipAddress(ipAddress), _port(port), _socketAddress(),
-      _socketAddressLength(sizeof(_socketAddress)) {
+TCPSocket::TCPSocket(const ServerConfig& serverConfig)
+    : _serverConfig(serverConfig), _socketFD(0), _ipAddress(serverConfig.listen), _port(serverConfig.port), _socketAddress(), _socketAddressLength(sizeof(_socketAddress))
+{
   // Initialize the sockaddr_in structure
   _socketAddress.sin_family = AF_INET; // Set address family to IPv4
   _socketAddress.sin_port = htons(_port); // Convert port to network byte order
-  _socketAddress.sin_addr.s_addr = inet_addr(ipAddress.c_str()); // Convert IP address to network byte order
+  _socketAddress.sin_addr.s_addr = inet_addr(_ipAddress.c_str()); // Convert IP address to network byte order
 }
 
 
@@ -44,6 +44,8 @@ struct sockaddr_in &TCPSocket::getSocketAdress() {
 unsigned int &TCPSocket::getSocketAddressLength() {
   return this->_socketAddressLength;
 }
+
+ServerConfig &TCPSocket::getServerConfig() { return this->_serverConfig; }
 
 void TCPSocket::closeServer() const { close(_socketFD); }
 
@@ -88,9 +90,8 @@ std::vector<TCPSocket*> createSockets(const std::vector<ServerConfig>& serverCon
     // Iterate through each server configuration
     for (std::vector<ServerConfig>::const_iterator it = serverConfigs.begin(); it != serverConfigs.end(); ++it)
     {
-        const ServerConfig& serverConfig = *it;
         // Create a new TCPSocket with the given IP address and port from the configuration
-        sockets.push_back(new TCPSocket(serverConfig.listen, serverConfig.port));
+        sockets.push_back(new TCPSocket(*it));
     }
     return sockets;
 }
