@@ -3,8 +3,8 @@
 #include <sstream>
 
 Request::Request(std::string entireRequest)
-    : _data(entireRequest), _method(""), _path(""), _mimetype(""), _version(""),
-      _host(""), _userAgent("") {
+    :  _method(""), _path(""), _mimetype(""), _version(""),
+      _host(""), _userAgent(""), _data(entireRequest) {
   this->parseData();
 }
 
@@ -45,6 +45,7 @@ void Request::parseData() {
     else if (!_connection.size() && line.compare(0, 12, "Connection: ") == 0)
       setConnection(line.substr(12));
   }
+
 }
 
 void Request::setMethod(std::string s) { this->_method = s; }
@@ -83,12 +84,9 @@ std::string Request::getMethod() const { return this->_method; }
 std::string Request::getPath() const { return this->_path; }
 std::string Request::getMimeType() const { return this->_mimetype; }
 std::string Request::getConnection() const { return this->_connection; }
+std::string Request::getHost() const { return this->_host; }
 
 std::ostream &operator<<(std::ostream &out, const Request &req) {
-  out << "Request: " << std::endl;
-  out << " -> Method: " << req.getMethod() << std::endl;
-  out << " -> Path: " << req.getPath() << std::endl;
-  out << " -> Mimetype: " << req.getMimeType() << std::endl;
-  out << " -> Connection: " << req.getConnection() << std::endl;
+  out << req._data << std::endl;
   return out;
 }

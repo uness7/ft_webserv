@@ -6,7 +6,6 @@
 
 class Request {
 private:
-  std::string _data;
   std::string _method;
   std::string _path;
   std::string _mimetype;
@@ -18,6 +17,7 @@ private:
   void parseData();
 
 public:
+  std::string _data;
   Request(std::string);
   Request(const Request &);
   Request &operator=(const Request &);
@@ -28,6 +28,7 @@ public:
   std::string getPath() const;
   std::string getMimeType() const;
   std::string getConnection() const;
+  std::string getHost() const;
 
   // SETTERS
   void setMethod(std::string);

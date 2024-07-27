@@ -5,32 +5,37 @@
 #include "TCPSocket.hpp"
 #include <arpa/inet.h>
 #include <iostream>
-#include <map>
 #include <netinet/in.h>
-#include <poll.h>
+#include <sys/event.h>
 #include <sstream>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <vector>
+#include <map>
 
-class Server {
+class Server
+{
 private:
-  std::vector<TCPSocket *> _sockets;
+  std::vector<TCPSocket *> _sockets;           // Vector to store pointers to TCPSocket instances
+  std::map<unsigned short, Client *> _clients; // Map to store connected clients
   int _kqueue_fd;
 
   void startToListenClients();
   void acceptConnection(TCPSocket *s);
-  TCPSocket *getSocketByFD(int) const;
-  void closeAllSockets() const;
-  bool isServerSocketFD(int);
+  void handleClientRequest(int fd);
   void handleResponse(Client *);
+
   void removeClient(int keyFD);
+  TCPSocket *getSocketByFD(int targetFD) const;
+  bool isServerSocketFD(int);
+  void closeAllSockets();
+
+  static void updateKqueue(int kqFD, short action, int targetFD);
 
 public:
-  std::map<unsigned short, Client *> _clients;
-
-  Server(std::vector<TCPSocket *> &);
+  Server(std::vector<TCPSocket *> sockets);
   ~Server();
   void runServers();
 };
