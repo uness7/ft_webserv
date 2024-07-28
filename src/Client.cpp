@@ -1,7 +1,9 @@
 #include "../inc/Client.hpp"
 
-Client::Client(unsigned short fd)
-    : _fd(fd), _dataSent(0), _request(""), _response() {}
+Client::Client(unsigned short fd, ServerConfig config)
+    : _fd(fd), _dataSent(0), _request(""), _config(config) {
+     this->_response = new Response();
+    }
 Client::Client(const Client &cp) : _fd(0), _request("") { *this = cp; }
 Client &Client::operator=(const Client &rhs)
 {
@@ -10,6 +12,8 @@ Client &Client::operator=(const Client &rhs)
     this->setFd(rhs._fd);
     this->_request = rhs._request;
     this->_dataSent = rhs._dataSent;
+    this->_response = rhs._response;
+    this->_config = rhs._config;
   }
   return *this;
 }
@@ -18,7 +22,7 @@ Client::~Client() {}
 unsigned short Client::getFd() const { return this->_fd; }
 void Client::setFd(unsigned short fd) { this->_fd = fd; }
 
-const Request &Client::getRequest() const { return this->_request; }
+Request &Client::getRequest() { return this->_request; }
 int Client::readRequest()
 {
   char buffer[BUFFER_SIZE];
@@ -27,16 +31,16 @@ int Client::readRequest()
   if (byteReceived > 0)
   {
     _request = Request(buffer);
-    _response = Response(this->getRequest());
+    _response = new Response(this);
   }
   return byteReceived;
 }
 
 const std::string Client::getResponseToString() const
 {
-  return _response.getResponse();
+  return _response->getResponse();
 }
-const Response &Client::getResponse() const { return _response; }
+const Response *Client::getResponse() const { return _response; }
 
 void Client::sendResponse()
 {
@@ -57,3 +61,6 @@ void Client::sendResponse()
 
 int Client::getDataSent() const { return _dataSent; }
 void Client::setDataSent(int dataSent) { this->_dataSent = dataSent; }
+
+
+const ServerConfig Client::getConfig() const { return this->_config;}

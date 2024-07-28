@@ -63,7 +63,7 @@ std::string Config::extractValue(const std::string &line, const std::string &key
     size_t pos = line.find(key) + key.length();
     std::string value = line.substr(pos);
     value.erase(0, value.find_first_not_of(" \t\n\r\f\v"));
-    value.erase(value.find_last_not_of(" \t\n\r\f\v") + 1);
+    value.erase(value.find_last_not_of(" \t\n\r\f\v;") + 1);
     return value;
 }
 

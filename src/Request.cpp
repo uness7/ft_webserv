@@ -79,6 +79,7 @@ void Request::setHost(std::string s) { this->_host = s; }
 void Request::setVersion(std::string s) { this->_version = s; }
 void Request::setUserAgent(std::string s) { this->_userAgent = s; }
 void Request::setConnection(std::string s) { this->_connection = s; }
+void RsetMimeType();
 
 std::string Request::getMethod() const { return this->_method; }
 std::string Request::getPath() const { return this->_path; }

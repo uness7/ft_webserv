@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Config.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
 #include <unistd.h>
@@ -7,16 +8,18 @@
 #include <cstring>
 
 #define BUFFER_SIZE 30720
+class Response;
 
 class Client {
 private:
   unsigned short _fd;
   int _dataSent;
   Request _request;
-  Response _response;
+  Response *_response;
+  ServerConfig _config;
 
 public:
-  Client(unsigned short);
+  Client(unsigned short, ServerConfig);
   Client(const Client &);
   Client &operator=(const Client &);
   ~Client();
@@ -27,11 +30,12 @@ public:
   int getDataSent() const;
   void setDataSent(int);
 
-  const Request &getRequest() const;
+  Request &getRequest();
   int readRequest();
 
   const std::string getResponseToString() const;
-  const Response &getResponse() const;
+  const Response *getResponse() const;
   void sendResponse();
-
+  
+  const ServerConfig getConfig() const;
 };

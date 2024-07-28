@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link rel="stylesheet" type="text/css" href="./404.css" />
+</head>
+<body class="main" >
+    <div>
+        <h2>
+            Oops! The page you are looking for cannot be found. Please check the URL or try navigating back to the homepage.
+        </h2>
+        <p>
+            Try <a id="redirect">INDEX</a>
+        </p>
+    </div>
+<script>
+const target = document.querySelector("#redirect");
+target.href = location.protocol + '//' + location.host;
+</script>
+</body>
+</html>

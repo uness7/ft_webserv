@@ -5,7 +5,7 @@ server {
     client_max_body_size 1M;
 
     location / {
-        root /var/www/html;
+        root /static/ohmyfood;
         index index.html;
     }
 
@@ -28,7 +28,7 @@ server {
     client_max_body_size 2M;
 
     location / {
-        root /var/www/html;
+        root /static/fisheye;
         index index.html;
     }
 }

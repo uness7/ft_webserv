@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Request.hpp"
+#include "Client.hpp"
 #include <iostream>
 
 struct STATUS_CODE {
@@ -8,22 +9,28 @@ struct STATUS_CODE {
   std::string status;
 };
 
+class Client;
+
 class Response {
 private:
   std::string _value;
   STATUS_CODE _statusCode;
   std::string _contentType;
   std::string _buffer;
+  Client *_client;
 
+
+  void build();
+  void buildError();
 
 public:
   Response();
-  Response(const Request &request);
+  Response(Client *);
   Response(const Response &);
   Response &operator=(const Response &);
   ~Response();
 
-  void build(const Request &);
+
 
   const std::string getResponse() const;
 
