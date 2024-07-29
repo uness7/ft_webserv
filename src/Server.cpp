@@ -53,7 +53,7 @@ void Server::acceptConnection(TCPSocket *s) {
 	}
 	if (fcntl(newClient, F_SETFL, O_NONBLOCK) < 0)
 	  exitWithFailure("Failed to set non-blocking mode for client socket");
-	Client *n = new Client(newClient);
+	Client *n = new Client(newClient, s->getServerConfig());
 	_clients.insert(std::make_pair(newClient, n));
 	std::cout << "[NEW CLIENT]: FD -> " << newClient << " on " << s->getIpAddress() << ":" << s->getPort() << std::endl;
 	Server::updateEpoll(_epoll_fd, EPOLL_CTL_ADD, newClient, NULL);

@@ -28,7 +28,7 @@ server {
     client_max_body_size 2M;
 
     location / {
-        root /static/fisheye;
+        root /static/html;
         index index.html;
     }
 }

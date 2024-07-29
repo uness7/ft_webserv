@@ -46,7 +46,7 @@ void Response::buildError() {
   std::string newPath = _client->getConfig().locations.begin()->second.root + error_page[1];
   _client->getRequest().setPath(newPath); 
   std::stringstream buffer;
-  std::ifstream inFile("." + request.getPath());
+  std::ifstream inFile(std::string("." + request.getPath()).c_str()); 
   buffer << inFile.rdbuf();
   inFile.close();
   setStatusCode(atoi(error_page[0].c_str()));
@@ -64,9 +64,7 @@ void Response::build() {
     newPath = _client->getConfig().locations.begin()->second.root + request.getPath();
   }
   _client->getRequest().setPath(newPath); 
-  std::ifstream inFile(
-      std::string("." + request.getPath())
-          .c_str()); // Problem when path is a directory ("/" | "/static")
+  std::ifstream inFile(std::string("." + request.getPath()).c_str()); 
   std::stringstream buffer;
   if (inFile.is_open()) {
     buffer << inFile.rdbuf();
