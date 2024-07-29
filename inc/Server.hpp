@@ -6,25 +6,23 @@
 #include <arpa/inet.h>
 #include <iostream>
 #include <netinet/in.h>
-#include <sys/event.h>
+#include <sys/epoll.h>
 #include <sstream>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <vector>
 #include <map>
 
-class Server
-{
+class Server {
 private:
-  std::vector<TCPSocket *> _sockets;           // Vector to store pointers to TCPSocket instances
-  std::map<unsigned short, Client *> _clients; // Map to store connected clients
-  int _kqueue_fd;
+  std::vector<TCPSocket *> _sockets;  // Vector to store pointers to TCPSocket instances
+  std::map<unsigned short, Client *> _clients;  // Map to store connected clients
+  int _epoll_fd;
 
   void startToListenClients();
   void acceptConnection(TCPSocket *s);
-  void handleClientRequest(int fd);
+  void handleClientRequest(int fd, struct epoll_event *ev);
   void handleResponse(Client *);
 
   void removeClient(int keyFD);
@@ -32,8 +30,7 @@ private:
   bool isServerSocketFD(int);
   void closeAllSockets();
 
-  static void updateKqueue(int kqFD, short action, int targetFD);
-
+  static void updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev);
 public:
   Server(std::vector<TCPSocket *> sockets);
   ~Server();
