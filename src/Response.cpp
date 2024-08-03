@@ -62,24 +62,21 @@ void Response::build() {
         _buffer = "Method Not Allowed";
     } else {
         std::string path = request.getPath();
+        std::string server_root = _client->getConfig().locations.begin()->second.root;
+
         if (path == "/api/data") {
-            // Gérer la route dynamique
             _buffer = "{\"message\": \"This is dynamic data!\"}";
             setStatusCode(200);
             _contentType = "application/json";
         } else if (path == "/api/info") {
-            // Gérer la route dynamique /api/info
             _buffer = "{\"info\": \"This is some info!\"}";
             setStatusCode(200);
             _contentType = "application/json";
         } else {
             // Gérer les fichiers statiques
-            std::string newPath;
-            if (path.compare("/") == 0) {
-                newPath = _client->getConfig().locations.begin()->second.root + "/" + _client->getConfig().locations.begin()->second.index;
-            } else {
-                newPath = _client->getConfig().locations.begin()->second.root + path;
-            }
+            std::string newPath = (path.compare("/") == 0)
+                                    ? server_root + "/" + _client->getConfig().locations.begin()->second.index
+                                    : server_root + path;
             _client->getRequest().setPath(newPath);
 
             std::ifstream inFile(std::string("." + newPath).c_str());
@@ -102,7 +99,6 @@ void Response::build() {
        << _buffer;
     this->_value = ss.str();
 }
-
 
 
 const std::string Response::getResponse() const { return this->_value; }
