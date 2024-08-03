@@ -3,6 +3,11 @@
 #include "Request.hpp"
 #include "Client.hpp"
 #include <iostream>
+#include <cstring>
+#include <string>
+#include <cstdlib>
+#include <algorithm>
+
 
 struct STATUS_CODE {
   unsigned short code;

@@ -123,7 +123,16 @@ void Config::parseLocationLine(const std::string &line, LocationConfig &location
     }
     else if (line.find("upload_store") != std::string::npos)
         locationConfig.upload_store = extractValue(line, "upload_store");
+    else if (line.find("allowed_methods") != std::string::npos)  // Ajoutez cette ligne
+    {
+        std::string methods = extractValue(line, "allowed_methods");  // Ajoutez cette ligne
+        std::istringstream iss(methods);  // Ajoutez cette ligne
+        std::string method;  // Ajoutez cette ligne
+        while (iss >> method)  // Ajoutez cette ligne
+            locationConfig.allowed_methods.push_back(method);  // Ajoutez cette ligne
+    }
 }
+
 
 // Function to return the server configurations
 std::vector<ServerConfig> Config::getServerConfigs() const { return _serverConfigs; }

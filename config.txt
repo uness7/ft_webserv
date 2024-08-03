@@ -7,19 +7,23 @@ server {
     location / {
         root /static/ohmyfood;
         index index.html;
+        allowed_methods GET POST;
     }
 
     location /images/ {
         root /var/www/images;
         autoindex on;
+        allowed_methods GET;
     }
 
     location /uploads/ {
         root /var/www/uploads;
         limit_except GET POST;
         upload_store /var/www/uploads;
+        allowed_methods GET POST;
     }
 }
+
 
 server {
     listen 0.0.0.0:8010;
@@ -30,5 +34,6 @@ server {
     location / {
         root /static/html;
         index index.html;
+        allowed_methods GET POST;
     }
 }

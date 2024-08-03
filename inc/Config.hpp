@@ -12,6 +12,7 @@ struct LocationConfig {
     bool autoindex; // Autoindex flag
     std::vector<std::string> limit_except; // HTTP methods to limit
     std::string upload_store; // Directory to store uploads
+    std::vector<std::string> allowed_methods;
 };
 
 // Struct to store server-specific configurations

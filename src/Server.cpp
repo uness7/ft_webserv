@@ -115,15 +115,15 @@ bool Server::isServerSocketFD(int fd) {
 }
 
 void Server::handleClientRequest(int fd, struct epoll_event *ev) {
-	Client *client = _clients.at(fd);
-	int byteReceived = client->readRequest();
-	if (byteReceived > 0)
-	{
+  Client *client = _clients.at(fd);
+  int byteReceived = client->readRequest();
+  if (byteReceived > 0) {
     Server::updateEpoll(_epoll_fd, EPOLL_CTL_MOD, fd, ev);
-	} else {
-		this->removeClient(fd);
-	}
+  } else {
+    this->removeClient(fd);
+  }
 }
+
 
 // Main loop to manage all sockets
 void Server::runServers(void)

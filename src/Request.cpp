@@ -45,8 +45,8 @@ void Request::parseData() {
     else if (!_connection.size() && line.compare(0, 12, "Connection: ") == 0)
       setConnection(line.substr(12));
   }
-
 }
+
 
 void Request::setMethod(std::string s) { this->_method = s; }
 void Request::setPath(std::string s) {
