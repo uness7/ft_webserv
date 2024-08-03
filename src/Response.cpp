@@ -53,31 +53,46 @@ void Response::buildError() {
 
 void Response::build() {
     Request &request = _client->getRequest();
-    std::string path = request.getPath();
-    
-    if (path == "/api/data") {
-        // Gérer la route dynamique /api/data
-        _buffer = "{\"message\": \"This is dynamic data!\"}";
-        setStatusCode(200);
-        _contentType = "application/json";
-    } else if (path == "/api/info") {
-        // Gérer la route dynamique /api/info
-        _buffer = "{\"info\": \"This is some info!\"}";
-        setStatusCode(200);
-        _contentType = "application/json";
+    std::string method = request.getMethod();
+    std::vector<std::string> allowed_methods = _client->getConfig().locations.begin()->second.allowed_methods;
+
+    if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end()) {
+        setStatusCode(405);
+        _contentType = "text/plain";
+        _buffer = "Method Not Allowed";
     } else {
-        // Gérer les fichiers statiques
-        std::string newPath = _client->getConfig().locations.begin()->second.root + path;
-        std::ifstream inFile(std::string("." + newPath).c_str());
-        std::stringstream buffer;
-        if (inFile.is_open()) {
-            buffer << inFile.rdbuf();
-            inFile.close();
+        std::string path = request.getPath();
+        if (path == "/api/data") {
+            // Gérer la route dynamique
+            _buffer = "{\"message\": \"This is dynamic data!\"}";
             setStatusCode(200);
-            _buffer = buffer.str();
-            _contentType = request.getMimeType();
+            _contentType = "application/json";
+        } else if (path == "/api/info") {
+            // Gérer la route dynamique /api/info
+            _buffer = "{\"info\": \"This is some info!\"}";
+            setStatusCode(200);
+            _contentType = "application/json";
         } else {
-            buildError();
+            // Gérer les fichiers statiques
+            std::string newPath;
+            if (path.compare("/") == 0) {
+                newPath = _client->getConfig().locations.begin()->second.root + "/" + _client->getConfig().locations.begin()->second.index;
+            } else {
+                newPath = _client->getConfig().locations.begin()->second.root + path;
+            }
+            _client->getRequest().setPath(newPath);
+
+            std::ifstream inFile(std::string("." + newPath).c_str());
+            std::stringstream buffer;
+            if (inFile.is_open()) {
+                buffer << inFile.rdbuf();
+                inFile.close();
+                setStatusCode(200);
+                _buffer = buffer.str();
+                _contentType = request.getMimeType();
+            } else {
+                buildError();
+            }
         }
     }
 
@@ -87,6 +102,8 @@ void Response::build() {
        << _buffer;
     this->_value = ss.str();
 }
+
+
 
 const std::string Response::getResponse() const { return this->_value; }
 
