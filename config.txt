@@ -24,9 +24,8 @@ server {
     }
 }
 
-
 server {
-    listen 0.0.0.0:8010;
+    listen 127.0.0.1:8090;
     server_name another.com;
     error_page 404 /404.html;
     client_max_body_size 2M;

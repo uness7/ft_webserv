@@ -53,31 +53,22 @@ void Response::buildError() {
 
 void Response::build() {
     Request &request = _client->getRequest();
-    std::string method = request.getMethod();
-    std::vector<std::string> allowed_methods = _client->getConfig().locations.begin()->second.allowed_methods;
-
-    // Ajoutons un débogage pour afficher le type et la valeur de method et de allowed_methods
-    std::cout << "Method: " << method << std::endl;
-    std::cout << "Allowed Methods: ";
-    for (std::vector<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
-        std::cout << *it << " ";
-    }
-    std::cout << std::endl;
-
-    // Utilisation correcte de std::find avec conversion explicite
-    if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end()) {
-        setStatusCode(405);
-        _contentType = "text/plain";
-        _buffer = "Method Not Allowed";
+    std::string path = request.getPath();
+    
+    if (path == "/api/data") {
+        // Gérer la route dynamique /api/data
+        _buffer = "{\"message\": \"This is dynamic data!\"}";
+        setStatusCode(200);
+        _contentType = "application/json";
+    } else if (path == "/api/info") {
+        // Gérer la route dynamique /api/info
+        _buffer = "{\"info\": \"This is some info!\"}";
+        setStatusCode(200);
+        _contentType = "application/json";
     } else {
-        std::string newPath;
-        if (request.getPath().compare("/") == 0) {
-            newPath = _client->getConfig().locations.begin()->second.root + "/" + _client->getConfig().locations.begin()->second.index;
-        } else {
-            newPath = _client->getConfig().locations.begin()->second.root + request.getPath();
-        }
-        _client->getRequest().setPath(newPath);
-        std::ifstream inFile(std::string("." + request.getPath()).c_str());
+        // Gérer les fichiers statiques
+        std::string newPath = _client->getConfig().locations.begin()->second.root + path;
+        std::ifstream inFile(std::string("." + newPath).c_str());
         std::stringstream buffer;
         if (inFile.is_open()) {
             buffer << inFile.rdbuf();
@@ -89,16 +80,13 @@ void Response::build() {
             buildError();
         }
     }
+
     std::ostringstream ss;
     ss << "HTTP/1.1 " << this->getStatusToString() << "\nContent-Type: " << _contentType
        << "\nContent-Length: " << _buffer.size() << "\n\n"
        << _buffer;
     this->_value = ss.str();
 }
-
-
-
-
 
 const std::string Response::getResponse() const { return this->_value; }
 
