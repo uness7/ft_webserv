@@ -201,7 +201,7 @@ void Server::removeClient(int keyFD) {
   if (element == _clients.end())
     return;
   Server::updateEpoll(_epoll_fd, EPOLL_CTL_DEL, keyFD, NULL);
-  std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on " << element->second->getRequest().getHost() << std::endl;
+  std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on " << element->second->getConfig().port << std::endl;
   close(keyFD);
   _clients.erase(element);
   delete element->second;

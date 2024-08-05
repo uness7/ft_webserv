@@ -3,8 +3,7 @@
 #include <sstream>
 
 Request::Request(std::string entireRequest)
-    :  _method(""), _path(""), _mimetype(""), _version(""),
-      _host(""), _userAgent(""), _data(entireRequest) {
+    :  _method(""), _path(""), _query(""), _mimetype(""), _body(""), _headers(), _data(entireRequest) {
   this->parseData();
 }
 
@@ -16,43 +15,55 @@ Request &Request::operator=(const Request &rhs) {
     this->_path = rhs.getPath();
     this->_method = rhs.getMethod();
     this->_mimetype = rhs.getMimeType();
-    this->_connection = rhs.getConnection();
-    this->_host = rhs._host;
-    this->_version = rhs._version;
-    this->_userAgent = rhs._userAgent;
+    this->_query = rhs._query;
+    this->_body = rhs._body;
+    this->_headers = rhs._headers;
   }
+
   return *this;
 }
 
 void Request::parseData() {
-  std::stringstream request(_data);
-  std::string method;
-  std::string path;
-  std::string version;
-  std::string line;
+	  std::stringstream request(_data);
+	  std::string method;
+	  std::string path;
+	  std::string line;
+	  std::stringstream body;
+	  bool isBody = false;
 
-  request >> method;
-  request >> path;
-  request >> version;
-  setPath(path);
-  setMethod(method);
-  _version = version;
-  while (std::getline(request, line)) {
-    if (!_host.size() && line.compare(0, 6, "Host: ") == 0)
-      setHost(line.substr(6));
-    else if (!_userAgent.size() && line.compare(0, 12, "User-Agent: ") == 0)
-      setUserAgent(line.substr(12));
-    else if (!_connection.size() && line.compare(0, 12, "Connection: ") == 0)
-      setConnection(line.substr(12));
-  }
+	  request >> method;
+	  request >> path;
+	  setPath(path);
+	  setMethod(method);
+	  std::getline(request, line);
+	  while (std::getline(request, line)) {
+		  if (isBody) {
+			  body << line;
+		  } else {
+			  std::size_t found = line.find(":");
+			  if (found == std::string::npos) {
+				  isBody = true;
+				  continue;
+			  }
+			  std::string key = line.substr(0, found);
+			  std::string value = line.substr(found+1);
+			  _headers.insert(std::make_pair(key, value));
+		  } 
+
+	  }
+	  std::string b = body.str();
+	  if (b.length())
+		  _body = b;
 }
 
 
 void Request::setMethod(std::string s) { this->_method = s; }
 void Request::setPath(std::string s) {
   std::size_t found = s.find("?");
-  if (found != std::string::npos)
+  if (found != std::string::npos) {
     this->_path = s.substr(0, found);
+    this->_query =  s.substr(found + 1);
+  }
   else
     this->_path = s;
   setMimeType();
@@ -75,17 +86,19 @@ void Request::setMimeType() {
     _mimetype = "text/plain";
   }
 }
-void Request::setHost(std::string s) { this->_host = s; }
-void Request::setVersion(std::string s) { this->_version = s; }
-void Request::setUserAgent(std::string s) { this->_userAgent = s; }
-void Request::setConnection(std::string s) { this->_connection = s; }
-void RsetMimeType();
 
 std::string Request::getMethod() const { return this->_method; }
 std::string Request::getPath() const { return this->_path; }
 std::string Request::getMimeType() const { return this->_mimetype; }
-std::string Request::getConnection() const { return this->_connection; }
-std::string Request::getHost() const { return this->_host; }
+std::string Request::getQuery() const {
+	return this->_query;
+}
+std::string Request::getBody() const { return this->_body; }
+std::string Request::getHeaderField(std::string field) const {
+	if (_headers.count(field))
+		return _headers.at(field);
+	return "";
+}
 
 std::ostream &operator<<(std::ostream &out, const Request &req) {
   out << req._data << std::endl;

@@ -3,17 +3,16 @@
 #include <iostream>
 #include <ostream>
 #include <sstream>
+#include <map>
 
 class Request {
 private:
   std::string _method;
   std::string _path;
+  std::string _query;
   std::string _mimetype;
-  std::string _version;
-  std::string _host;
-  std::string _userAgent;
-  std::string _connection;
-
+  std::string _body;
+  std::map<std::string, std::string> _headers;
   void parseData();
 
 public:
@@ -27,17 +26,15 @@ public:
   std::string getMethod() const;
   std::string getPath() const;
   std::string getMimeType() const;
-  std::string getConnection() const;
-  std::string getHost() const;
+  std::string getQuery() const;
+  std::string getBody() const;
+  std::string getHeaderField(std::string) const;
+
 
   // SETTERS
   void setMethod(std::string);
   void setPath(std::string);
   void setMimeType();
-  void setHost(std::string);
-  void setVersion(std::string);
-  void setUserAgent(std::string);
-  void setConnection(std::string);
 };
 
 std::ostream &operator<<(std::ostream &out, const Request &);
