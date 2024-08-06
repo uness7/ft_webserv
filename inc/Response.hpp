@@ -7,40 +7,43 @@
 #include <string>
 #include <cstdlib>
 #include <algorithm>
+#include <map>
 
 
 struct STATUS_CODE {
-  unsigned short code;
-  std::string status;
+	unsigned short code;
+	std::string status;
 };
 
 class Client;
 
-class Response {
-private:
-  std::string _value;
-  STATUS_CODE _statusCode;
-  std::string _contentType;
-  std::string _buffer;
-  Client *_client;
+class Response
+{
+	private:
+		std::string 				_value;
+		STATUS_CODE 				_statusCode;
+		std::string 				_contentType;
+		std::string 				_buffer;
+		Client 					*_client;
+		std::map<std::string, std::string>	envMap;
 
 
-  void build();
-  void buildError();
+		void	build();
+		void	buildError();
 
-public:
-  Response();
-  Response(Client *);
-  Response(const Response &);
-  Response &operator=(const Response &);
-  ~Response();
+	public:
+		Response();
+		Response(Client *);
+		Response(const Response &);
+		Response &operator=(const Response &);
+		~Response();
 
 
 
-  const std::string getResponse() const;
+		const std::string getResponse() const;
 
-  void setStatusCode(STATUS_CODE);
-  void setStatusCode(unsigned short code);
-  STATUS_CODE getStatusCode() const;
-  std::string getStatusToString() const;
+		void setStatusCode(STATUS_CODE);
+		void setStatusCode(unsigned short code);
+		STATUS_CODE getStatusCode() const;
+		std::string getStatusToString() const;
 };

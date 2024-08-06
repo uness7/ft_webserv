@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>File Upload</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload File</h1>
+        <form action="upload.py" method="POST" enctype="multipart/form-data">
+		<input type="hidden" name="x" value="x" required><br><br>
+		<label for="file">Choose a file:</label>
+		<p><input type="file" name="file" required></p><br><br>
+		<input type="submit" value="Upload">
+        </form>
+    </div>
+</body>
+</html>
+
