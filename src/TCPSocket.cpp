@@ -9,12 +9,11 @@ void exitWithFailure(std::string s, int port)
 
 // Constructor for TCPSocket
 TCPSocket::TCPSocket(const ServerConfig &serverConfig)
-    : _serverConfig(serverConfig), _socketFD(0), _ipAddress(serverConfig.listen), _port(serverConfig.port), _socketAddress(), _socketAddressLength(sizeof(_socketAddress))
+    : _serverConfig(serverConfig), _socketFD(-1), _ipAddress(serverConfig.listen), _port(serverConfig.port), _socketAddress(), _socketAddressLength(sizeof(_socketAddress))
 {
-  // Initialize the sockaddr_in structure
-  _socketAddress.sin_family = AF_INET;                            // Set address family to IPv4
-  _socketAddress.sin_port = htons(_port);                         // Convert port to network byte order
-  _socketAddress.sin_addr.s_addr = inet_addr(_ipAddress.c_str()); // Convert IP address to network byte order
+  _socketAddress.sin_family = AF_INET;
+  _socketAddress.sin_port = htons(_port);
+  _socketAddress.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
 }
 
 TCPSocket::TCPSocket(const TCPSocket &cp) { *this = cp; }
@@ -54,41 +53,23 @@ ServerConfig &TCPSocket::getServerConfig() { return this->_serverConfig; }
 
 void TCPSocket::closeServer() const { close(_socketFD); }
 
-bool TCPSocket::initSocket()
+void TCPSocket::initSocket()
 {
   // Create a new socket
   _socketFD = socket(AF_INET, SOCK_STREAM, 0);
   if (_socketFD < 0)
-  {
-    exitWithFailure("Cannot create socket", _port);
-    return false;
-  }
+    throw CreateSocketException();
 
   // Option value to set for socket options
   int opt = 1;
 
   // Set socket options to allow reuse of local addresses
   if (setsockopt(_socketFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-  {
-    exitWithFailure("Setsockopt SO_REUSEADDR failed", _port);
-    return false;
-  }
-
-  // Set socket options to allow reuse of local ports
-  if (setsockopt(_socketFD, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0)
-  {
-    exitWithFailure("Setsockopt SO_REUSEPORT failed", _port);
-    return false;
-  }
+    throw InitSocketException();
 
   // Bind the socket to the specified address and port
   if (bind(_socketFD, (sockaddr *)&_socketAddress, _socketAddressLength) < 0)
-  {
-    exitWithFailure("Cannot connect socket to address", _port);
-    return false;
-  }
-
-  return true;
+    throw InitSocketException();
 }
 
 // Function to create sockets based on the server configurations

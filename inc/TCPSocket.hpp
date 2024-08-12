@@ -4,10 +4,12 @@
 
 #include <arpa/inet.h>
 #include <cstdlib>
+#include <exception>
 #include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
 #include <poll.h>
+#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -32,7 +34,7 @@ public:
   ~TCPSocket();
 
   // Member functions
-  bool initSocket(); // Function to initialize the socket
+  void initSocket(); // Function to initialize the socket
   void closeServer() const; // Function to close the socket
 
   // Getters
@@ -42,6 +44,20 @@ public:
   struct sockaddr_in &getSocketAdress();
   unsigned int &getSocketAddressLength();
   ServerConfig &getServerConfig();
+
+
+  class CreateSocketException : public std::exception {
+  public:
+    const char * what() const throw() {
+      return "Cannot create socket";
+    }
+  };
+  class InitSocketException : public std::exception {
+  public:
+    const char * what() const throw() {
+      return "Cannot init socket";
+    }
+  };
 };
 
 // Function to create sockets based on server configurations

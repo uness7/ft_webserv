@@ -5,7 +5,7 @@ Response::Response() : _value(""), _statusCode(), _contentType(""), _buffer(""),
 
 Response::Response(Client *client) : _value(""), _statusCode(), _contentType(""), _buffer(""), _client(client)
 {
- 	this->build();
+	this->build();
 }
 
 Response::Response(const Response &cp)
@@ -28,31 +28,33 @@ Response &Response::operator=(const Response &rhs)
 
 Response::~Response() {}
 
-std::vector<std::string> splitString(const std::string& str)
+std::vector<std::string> splitString(const std::string &str)
 {
 	std::vector<std::string> result;
 	std::istringstream iss(str);
 	std::string part;
 
-	if (std::getline(iss, part, ' ')) {
+	if (std::getline(iss, part, ' '))
+	{
 		result.push_back(part);
-		if (std::getline(iss, part)) {
+		if (std::getline(iss, part))
+		{
 			result.push_back(part);
 		}
 	}
 	return result;
 }
 
-void	Response::buildError()
+void Response::buildError()
 {
-	Request &request =_client->getRequest();
+	Request &request = _client->getRequest();
 	std::vector<std::string> error_page = splitString(_client->getConfig().error_page);
 	if (error_page.size() != 2)
 		return;
 	std::string newPath = _client->getConfig().locations.begin()->second.root + error_page[1];
-	_client->getRequest().setPath(newPath); 
+	_client->getRequest().setPath(newPath);
 	std::stringstream buffer;
-	std::ifstream inFile(std::string("." + request.getPath()).c_str()); 
+	std::ifstream inFile(std::string("." + request.getPath()).c_str());
 	buffer << inFile.rdbuf();
 	inFile.close();
 	setStatusCode(atoi(error_page[0].c_str()));
@@ -63,14 +65,14 @@ void	Response::buildError()
 /////////////////////////////////////////////////////////////////////////////////////
 //
 
-void	Response::build()
+void Response::build()
 {
 	Request &request = _client->getRequest();
 	std::string method = request.getMethod();
 	std::vector<std::string> allowed_methods = _client->getConfig().locations.begin()->second.allowed_methods;
 
-
-	if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end()) {
+	if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end())
+	{
 		setStatusCode(405);
 		_contentType = "text/plain";
 		_buffer = "Method Not Allowed";
@@ -94,13 +96,14 @@ void	Response::build()
 		}
 		else
 		{
-			/*
-			   std::string newPath = (path.compare("/") == 0) ? server_root + "/" + _client->getConfig().locations.begin()->second.index : server_root + path;
-			   _client->getRequest().setPath(newPath);
-			   */
+			if (path.compare("/") == 0) {
+				request.setPath(server_root + "/" + _client->getConfig().locations.begin()->second.index);
+			} else {
+				request.setPath(server_root + path);
+			}
 
-			std::string	newPath = request.getPath();
-			std::string	mimetype = request.getMimeType();
+			std::string newPath = request.getPath();
+			std::string mimetype = request.getMimeType();
 
 			/*
 			if (newPath == "/cgi-bin/form/index.html")
@@ -117,7 +120,7 @@ void	Response::build()
 				httpResponse << "HTTP/1.1 200 OK\r\n";
 				httpResponse << "Content-Type: text/html\r\n";
 				httpResponse << "Content-Length: " << response.size() << "\r\n";
-				httpResponse << "\r\n"; 
+				httpResponse << "\r\n";
 				httpResponse << response;
 				this->_value = httpResponse.str();
 				return;
@@ -141,78 +144,81 @@ void	Response::build()
 
 	std::ostringstream ss;
 	ss << "HTTP/1.1 " << this->getStatusToString() << "\nContent-Type: " << _contentType
-		<< "\nContent-Length: " << _buffer.size() << "\n\n"
-		<< _buffer;
+	   << "\nContent-Length: " << _buffer.size() << "\n\n"
+	   << _buffer;
 	this->_value = ss.str();
 }
 
-const std::string	Response::getResponse() const
+const std::string Response::getResponse() const
 {
 	return this->_value;
 }
 
-void	Response::setStatusCode(unsigned short code) {
+void Response::setStatusCode(unsigned short code)
+{
 	_statusCode.code = code;
-	switch (code) {
-		case 200:
-			_statusCode.status = "OK";
-			break;
-		case 201:
-			_statusCode.status = "Created";
-			break;
-		case 202:
-			_statusCode.status = "Accepted";
-			break;
-		case 204:
-			_statusCode.status = "No Content";
-			break;
-		case 301:
-			_statusCode.status = "Moved Permanently";
-			break;
-		case 302:
-			_statusCode.status = "Found";
-			break;
-		case 304:
-			_statusCode.status = "Not Modified";
-			break;
-		case 400:
-			_statusCode.status = "Bad Request";
-			break;
-		case 401:
-			_statusCode.status = "Unauthorized";
-			break;
-		case 403:
-			_statusCode.status = "Forbidden";
-			break;
-		case 404:
-			_statusCode.status = "Not Found";
-			break;
-		case 405:
-			_statusCode.status = "Method Not Allowed";
-			break;
-		case 500:
-			_statusCode.status = "Internal Server Error";
-			break;
-		case 501:
-			_statusCode.status = "Not Implemented";
-			break;
-		case 502:
-			_statusCode.status = "Bad Gateway";
-			break;
-		case 503:
-			_statusCode.status = "Service Unavailable";
-			break;
-		case 504:
-			_statusCode.status = "Gateway Timeout";
-			break;
-		default:
-			_statusCode.code = 500;
-			_statusCode.status = "Internal Server Error";
-			break;
+	switch (code)
+	{
+	case 200:
+		_statusCode.status = "OK";
+		break;
+	case 201:
+		_statusCode.status = "Created";
+		break;
+	case 202:
+		_statusCode.status = "Accepted";
+		break;
+	case 204:
+		_statusCode.status = "No Content";
+		break;
+	case 301:
+		_statusCode.status = "Moved Permanently";
+		break;
+	case 302:
+		_statusCode.status = "Found";
+		break;
+	case 304:
+		_statusCode.status = "Not Modified";
+		break;
+	case 400:
+		_statusCode.status = "Bad Request";
+		break;
+	case 401:
+		_statusCode.status = "Unauthorized";
+		break;
+	case 403:
+		_statusCode.status = "Forbidden";
+		break;
+	case 404:
+		_statusCode.status = "Not Found";
+		break;
+	case 405:
+		_statusCode.status = "Method Not Allowed";
+		break;
+	case 500:
+		_statusCode.status = "Internal Server Error";
+		break;
+	case 501:
+		_statusCode.status = "Not Implemented";
+		break;
+	case 502:
+		_statusCode.status = "Bad Gateway";
+		break;
+	case 503:
+		_statusCode.status = "Service Unavailable";
+		break;
+	case 504:
+		_statusCode.status = "Gateway Timeout";
+		break;
+	default:
+		_statusCode.code = 500;
+		_statusCode.status = "Internal Server Error";
+		break;
 	}
 }
 
-void	Response::setStatusCode(STATUS_CODE statusCode) {
+void Response::setStatusCode(STATUS_CODE statusCode)
+{
 	this->_statusCode.code = statusCode.code;
 	this->_statusCode.status = statusCode.status;
 }
@@ -222,7 +228,7 @@ STATUS_CODE Response::getStatusCode() const
 	return this->_statusCode;
 }
 
-std::string	Response::getStatusToString() const
+std::string Response::getStatusToString() const
 {
 	std::stringstream ss;
 	ss << _statusCode.code << " " << _statusCode.status;

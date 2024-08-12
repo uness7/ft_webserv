@@ -17,6 +17,16 @@ int main(int argc, char *argv[])
     {
         Config config(argv[1]);
         serverConfigs = config.getServerConfigs();
+        //
+        // Print the configuration details
+        Config::printConfigs(serverConfigs);
+
+        // Create sockets based on the configurations
+        std::vector<TCPSocket*> sockets = createSockets(serverConfigs);
+
+        // Initialize the server with the sockets and start listening
+        Server server(sockets);
+        server.runServers();
     }
     catch (const std::exception &e)
     {
@@ -24,15 +34,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Print the configuration details
-    Config::printConfigs(serverConfigs);
-
-    // Create sockets based on the configurations
-    std::vector<TCPSocket*> sockets = createSockets(serverConfigs);
-
-    // Initialize the server with the sockets and start listening
-    Server server(sockets);
-    server.runServers();
 
     return 0;
 }
