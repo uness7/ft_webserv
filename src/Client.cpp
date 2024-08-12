@@ -42,6 +42,7 @@ Request &Client::getRequest()
 
 int	Client::readRequest()
 {
+	// TODO: Convert the string of _config.client_max_body_size to an unsigned int (Not here, in class itself)
 	char buffer[BUFFER_SIZE];
 	memset(&buffer, 0, BUFFER_SIZE);
 	int byteReceived = read(getFd(), buffer, BUFFER_SIZE);

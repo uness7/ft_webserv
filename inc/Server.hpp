@@ -27,7 +27,6 @@ private:
 
   void removeClient(int keyFD);
   TCPSocket *getSocketByFD(int targetFD) const;
-  bool isServerSocketFD(int);
   void closeAllSockets();
 
   static void updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev);

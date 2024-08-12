@@ -128,16 +128,6 @@ void Server::startToListenClients()
 	}
 }
 
-// Check if the file descriptor belongs to a server socket
-bool Server::isServerSocketFD(int fd)
-{
-	for (size_t i = 0; i < _sockets.size(); i++)
-	{
-		if (_sockets[i]->getSocketFD() == fd)
-			return true;
-	}
-	return false;
-}
 
 void Server::handleClientRequest(int fd, struct epoll_event *ev)
 {
@@ -207,11 +197,19 @@ void Server::runServers(void)
 void Server::handleResponse(Client *client)
 {
 	client->sendResponse();
-	if (client->getDataSent() <= 0)
+	std::string conn = client->getRequest().getHeaderField("Connection");
+	/*
+		int res =  conn.compare(" keep-alive");
+		std::cout << "=" << conn << "=" << std::endl;
+		std::cout << client->getConfig().server_name << " -> " << client->getDataSent() << " -> " << res  << std::endl;
+
+	*/
+	if (client->getDataSent() <= 0 && conn != "" )
 	{
 		removeClient(client->getFd());
 	}
 }
+
 
 // Close all server sockets
 void Server::closeAllSockets()
