@@ -1,7 +1,7 @@
+#!/usr/bin/env python3
 import cgi
 
-form = cgi.FieldStorage()
-print(form);
+form = cgi.FieldStorage();
 
 name = form.getvalue('name')
 status = form.getvalue('status')
