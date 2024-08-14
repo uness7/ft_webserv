@@ -7,7 +7,6 @@ void exitWithFailure(std::string s, int port)
   exit(1);
 }
 
-// Constructor for TCPSocket
 TCPSocket::TCPSocket(const ServerConfig &serverConfig)
     : _serverConfig(serverConfig), _socketFD(-1), _ipAddress(serverConfig.listen), _port(serverConfig.port), _socketAddress(), _socketAddressLength(sizeof(_socketAddress))
 {
