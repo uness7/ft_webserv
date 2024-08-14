@@ -62,8 +62,33 @@ void Response::buildError()
 	_contentType = request.getMimeType();
 }
 
-/////////////////////////////////////////////////////////////////////////////////////
-//
+void	Response::buildPath() {
+	Request &request = _client->getRequest();
+	std::map<std::string, LocationConfig> lc = _client->getConfig().locations;
+	std::map<std::string, LocationConfig>::const_iterator it;
+	std::string path = request.getPath();
+	int path_max = -1;
+	LocationConfig target;
+	std::cout << path << std::endl;
+	for (it = lc.begin(); it != lc.end(); it++)
+	{
+
+		int key_size = it->first.size();
+		int found = it->first.compare(0, key_size, path, 0, key_size);
+		if (found == 0 && path_max < key_size) {
+			target = it->second;
+			path_max = key_size;
+		}
+	}
+
+	std::string end_s = path.substr(path_max);
+	if (end_s.size() == 0)
+		request.setPath(target.root + "/" + target.index);
+	else	
+		request.setPath(target.root + "/" + end_s);
+	std::cout << request.getPath() << std::endl;
+
+}
 
 void Response::build()
 {
@@ -96,11 +121,7 @@ void Response::build()
 		}
 		else
 		{
-			if (path.compare("/") == 0) {
-				request.setPath(server_root + "/" + _client->getConfig().locations.begin()->second.index);
-			} else {
-				request.setPath(server_root + path);
-			}
+			buildPath();
 
 			std::string newPath = request.getPath();
 			std::string mimetype = request.getMimeType();

@@ -30,6 +30,7 @@ class Response
 
 		void	build();
 		void	buildError();
+		void	buildPath();
 
 	public:
 		Response();
