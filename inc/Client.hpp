@@ -7,7 +7,6 @@
 #include <cstdlib>
 #include <cstring>
 
-#define BUFFER_SIZE 30720
 class Response;
 
 class Client {

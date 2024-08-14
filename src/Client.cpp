@@ -40,18 +40,16 @@ Request &Client::getRequest()
 	return this->_request;
 }
 
-int	Client::readRequest()
-{
-	// TODO: Convert the string of _config.client_max_body_size to an unsigned int (Not here, in class itself)
-	char buffer[BUFFER_SIZE];
-	memset(&buffer, 0, BUFFER_SIZE);
-	int byteReceived = read(getFd(), buffer, BUFFER_SIZE);
-	if (byteReceived > 0)
-	{
-		_request = Request(buffer);
-		_response = new Response(this);
-	}
-	return byteReceived;
+int Client::readRequest() {
+    long long BUFFER_SIZE = _config.client_max_body_size;
+    std::vector<char> buffer(BUFFER_SIZE);
+    memset(buffer.data(), 0, BUFFER_SIZE);
+    int byteReceived = read(getFd(), buffer.data(), BUFFER_SIZE);
+    if (byteReceived > 0) {
+        _request = Request(buffer.data());
+        _response = new Response(this);
+    }
+    return byteReceived;
 }
 
 const std::string	Client::getResponseToString() const

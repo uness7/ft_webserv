@@ -146,7 +146,7 @@ void Server::handleClientRequest(int fd, struct epoll_event *ev)
 // Main loop to manage all sockets
 void Server::runServers(void)
 {
-	const int MAX_EVENT = 200;
+	const int MAX_EVENT = 1000;
 	struct epoll_event events[MAX_EVENT];
 
 	_epoll_fd = epoll_create1(0);
@@ -172,7 +172,10 @@ void Server::runServers(void)
 			int fd_triggered = events[i].data.fd;
 			short ev = events[i].events;
 			if (ev & EPOLLHUP || ev & EPOLLERR)
+			{
+				std::cout << "Error on client: " << fd_triggered << std::endl;
 				this->removeClient(fd_triggered);
+			}
 			else if (ev & EPOLLIN)
 			{
 				if (_clients.count(fd_triggered))
@@ -198,16 +201,8 @@ void Server::handleResponse(Client *client)
 {
 	client->sendResponse();
 	std::string conn = client->getRequest().getHeaderField("Connection");
-	/*
-		int res =  conn.compare(" keep-alive");
-		std::cout << "=" << conn << "=" << std::endl;
-		std::cout << client->getConfig().server_name << " -> " << client->getDataSent() << " -> " << res  << std::endl;
-
-	*/
-	if (client->getDataSent() <= 0 && conn != "" )
-	{
+	if (client->getDataSent() <= 0 && conn.compare(" keep-alive") != 0)
 		removeClient(client->getFd());
-	}
 }
 
 

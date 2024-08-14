@@ -3,6 +3,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
+#include <cstring>
 
 // Constructor that parses the configuration file
 Config::Config(const std::string &fileName) { parseConfigFile(fileName); }
@@ -29,12 +30,51 @@ void Config::parseConfigFile(const std::string &fileName)
     }
 }
 
+long long convertToBytes(const std::string& sizeStr) {
+    long long size = 0;
+    char unit = 'B'; // Default unit is bytes
+
+    // Parse the numeric part
+    size_t i = 0;
+    while (i < sizeStr.size() && std::isdigit(sizeStr[i])) {
+        size = size * 10 + (sizeStr[i] - '0');
+        i++;
+    }
+
+    // Parse the unit part
+    if (i < sizeStr.size()) {
+        unit = std::toupper(sizeStr[i]);
+    }
+
+    // Convert based on the unit
+    switch (unit) {
+        case 'K':
+            size *= 1024; // Kilobytes
+            break;
+        case 'M':
+            size *= 1024 * 1024; // Megabytes
+            break;
+        case 'G':
+            size *= 1024 * 1024 * 1024; // Gigabytes
+            break;
+        default:
+            // If no valid unit is found, assume bytes
+            break;
+    }
+
+    return size;
+}
+
 // Function to parse a server block
 void Config::parseServer(std::ifstream &configFile, ServerConfig &serverConfig)
 {
     std::string line;
+    serverConfig.client_max_body_size = -1;
     while (std::getline(configFile, line) && line.find("}") == std::string::npos)
         parseServerLine(configFile, line, serverConfig);
+    if (serverConfig.client_max_body_size == -1) {
+        serverConfig.client_max_body_size = convertToBytes("1M");
+    }
 }
 
 // Function to parse individual lines within a server block
@@ -47,7 +87,7 @@ void Config::parseServerLine(std::ifstream &configFile, const std::string &line,
     else if (line.find("error_page") != std::string::npos)
         serverConfig.error_page = extractValue(line, "error_page");
     else if (line.find("client_max_body_size") != std::string::npos)
-        serverConfig.client_max_body_size = extractValue(line, "client_max_body_size");
+        serverConfig.client_max_body_size = convertToBytes(extractValue(line, "client_max_body_size"));
     else if (line.find("location") != std::string::npos)
     {
         std::string locationPath = extractLocationPath(line);
@@ -152,7 +192,7 @@ void Config::printServerConfig(const ServerConfig& serverConfig)
         std::cout << "Server name: " << serverConfig.server_name << std::endl;
     if (!serverConfig.error_page.empty())
         std::cout << "Error page: " << serverConfig.error_page << std::endl;
-    if (!serverConfig.client_max_body_size.empty())
+    if (serverConfig.client_max_body_size > 0)
         std::cout << "Client max body size: " << serverConfig.client_max_body_size << std::endl;
     for (std::map<std::string, LocationConfig>::const_iterator loc_it = serverConfig.locations.begin(); loc_it != serverConfig.locations.end(); ++loc_it)
         printLocationConfig(loc_it->first, loc_it->second);

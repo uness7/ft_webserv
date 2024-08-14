@@ -21,7 +21,7 @@ struct ServerConfig {
     unsigned int port; // Port number
     std::string server_name; // Server name
     std::string error_page; // Default error page
-    std::string client_max_body_size; // Maximum client body size
+    long long client_max_body_size; // Maximum client body size
     std::map<std::string, LocationConfig> locations; // Map of locations
 };
 
