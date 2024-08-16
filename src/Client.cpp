@@ -41,12 +41,11 @@ Request &Client::getRequest()
 }
 
 int Client::readRequest() {
-    long long BUFFER_SIZE = _config.client_max_body_size;
-    std::vector<char> buffer(BUFFER_SIZE);
-    memset(buffer.data(), 0, BUFFER_SIZE);
-    int byteReceived = read(getFd(), buffer.data(), BUFFER_SIZE);
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+    int byteReceived = read(getFd(), buffer, BUFFER_SIZE);
     if (byteReceived > 0) {
-        _request = Request(buffer.data());
+        _request = Request(buffer);
         _response = new Response(this);
     }
     return byteReceived;

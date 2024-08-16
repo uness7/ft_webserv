@@ -24,13 +24,15 @@ class Response
 		STATUS_CODE 				_statusCode;
 		std::string 				_contentType;
 		std::string 				_buffer;
-		Client 					*_client;
+		Client 					    *_client;
 		std::map<std::string, std::string>	envMap;
 
 
 		void	build();
 		void	buildError();
 		void	buildPath();
+        void    updateResponse(unsigned short statusCode, std::string contentType, std::string buffer);
+        
 
 	public:
 		Response();

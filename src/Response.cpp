@@ -1,5 +1,6 @@
 #include "../inc/Response.hpp"
 #include "CGIResponse.hpp"
+#include <cstdlib>
 
 Response::Response() : _value(""), _statusCode(), _contentType(""), _buffer(""), _client(NULL) {}
 
@@ -44,6 +45,11 @@ std::vector<std::string> splitString(const std::string &str)
 	}
 	return result;
 }
+void    Response::updateResponse(unsigned short statusCode, std::string contentType, std::string buffer) {
+		setStatusCode(statusCode);
+		_contentType = contentType;
+		_buffer = buffer;
+}
 
 void Response::buildError()
 {
@@ -69,10 +75,8 @@ void	Response::buildPath() {
 	std::string path = request.getPath();
 	int path_max = -1;
 	LocationConfig target;
-	std::cout << path << std::endl;
 	for (it = lc.begin(); it != lc.end(); it++)
 	{
-
 		int key_size = it->first.size();
 		int found = it->first.compare(0, key_size, path, 0, key_size);
 		if (found == 0 && path_max < key_size) {
@@ -80,14 +84,11 @@ void	Response::buildPath() {
 			path_max = key_size;
 		}
 	}
-
 	std::string end_s = path.substr(path_max);
 	if (end_s.size() == 0)
 		request.setPath(target.root + "/" + target.index);
 	else	
 		request.setPath(target.root + "/" + end_s);
-	std::cout << request.getPath() << std::endl;
-
 }
 
 void Response::build()
@@ -95,30 +96,22 @@ void Response::build()
 	Request &request = _client->getRequest();
 	std::string method = request.getMethod();
 	std::vector<std::string> allowed_methods = _client->getConfig().locations.begin()->second.allowed_methods;
+    long long bodySize = std::atoll(request.getHeaderField("content-length").c_str());
 
-	if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end())
-	{
-		setStatusCode(405);
-		_contentType = "text/plain";
-		_buffer = "Method Not Allowed";
-	}
+    if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end())
+        updateResponse(405, "text/plain", "Method Not Allowed");
+    else if (request.getHeaderField("content-length") != "" && (bodySize > _client->getConfig().client_max_body_size)) {
+        updateResponse(413, "text/plain", "Payload Too Large");
+    }
 	else
 	{
 		std::string path = request.getPath();
 		std::string server_root = _client->getConfig().locations.begin()->second.root;
 
 		if (path == "/api/data")
-		{
-			_buffer = "{\"message\": \"This is dynamic data!\"}";
-			setStatusCode(200);
-			_contentType = "application/json";
-		}
+            updateResponse(200, "application/json", "{\"message\": \"This is dynamic data!\"}");
 		else if (path == "/api/info")
-		{
-			_buffer = "{\"info\": \"This is some info!\"}";
-			setStatusCode(200);
-			_contentType = "application/json";
-		}
+            updateResponse(200, "application/json", "{\"info\": \"This is some info!\"}");
 		else
 		{
 			buildPath();
@@ -154,9 +147,7 @@ void Response::build()
 			{
 				buffer << inFile.rdbuf();
 				inFile.close();
-				setStatusCode(200);
-				_buffer = buffer.str();
-				_contentType = request.getMimeType();
+                updateResponse(200, request.getMimeType(), buffer.str());
 			}
 			else
 				buildError();
@@ -215,6 +206,9 @@ void Response::setStatusCode(unsigned short code)
 		break;
 	case 405:
 		_statusCode.status = "Method Not Allowed";
+		break;
+	case 413:
+		_statusCode.status = "Payload Too Large";
 		break;
 	case 500:
 		_statusCode.status = "Internal Server Error";

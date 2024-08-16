@@ -1,6 +1,8 @@
 #include "../inc/Request.hpp"
 #include <iterator>
 #include <sstream>
+#include <cctype>
+#include <algorithm>
 
 Request::Request(std::string entireRequest)
     : _method(""), _path(""), _query(""), _mimetype(""), _body(""), _postData(""), _headers(), _data(entireRequest) {
@@ -50,6 +52,7 @@ void	Request::parseData( void )
 			}
 			std::string key = line.substr(0, found);
 			std::string value = line.substr(found+1);
+            std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 			_headers.insert(std::make_pair(key, value));
 		} 
 

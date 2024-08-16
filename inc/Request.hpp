@@ -13,7 +13,7 @@ class Request
 		std::string 	_query;
 		std::string 	_mimetype;
 		std::string 	_body;
-		std::string	_postData;
+		std::string	    _postData;
 		std::map<std::string, std::string>	_headers;
 
 		void	parseData();
@@ -31,7 +31,7 @@ class Request
 		std::string 	getQuery() const;
 		std::string 	getBody() const;
 		std::string 	getHeaderField(std::string) const;
-		std::string	getPostData() const;
+		std::string	    getPostData() const;
 
 		void	setMethod(std::string);
 		void 	setPath(std::string);

@@ -6,35 +6,36 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <cstring>
+#define BUFFER_SIZE 30720
 
 class Response;
 
 class Client {
-private:
-  unsigned short _fd;
-  int _dataSent;
-  Request _request;
-  Response *_response;
-  ServerConfig _config;
+    private:
+      unsigned short _fd;
+      int _dataSent;
+      Request _request;
+      Response *_response;
+      ServerConfig _config;
 
-public:
-  Client(unsigned short, ServerConfig);
-  Client(const Client &);
-  Client &operator=(const Client &);
-  ~Client();
+    public:
+      Client(unsigned short, ServerConfig);
+      Client(const Client &);
+      Client &operator=(const Client &);
+      ~Client();
 
-  unsigned short getFd() const;
-  void setFd(unsigned short);
+      unsigned short getFd() const;
+      void setFd(unsigned short);
 
-  int getDataSent() const;
-  void setDataSent(int);
+      int getDataSent() const;
+      void setDataSent(int);
 
-  Request &getRequest();
-  int readRequest();
+      Request &getRequest();
+      int readRequest();
 
-  const std::string getResponseToString() const;
-  const Response *getResponse() const;
-  void sendResponse();
-  
-  const ServerConfig getConfig() const;
+      const std::string getResponseToString() const;
+      const Response *getResponse() const;
+      void sendResponse();
+      
+      const ServerConfig getConfig() const;
 };
