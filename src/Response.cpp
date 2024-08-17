@@ -254,13 +254,6 @@ void	Response::build(void)
 			handleStaticFiles(request);
 	}
 	finalizeHTMLResponse();
-	/*
-	std::ostringstream ss;
-	ss << "HTTP/1.1 " << this->getStatusToString() << "\nContent-Type: " << _contentType
-		<< "\nContent-Length: " << _buffer.size() << "\n\n"
-		<< _buffer;
-	this->_value = ss.str();
-	*/
 }
 
 
