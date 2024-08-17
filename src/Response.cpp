@@ -221,6 +221,9 @@ std::string Response::getStatusToString() const
 	return ss.str();
 }
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void	Response::build(void)
 {
 	Request				&request = _client->getRequest();

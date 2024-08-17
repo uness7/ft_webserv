@@ -11,7 +11,7 @@ Client::Client(const Client &cp) : _fd(0), _request("")
 	*this = cp;
 }
 
-Client &Client::operator=(const Client &rhs)
+Client	&Client::operator=(const Client &rhs)
 {
 	if (this != &rhs)
 	{

@@ -9,6 +9,7 @@ SRCS =  $(S)/main.cpp \
 	$(S)/TCPSocket.cpp \
 	$(S)/Client.cpp \
 	$(S)/Config.cpp \
+	$(S)/Utils.cpp \
 
 INCDIR = inc
 
