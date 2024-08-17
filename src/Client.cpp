@@ -6,7 +6,8 @@ Client::Client(unsigned short fd, ServerConfig config)
 	this->_response = new Response();
 }
 
-Client::Client(const Client &cp) : _fd(0), _request("") {
+Client::Client(const Client &cp) : _fd(0), _request("")
+{
 	*this = cp;
 }
 
@@ -40,15 +41,17 @@ Request &Client::getRequest()
 	return this->_request;
 }
 
-int Client::readRequest() {
-    char buffer[BUFFER_SIZE];
-    memset(buffer, 0, BUFFER_SIZE);
-    int byteReceived = read(getFd(), buffer, BUFFER_SIZE);
-    if (byteReceived > 0) {
-        _request = Request(buffer);
-        _response = new Response(this);
-    }
-    return byteReceived;
+int	Client::readRequest()
+{
+	char	buffer[BUFFER_SIZE];
+	memset(buffer, 0, BUFFER_SIZE);
+	int byteReceived = read(getFd(), buffer, BUFFER_SIZE);
+	if (byteReceived > 0)
+	{
+		_request = Request(buffer);
+		_response = new Response(this);
+	}
+	return byteReceived;
 }
 
 const std::string	Client::getResponseToString() const

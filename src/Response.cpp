@@ -45,16 +45,17 @@ std::vector<std::string> splitString(const std::string &str)
 	}
 	return result;
 }
+
 void    Response::updateResponse(unsigned short statusCode, std::string contentType, std::string buffer) {
 		setStatusCode(statusCode);
 		_contentType = contentType;
 		_buffer = buffer;
 }
 
-void Response::buildError()
+void	Response::buildError()
 {
 	Request &request = _client->getRequest();
-    std::vector<std::string> error_page = splitString(_client->getConfig().error_page);
+	std::vector<std::string> error_page = splitString(_client->getConfig().error_page);
 	if (error_page.size() != 2)
 		return;
 	std::string newPath = _client->getConfig().locations.begin()->second.root + error_page[1];
@@ -68,7 +69,8 @@ void Response::buildError()
 	_contentType = request.getMimeType();
 }
 
-void	Response::buildPath() {
+void	Response::buildPath()
+{
 	Request &request = _client->getRequest();
 	std::map<std::string, LocationConfig> lc = _client->getConfig().locations;
 	std::map<std::string, LocationConfig>::const_iterator it;
@@ -85,68 +87,12 @@ void	Response::buildPath() {
 		}
 	}
 	std::string end_s = path.substr(path_max);
-    if (!target.root.empty() && target.root.compare(1, target.root.size()-1 , end_s, 0, target.root.size()-1) == 0)
-        return;
-    if (end_s.empty() && !target.index.empty())
+	if (!target.root.empty() && target.root.compare(1, target.root.size()-1 , end_s, 0, target.root.size()-1) == 0)
+		return;
+	if (end_s.empty() && !target.index.empty())
 		request.setPath(target.root + "/" + target.index);
 	else	
 		request.setPath(target.root + "/" + end_s);
-}
-
-void Response::build()
-{
-	Request &request = _client->getRequest();
-	std::string method = request.getMethod();
-	std::vector<std::string> allowed_methods = _client->getConfig().locations.begin()->second.allowed_methods;
-    long long bodySize = std::atoll(request.getHeaderField("content-length").c_str());
-
-    if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end())
-        updateResponse(405, "text/plain", "Method Not Allowed");
-    else if (request.getHeaderField("content-length") != "" && (bodySize > _client->getConfig().client_max_body_size)) {
-        updateResponse(413, "text/plain", "Payload Too Large");
-    }
-	else
-	{
-		std::string path = request.getPath();
-		std::string server_root = _client->getConfig().locations.begin()->second.root;
-
-		if (path == "/api/data")
-            updateResponse(200, "application/json", "{\"message\": \"This is dynamic data!\"}");
-		else if (path == "/api/info")
-            updateResponse(200, "application/json", "{\"info\": \"This is some info!\"}");
-        
-        else if (request.isCGI()) { // TODO: CHECK IF CGI IS PRESENT ON CONFIG
-            std::cout << request.getPath() << std::endl;
-            CGIResponse cgi = CGIResponse(_client);
-            std::string resp = cgi.execute();
-            if (!resp.empty()) {
-                updateResponse(200, "text/html", resp);
-            } else 
-                buildError();
-        } 
-        else 
-		{
-            buildPath();
-            std::string newPath = request.getPath();
-            std::string mimetype = request.getMimeType();
-            std::ifstream inFile(std::string("." + newPath).c_str());
-            std::stringstream buffer;
-            if (inFile.is_open())
-            {
-                buffer << inFile.rdbuf();
-                inFile.close();
-                updateResponse(200, request.getMimeType(), buffer.str());
-            }
-            else
-                buildError();
-		}
-	}
-
-	std::ostringstream ss;
-	ss << "HTTP/1.1 " << this->getStatusToString() << "\nContent-Type: " << _contentType
-	   << "\nContent-Length: " << _buffer.size() << "\n\n"
-	   << _buffer;
-	this->_value = ss.str();
 }
 
 const std::string Response::getResponse() const
@@ -231,9 +177,90 @@ STATUS_CODE Response::getStatusCode() const
 	return this->_statusCode;
 }
 
+void	Response::handleCGI(Request &request)
+{
+	std::cout << request.getPath() << std::endl;
+	CGIResponse 	cgi = CGIResponse(this->_client);
+	std::string 	resp = cgi.execute();
+
+	if (!resp.empty())
+		updateResponse(200, "text/html", resp);
+	else 
+		buildError();
+}
+
+void	Response::handleStaticFiles(Request &request)
+{
+	buildPath();
+	std::string newPath = request.getPath();
+	std::string mimetype = request.getMimeType();
+	std::ifstream inFile(std::string("." + newPath).c_str());
+	std::stringstream buffer;
+	if (inFile.is_open())
+	{
+		buffer << inFile.rdbuf();
+		inFile.close();
+		updateResponse(200, request.getMimeType(), buffer.str());
+	}
+	else
+		buildError();
+}
+void	Response::finalizeHTMLResponse(void) 
+{
+	std::ostringstream ss;
+	ss << "HTTP/1.1 " << this->getStatusToString() << "\nContent-Type: " << _contentType
+		<< "\nContent-Length: " << _buffer.size() << "\n\n"
+		<< _buffer;
+	this->_value = ss.str();
+}
+
 std::string Response::getStatusToString() const
 {
 	std::stringstream ss;
 	ss << _statusCode.code << " " << _statusCode.status;
 	return ss.str();
 }
+
+void	Response::build(void)
+{
+	Request				&request = _client->getRequest();
+	std::string 			method = request.getMethod();
+	std::vector<std::string> 	allowed_methods = _client->getConfig()
+		.locations
+		.begin()->second
+		.allowed_methods;
+	long long 			bodySize = std::atoll(request.getHeaderField("content-length").c_str());
+
+
+	if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end())
+		updateResponse(405, "text/plain", "Method Not Allowed");
+	else if (request.getHeaderField("content-length") != "" && 
+			(bodySize > _client->getConfig().client_max_body_size))
+	{
+		updateResponse(413, "text/plain", "Payload Too Large");
+	}
+	else
+	{
+		std::string	path = request.getPath();
+		std::string 	server_root = _client->getConfig().locations.begin()->second.root;
+
+		if (path == "/api/data")
+			updateResponse(200, "application/json", "{\"message\": \"This is dynamic data!\"}");
+		else if (path == "/api/info")
+			updateResponse(200, "application/json", "{\"info\": \"This is some info!\"}");
+		else if (request.isCGI()) // TODO: CHECK IF CGI IS PRESENT ON CONFIG
+			handleCGI(request);
+		else 
+			handleStaticFiles(request);
+	}
+	finalizeHTMLResponse();
+	/*
+	std::ostringstream ss;
+	ss << "HTTP/1.1 " << this->getStatusToString() << "\nContent-Type: " << _contentType
+		<< "\nContent-Length: " << _buffer.size() << "\n\n"
+		<< _buffer;
+	this->_value = ss.str();
+	*/
+}
+
+

@@ -11,13 +11,12 @@
 
 CGIResponse::CGIResponse(Client *client) : _client(client), _cgiPath("/usr/bin/python3")
 {
-    char cwd[1024];
-    getcwd(cwd, sizeof(cwd));
-    _scriptPath = cwd + _client->getRequest().getPath();  
-    setCgiEnv();
+	char	cwd[1024];
+	getcwd(cwd, sizeof(cwd));
+	_scriptPath = cwd + _client->getRequest().getPath();  
+	setCgiEnv();
 }
 
-/* Helper Functions */
 std::string	intToString(int value)
 {
 	std::ostringstream oss;
@@ -38,7 +37,8 @@ char 	**mapToEnvArray(const std::map<std::string, std::string> &envMap)
 	char	**envArray = new char*[envMap.size() + 1];
 	int 	i = 0;
 
-	for (std::map<std::string, std::string>::const_iterator it = envMap.begin(); it != envMap.end(); ++it) {
+	for (std::map<std::string, std::string>::const_iterator it = envMap.begin(); it != envMap.end(); ++it)
+	{
 		std::string envEntry = it->first + "=" + it->second;
 		envArray[i] = strdup(envEntry.c_str());
 		i++;
@@ -47,12 +47,11 @@ char 	**mapToEnvArray(const std::map<std::string, std::string> &envMap)
 	return envArray;
 }
 
-
-/* Execute CGI Script */
-std::string 	CGIResponse::execute()
+std::string 	CGIResponse::execute(void)
 {
 	char	*const argv[] = {
-		(char *)_cgiPath.c_str(), (char *)_scriptPath.c_str(), NULL
+		(char *)_cgiPath.c_str(), 
+		(char *)_scriptPath.c_str(), NULL
 	};
 	char	**envp = mapToEnvArray(_envMap);
 	int	out_pipe[2];
@@ -76,11 +75,14 @@ std::string 	CGIResponse::execute()
 		 dup2(out_pipe[1], STDOUT_FILENO);
 		 close(out_pipe[1]);
 
-		 if (_envMap["REQUEST_METHOD"] == "POST") {
+		 if (_envMap["REQUEST_METHOD"] == "POST")
+		 {
 			 close(in_pipe[1]);
 			 dup2(in_pipe[0], STDIN_FILENO);
 			 close(in_pipe[0]);
-		 } else {
+		 }
+		 else
+		 {
 			 close(in_pipe[0]);
 			 close(in_pipe[1]);
 		 }

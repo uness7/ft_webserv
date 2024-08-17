@@ -26,7 +26,6 @@ Request	&Request::operator=(const Request &rhs) {
 	return *this;
 }
 
-
 void	Request::parseData( void )
 {
 	std::stringstream request(_data);
@@ -55,13 +54,11 @@ void	Request::parseData( void )
             std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 			_headers.insert(std::make_pair(key, value));
 		} 
-
 	}
 	std::string b = body.str();
 	if (!b.empty())
 		_body = b;
 }
-
 
 void	Request::setMethod(std::string s)
 {
@@ -102,29 +99,32 @@ void	Request::setMimeType()
 	}
 }
 
-bool Request::isCGI() const { return getMimeType() == "application/python" ? true : false;  }
+bool	Request::isCGI() const
+{
+	return getMimeType() == "application/python" ? true : false; 
+}
 
-std::string Request::getMethod() const
+std::string	Request::getMethod() const
 {
 	return this->_method;
 }
 
-std::string Request::getPath() const
+std::string	Request::getPath() const
 {
 	return this->_path;
 }
 
-std::string Request::getMimeType() const
+std::string	Request::getMimeType() const
 {
 	return this->_mimetype;
 }
 
-std::string Request::getQuery() const
+std::string	Request::getQuery() const
 {
 	return this->_query;
 }
 
-std::string Request::getBody() const
+std::string	Request::getBody() const
 {
 	return this->_body;
 }
@@ -136,8 +136,7 @@ std::string Request::getHeaderField(std::string field) const
 	return "";
 }
 
-
-std::ostream &operator<<(std::ostream &out, const Request &req)
+std::ostream	&operator<<(std::ostream &out, const Request &req)
 {
 	out << req._data << std::endl;
 	return out;
