@@ -27,12 +27,10 @@ class Response
 		Client 					    *_client;
 		std::map<std::string, std::string>	envMap;
 
-
 		void	build();
 		void	buildError();
 		void	buildPath();
         	void    updateResponse(unsigned short statusCode, std::string contentType, std::string buffer);
-        
 
 	public:
 		Response();
@@ -41,15 +39,12 @@ class Response
 		Response &operator=(const Response &);
 		~Response();
 
-
-
-		const std::string getResponse() const;
-
-		void 	setStatusCode(STATUS_CODE);
-		void	setStatusCode(unsigned short code);
-		void	handleCGI(Request &req);
-		void	handleStaticFiles(Request &req);
-		void	finalizeHTMLResponse(void) ;
-		STATUS_CODE getStatusCode() const;
-		std::string getStatusToString() const;
+		const std::string	getResponse() const;
+		void 		setStatusCode(STATUS_CODE);
+		void		setStatusCode(unsigned short code);
+		void		handleCGI(void);
+		void		handleStaticFiles(Request &req);
+		void		finalizeHTMLResponse(void) ;
+		STATUS_CODE 	getStatusCode() const;
+		std::string 	getStatusToString() const;
 };

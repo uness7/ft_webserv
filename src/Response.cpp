@@ -177,9 +177,8 @@ STATUS_CODE Response::getStatusCode() const
 	return this->_statusCode;
 }
 
-void	Response::handleCGI(Request &request)
+void	Response::handleCGI(void)
 {
-	std::cout << request.getPath() << std::endl;
 	CGIResponse 	cgi = CGIResponse(this->_client);
 	std::string 	resp = cgi.execute();
 
@@ -221,9 +220,6 @@ std::string Response::getStatusToString() const
 	return ss.str();
 }
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void	Response::build(void)
 {
 	Request				&request = _client->getRequest();
@@ -252,7 +248,7 @@ void	Response::build(void)
 		else if (path == "/api/info")
 			updateResponse(200, "application/json", "{\"info\": \"This is some info!\"}");
 		else if (request.isCGI()) // TODO: CHECK IF CGI IS PRESENT ON CONFIG
-			handleCGI(request);
+			handleCGI();
 		else 
 			handleStaticFiles(request);
 	}

@@ -1,26 +1,8 @@
 #include "CGIResponse.hpp"
-#include <unistd.h>
-#include <sys/wait.h>
-#include <iostream>
-#include <sstream>
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
-#include <unistd.h>
-
-# include "Utils.hpp"
-
-std::string	getCgiScriptForKey(const ServerConfig& serverConfig, const std::string& key)
-{
-	std::map<std::string, LocationConfig>::const_iterator	it = serverConfig.locations.find(key);
-	if (it != serverConfig.locations.end())
-		return it->second.cgi_script;
-	return ""; 
-}
 
 CGIResponse::CGIResponse(Client *client) : _client(client), _cgiPath("/usr/bin/python3")
 {
-	this->_scriptPath = getCgiScriptForKey(this->_client->getConfig(), "/");
+	this->_scriptPath = Utils::getCgiScriptForKey(this->_client->getConfig(), "/");
 	setCgiEnv();
 }
 
