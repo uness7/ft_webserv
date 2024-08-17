@@ -6,10 +6,15 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <unistd.h>
 
 
-CGIResponse::CGIResponse(const std::string &scriptPath) : scriptPath_(scriptPath)
+CGIResponse::CGIResponse(Client *client) : _client(client), _cgiPath("/usr/bin/python3")
 {
+    char cwd[1024];
+    getcwd(cwd, sizeof(cwd));
+    _scriptPath = cwd + _client->getRequest().getPath();  
+    setCgiEnv();
 }
 
 /* Helper Functions */
@@ -20,12 +25,12 @@ std::string	intToString(int value)
 	return oss.str();
 }
 
-void	CGIResponse::setCgiEnv(std::map<std::string, std::string> &envMap)
+void	CGIResponse::setCgiEnv()
 {
-	envMap["GATEWAY_INTERFACE"] = "CGI/1.1";
-	envMap["SERVER_PROTOCOL"] = "HTTP/1.1";
-	envMap["REDIRECT_STATUS"] = "200";
-	envMap["REQUEST_METHOD"] = "POST";
+	_envMap["GATEWAY_INTERFACE"] = "CGI/1.1";
+	_envMap["SERVER_PROTOCOL"] = "HTTP/1.1";
+	_envMap["REDIRECT_STATUS"] = "200";
+	_envMap["REQUEST_METHOD"] = _client->getRequest().getMethod();
 }
 
 char 	**mapToEnvArray(const std::map<std::string, std::string> &envMap)
@@ -44,17 +49,12 @@ char 	**mapToEnvArray(const std::map<std::string, std::string> &envMap)
 
 
 /* Execute CGI Script */
-std::string 	CGIResponse::execute(
-		const std::map<std::string, std::string> &envMap, 
-		const std::string &cgiPath, 
-		const std::string &scriptPath,
-		const std::string &method,
-		const std::string &postData)
+std::string 	CGIResponse::execute()
 {
 	char	*const argv[] = {
-		(char *)cgiPath.c_str(), (char *)scriptPath.c_str(), NULL
+		(char *)_cgiPath.c_str(), (char *)_scriptPath.c_str(), NULL
 	};
-	char	**envp = mapToEnvArray(envMap);
+	char	**envp = mapToEnvArray(_envMap);
 	int	out_pipe[2];
 	int	in_pipe[2];
 	pid_t	pid;
@@ -76,7 +76,7 @@ std::string 	CGIResponse::execute(
 		 dup2(out_pipe[1], STDOUT_FILENO);
 		 close(out_pipe[1]);
 
-		 if (method == "POST") {
+		 if (_envMap["REQUEST_METHOD"] == "POST") {
 			 close(in_pipe[1]);
 			 dup2(in_pipe[0], STDIN_FILENO);
 			 close(in_pipe[0]);
@@ -84,7 +84,7 @@ std::string 	CGIResponse::execute(
 			 close(in_pipe[0]);
 			 close(in_pipe[1]);
 		 }
-		 execve(cgiPath.c_str(), argv, envp);
+		 execve(_cgiPath.c_str(), argv, envp);
 		 perror("execve");
 		 exit(1);
 	}
@@ -92,9 +92,9 @@ std::string 	CGIResponse::execute(
 	{
 		close(out_pipe[1]);
 	
-		if (method == "POST") {
+		if (_envMap["REQUEST_METHOD"] == "POST") {
 			close(in_pipe[0]);
-			write(in_pipe[1], postData.c_str(), postData.length());
+			write(in_pipe[1], _client->getRequest().getBody().c_str(), _client->getRequest().getBody().length());
 			close(in_pipe[1]);
 		} else {
 			close(in_pipe[0]);

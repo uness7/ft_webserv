@@ -5,7 +5,7 @@
 #include <algorithm>
 
 Request::Request(std::string entireRequest)
-    : _method(""), _path(""), _query(""), _mimetype(""), _body(""), _postData(""), _headers(), _data(entireRequest) {
+    : _method(""), _path(""), _query(""), _mimetype(""), _body(""), _headers(), _data(entireRequest) {
     parseData();
 }
 
@@ -58,11 +58,8 @@ void	Request::parseData( void )
 
 	}
 	std::string b = body.str();
-	if (b.length())
-	{
+	if (!b.empty())
 		_body = b;
-		setPostData(b);
-	}
 }
 
 
@@ -105,10 +102,7 @@ void	Request::setMimeType()
 	}
 }
 
-void	Request::setPostData(std::string s)
-{
-	this->_postData = s;
-}
+bool Request::isCGI() const { return getMimeType() == "application/python" ? true : false;  }
 
 std::string Request::getMethod() const
 {
@@ -142,10 +136,6 @@ std::string Request::getHeaderField(std::string field) const
 	return "";
 }
 
-std::string	Request::getPostData() const
-{
-	return this->_postData;
-}
 
 std::ostream &operator<<(std::ostream &out, const Request &req)
 {

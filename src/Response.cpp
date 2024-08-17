@@ -54,7 +54,7 @@ void    Response::updateResponse(unsigned short statusCode, std::string contentT
 void Response::buildError()
 {
 	Request &request = _client->getRequest();
-	std::vector<std::string> error_page = splitString(_client->getConfig().error_page);
+    std::vector<std::string> error_page = splitString(_client->getConfig().error_page);
 	if (error_page.size() != 2)
 		return;
 	std::string newPath = _client->getConfig().locations.begin()->second.root + error_page[1];
@@ -85,7 +85,9 @@ void	Response::buildPath() {
 		}
 	}
 	std::string end_s = path.substr(path_max);
-	if (end_s.size() == 0)
+    if (!target.root.empty() && target.root.compare(1, target.root.size()-1 , end_s, 0, target.root.size()-1) == 0)
+        return;
+    if (end_s.empty() && !target.index.empty())
 		request.setPath(target.root + "/" + target.index);
 	else	
 		request.setPath(target.root + "/" + end_s);
@@ -112,45 +114,31 @@ void Response::build()
             updateResponse(200, "application/json", "{\"message\": \"This is dynamic data!\"}");
 		else if (path == "/api/info")
             updateResponse(200, "application/json", "{\"info\": \"This is some info!\"}");
-		else
+        
+        else if (request.isCGI()) { // TODO: CHECK IF CGI IS PRESENT ON CONFIG
+            std::cout << request.getPath() << std::endl;
+            CGIResponse cgi = CGIResponse(_client);
+            std::string resp = cgi.execute();
+            if (!resp.empty()) {
+                updateResponse(200, "text/html", resp);
+            } else 
+                buildError();
+        } 
+        else 
 		{
-			buildPath();
-
-			std::string newPath = request.getPath();
-			std::string mimetype = request.getMimeType();
-
-			/*
-			if (newPath == "/cgi-bin/form/index.html")
-			{
-				std::string	scriptPath;
-				scriptPath = "/home/yzioual/Desktop/ft_webserv/cgi-bin/form/script.py";
-				CGIResponse	cgiResponse(scriptPath);
-				std::string	postData = request.getPostData();
-
-				cgiResponse.setCgiEnv(envMap);
-				const std::string	response = cgiResponse.execute(this->envMap, "/usr/bin/python3", scriptPath, "POST", postData);
-
-				std::ostringstream httpResponse;
-				httpResponse << "HTTP/1.1 200 OK\r\n";
-				httpResponse << "Content-Type: text/html\r\n";
-				httpResponse << "Content-Length: " << response.size() << "\r\n";
-				httpResponse << "\r\n";
-				httpResponse << response;
-				this->_value = httpResponse.str();
-				return;
-			}
-			*/
-
-			std::ifstream inFile(std::string("." + newPath).c_str());
-			std::stringstream buffer;
-			if (inFile.is_open())
-			{
-				buffer << inFile.rdbuf();
-				inFile.close();
+            buildPath();
+            std::string newPath = request.getPath();
+            std::string mimetype = request.getMimeType();
+            std::ifstream inFile(std::string("." + newPath).c_str());
+            std::stringstream buffer;
+            if (inFile.is_open())
+            {
+                buffer << inFile.rdbuf();
+                inFile.close();
                 updateResponse(200, request.getMimeType(), buffer.str());
-			}
-			else
-				buildError();
+            }
+            else
+                buildError();
 		}
 	}
 

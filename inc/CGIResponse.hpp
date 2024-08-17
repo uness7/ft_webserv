@@ -3,24 +3,23 @@
 
 #include <string>
 #include <map>
+#include <Client.hpp>
+class Client;
 
 class CGIResponse
 {
 	public:
-		CGIResponse(const std::string& scriptPath);
-		void	setCgiEnv(std::map<std::string, std::string> &map);
+        CGIResponse(Client *client);
+		void	setCgiEnv();
 
-		std::string	execute(
-				const std::map<std::string, std::string> &envMap, 
-				const std::string &cgiPath, 
-				const std::string &scriptPath, 
-				const std::string &method, 
-				const std::string &postData);
+		std::string	execute();
 
-		std::map<std::string, std::string>	envMap;
 
 	private:
-		std::string scriptPath_;
+        Client *_client;
+        std::string _cgiPath;
+		std::string _scriptPath;
+		std::map<std::string, std::string>	_envMap;
 };
 
 #endif 

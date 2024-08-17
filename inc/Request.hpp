@@ -13,7 +13,6 @@ class Request
 		std::string 	_query;
 		std::string 	_mimetype;
 		std::string 	_body;
-		std::string	    _postData;
 		std::map<std::string, std::string>	_headers;
 
 		void	parseData();
@@ -32,11 +31,11 @@ class Request
 		std::string 	getBody() const;
 		std::string 	getHeaderField(std::string) const;
 		std::string	    getPostData() const;
+        bool            isCGI() const;
 
 		void	setMethod(std::string);
 		void 	setPath(std::string);
 		void 	setMimeType();
-		void	setPostData(std::string);
 };
 
 std::ostream &operator<<(std::ostream &out, const Request &);

@@ -35,7 +35,7 @@ class Client {
 
       const std::string getResponseToString() const;
       const Response *getResponse() const;
-      void sendResponse();
+      void  sendResponse();
       
       const ServerConfig getConfig() const;
 };
