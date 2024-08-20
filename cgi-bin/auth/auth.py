@@ -17,9 +17,11 @@ form = cgi.FieldStorage()
 username = form.getvalue("username")
 password = form.getvalue("password")
 
+path = os.getcwd() + "/cgi-bin/auth/response.html";
+# print(path)
 if username and password: 
     if auth(username, password):
-        template = read_template("~/Desktop/ft_webserv/cgi-bin/auth/response.html")
+        template = read_template(path)
         template = template.format(name=username, status='Logged In', age='', email='', 
                 feedback='', colors='', country='')
         print()
