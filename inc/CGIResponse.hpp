@@ -20,14 +20,14 @@ class CGIResponse
 {
 	public:
 	        CGIResponse(Client *client);
-		void	setCgiEnv();
 
+		void		setCgiEnv();
 		std::string	execute();
 
 	private:
-        	Client *_client;
-		std::string _cgiPath;
-		std::string _scriptPath;
+        	Client 					*_client;
+		std::string 				_cgiPath;
+		std::string 				_scriptPath;
 		std::map<std::string, std::string>	_envMap;
 };
 

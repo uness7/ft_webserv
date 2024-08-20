@@ -1,5 +1,4 @@
 import cgi
-#import http.cookies
 import os
 
 USER_CREDENTIALS = {
@@ -18,7 +17,7 @@ form = cgi.FieldStorage()
 username = form.getvalue("username")
 password = form.getvalue("password")
 
-if username and password:
+if username and password: 
     if auth(username, password):
         template = read_template("/home/waizi/Desktop/ft_webserv/cgi-bin/auth/response.html")
         template = template.format(name=username, status='Logged In', age='', email='', 

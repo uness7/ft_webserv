@@ -9,11 +9,18 @@ Request::Request(std::string entireRequest)
     parseData();
 }
 
-Request::~Request() {}
+Request::~Request()
+{
+	//
+}
 
-Request::Request(const Request &cp) { *this = cp; }
+Request::Request(const Request &cp)
+{
+	*this = cp;
+}
 
-Request	&Request::operator=(const Request &rhs) {
+Request	&Request::operator=(const Request &rhs)
+{
 	if (this != &rhs)
 	{
 		this->_path = rhs.getPath();
@@ -26,32 +33,35 @@ Request	&Request::operator=(const Request &rhs) {
 	return *this;
 }
 
-void	Request::parseData( void )
+void	Request::parseData(void)
 {
-	std::stringstream request(_data);
-	std::string method;
-	std::string path;
-	std::string line;
-	std::stringstream body;
-	bool isBody = false;
+	std::stringstream	request(_data);
+	std::string 		method;
+	std::string 		path;
+	std::string 		line;
+	std::stringstream 	body;
+	bool 			isBody = false;
 
 	request >> method;
 	request >> path;
 	setPath(path);
 	setMethod(method);
 	std::getline(request, line);
-	while (std::getline(request, line)) {
-		if (isBody) {
+	while (std::getline(request, line))
+	{
+		if (isBody)
 			body << line;
-		} else {
-			std::size_t found = line.find(":");
-			if (found == std::string::npos) {
+		else
+		{
+			std::size_t	found = line.find(":");
+			if (found == std::string::npos)
+			{
 				isBody = true;
 				continue;
 			}
-			std::string key = line.substr(0, found);
-			std::string value = line.substr(found+1);
-            std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+			std::string	key = line.substr(0, found);
+			std::string 	value = line.substr(found+1);
+            		std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 			_headers.insert(std::make_pair(key, value));
 		} 
 	}
@@ -67,8 +77,10 @@ void	Request::setMethod(std::string s)
 
 void	Request::setPath(std::string s)
 {
-	std::size_t found = s.find("?");
-	if (found != std::string::npos) {
+	std::size_t	found = s.find("?");
+
+	if (found != std::string::npos)
+	{
 		this->_path = s.substr(0, found);
 		this->_query =  s.substr(found + 1);
 	}
@@ -129,7 +141,7 @@ std::string	Request::getBody() const
 	return this->_body;
 }
 
-std::string Request::getHeaderField(std::string field) const
+std::string	Request::getHeaderField(std::string field) const
 {
 	if (_headers.count(field))
 		return _headers.at(field);

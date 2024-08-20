@@ -42,7 +42,7 @@ class Response
 		const std::string	getResponse() const;
 		void 		setStatusCode(STATUS_CODE);
 		void		setStatusCode(unsigned short code);
-		void		handleCGI(void);
+		void		handleCGI(Request& req);
 		void		handleStaticFiles(Request &req);
 		void		finalizeHTMLResponse(void) ;
 		STATUS_CODE 	getStatusCode() const;

@@ -6,11 +6,11 @@ CGIResponse::CGIResponse(Client *client) : _client(client), _cgiPath("/usr/bin/p
 	setCgiEnv();
 }
 
-std::string	intToString(int value)
+std::string     intToString(int value)
 {
-	std::ostringstream oss;
-	oss << value;
-	return oss.str();
+        std::ostringstream      oss;
+        oss << value;
+        return oss.str();
 }
 
 void	CGIResponse::setCgiEnv()
@@ -19,6 +19,8 @@ void	CGIResponse::setCgiEnv()
 	_envMap["SERVER_PROTOCOL"] = "HTTP/1.1";
 	_envMap["REDIRECT_STATUS"] = "200";
 	_envMap["REQUEST_METHOD"] = _client->getRequest().getMethod();
+	_envMap["CONTENT_TYPE"] = _client->getRequest().getHeaderField("content-type");
+	_envMap["CONTENT_LENGTH"] = _client->getRequest().getHeaderField("content-length");
 }
 
 char 	**mapToEnvArray(const std::map<std::string, std::string> &envMap)
@@ -52,6 +54,7 @@ std::string 	CGIResponse::execute(void)
 		perror("pipe");
 		return "Internal Server Error";
 	}
+	std::cout << "Body : " << this->_client->getRequest().getBody().c_str() << std::endl;
 	pid = fork();
 	if (pid < 0)
 	{
@@ -75,19 +78,30 @@ std::string 	CGIResponse::execute(void)
 			 close(in_pipe[0]);
 			 close(in_pipe[1]);
 		 }
+
+		 // printinf env variables for debuggin
+		 for (std::map<std::string, std::string>::iterator it = _envMap.begin(); it != _envMap.end(); ++it)
+			 std::cerr << it->first << "=" << it->second << std::endl;
 		 execve(_cgiPath.c_str(), argv, envp);
-		 perror("execve");
+		 perror("execve : ");
 		 exit(1);
 	}
 	else
 	{
 		close(out_pipe[1]);
 	
-		if (_envMap["REQUEST_METHOD"] == "POST") {
+		if (_envMap["REQUEST_METHOD"] == "POST")
+		{
 			close(in_pipe[0]);
-			write(in_pipe[1], _client->getRequest().getBody().c_str(), _client->getRequest().getBody().length());
+			write(
+				in_pipe[1], 
+				_client->getRequest().getBody().c_str(), 
+				_client->getRequest().getBody().length()
+			);
 			close(in_pipe[1]);
-		} else {
+		}
+		else
+		{
 			close(in_pipe[0]);
 			close(in_pipe[1]);
 		}

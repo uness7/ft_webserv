@@ -13,11 +13,11 @@ class Response;
 class Client
 {
 	private:
-		unsigned short _fd;
-		int _dataSent;
-		Request _request;
-		Response *_response;
-		ServerConfig _config;
+		unsigned short 	_fd;
+		int 		_dataSent;
+		Request 	_request;
+		Response *	_response;
+		ServerConfig 	_config;
 
 	public:
 		Client(unsigned short, ServerConfig);
@@ -25,18 +25,14 @@ class Client
 		Client &operator=(const Client &);
 		~Client();
 
-		unsigned short getFd() const;
-		void setFd(unsigned short);
-
-		int getDataSent() const;
-		void setDataSent(int);
-
-		Request &getRequest();
-		int readRequest();
-
-		const std::string getResponseToString() const;
-		const Response *getResponse() const;
-		void  sendResponse();
-
-		const ServerConfig getConfig() const;
+		unsigned short 		getFd() const;
+		void 			setFd(unsigned short);
+		int 			getDataSent() const;
+		void			setDataSent(int);
+		Request&		getRequest();
+		int 			readRequest();
+		const std::string 	getResponseToString() const;
+		const Response 		*getResponse() const;
+		void			sendResponse();
+		const ServerConfig 	getConfig() const;
 };

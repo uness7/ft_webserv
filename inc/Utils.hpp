@@ -13,6 +13,7 @@ class Utils
 		static void 		printLocationConfigMap(const std::map<std::string, LocationConfig>& myMap);
 		static std::string     	getCgiScriptForKey(const ServerConfig& serverConfig, const std::string& key);
 
+
 };
 
 #endif 
