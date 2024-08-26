@@ -1,0 +1,4 @@
+1. Map init and window creation
+2. casting the rays
+3. rendering the walls
+4. Player movement

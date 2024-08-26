@@ -3,6 +3,9 @@
 CGIResponse::CGIResponse(Client *client) : _client(client), _cgiPath("/usr/bin/python3")
 {
 	this->_scriptPath = Utils::getCgiScriptForKey(this->_client->getConfig(), "/");
+	//std::cout <<"header length " << this->_client->getRequest().getHeaderField("content-length") << std::endl;
+	std::cout << this->_client->getRequest().getBody() << std::endl;
+
 	setCgiEnv();
 }
 
@@ -54,7 +57,7 @@ std::string 	CGIResponse::execute(void)
 		perror("pipe");
 		return "Internal Server Error";
 	}
-	std::cout << "Body : " << this->_client->getRequest().getBody().c_str() << std::endl;
+//	std::cout << "Body : " << this->_client->getRequest().getBody().c_str() << std::endl;
 	pid = fork();
 	if (pid < 0)
 	{
@@ -80,8 +83,8 @@ std::string 	CGIResponse::execute(void)
 		 }
 
 		 // printinf env variables for debuggin
-		 for (std::map<std::string, std::string>::iterator it = _envMap.begin(); it != _envMap.end(); ++it)
-			 std::cerr << it->first << "=" << it->second << std::endl;
+//		 for (std::map<std::string, std::string>::iterator it = _envMap.begin(); it != _envMap.end(); ++it)
+//			 std::cerr << it->first << "=" << it->second << std::endl;
 		 execve(_cgiPath.c_str(), argv, envp);
 		 perror("execve : ");
 		 exit(1);

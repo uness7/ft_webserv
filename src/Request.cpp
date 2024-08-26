@@ -28,46 +28,47 @@ Request &Request::operator=(const Request &rhs) {
   return *this;
 }
 
-void Request::parseData(void) {
-  std::stringstream request(_data);
-  std::string method;
-  std::string path;
-  std::string line;
-  bool isBody = false;
+void	Request::parseData(void)
+{
+	std::stringstream request(_data);
+	std::string method;
+	std::string path;
+	std::string line;
+	bool isBody = false;
 
-  request >> method;
-  request >> path;
-  setPath(path);
-  setMethod(method);
-  std::getline(request, line);
-  std::string body;
-  while (std::getline(request, line)) {
-    if (line.empty()) {
-      isBody = true;
-      continue;
-    }
-    if (isBody) {
-      body += line + "\n";
-    } else {
-      std::size_t found = line.find(":");
-      if (found == std::string::npos) {
-        isBody = true;
-        continue;
-      }
-      std::string key = line.substr(0, found);
-      std::string value = line.substr(found + 1);
-      std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-      _headers.insert(std::make_pair(key, value));
-    }
-  }
-  if (!body.empty() && body[body.size() - 1] == '\n') {
-      body.erase(body.size() - 1);
-  }
+	request >> method;
+	request >> path;
+	setPath(path);
+	setMethod(method);
+	std::getline(request, line);
+	std::string body;
+	while (std::getline(request, line)) {
+		if (line.empty()) {
+			isBody = true;
+			continue;
+		}
+		if (isBody) {
+			body += line + "\n";
+		} else {
+			std::size_t found = line.find(":");
+			if (found == std::string::npos) {
+				isBody = true;
+				continue;
+			}
+			std::string key = line.substr(0, found);
+			std::string value = line.substr(found + 1);
+			std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+			_headers.insert(std::make_pair(key, value));
+		}
+	}
+	if (!body.empty() && body[body.size() - 1] == '\n') {
+		body.erase(body.size() - 1);
+	}
 
-  // Set the body of the request
-  if (!body.empty()) {
-      _body = body;
-  }
+	// Set the body of the request
+	if (!body.empty()) {
+		_body = body;
+	}
 }
 
 void Request::setMethod(std::string s) { this->_method = s; }
