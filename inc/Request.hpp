@@ -4,21 +4,22 @@
 #include <ostream>
 #include <sstream>
 #include <map>
+# include <vector>
 
 class Request
 {
 	private:
-		std::string 	_method;
-		std::string 	_path;
-		std::string 	_query;
-		std::string 	_mimetype;
-		std::string 	_body;
+		std::string 		_method;
+		std::string 		_path;
+		std::string 		_query;
+		std::string 		_mimetype;
+		std::vector<char>	_body;
 		std::map<std::string, std::string>	_headers;
 
 		void	parseData();
 
 	public:
-		std::string _data;
+		std::string 	_data;
 		Request(std::string);
 		Request(const Request &);
 		Request &operator=(const Request &);
@@ -28,7 +29,7 @@ class Request
 		std::string 	getPath() const;
 		std::string 	getMimeType() const;
 		std::string 	getQuery() const;
-		std::string 	getBody() const;
+		std::vector<char>	getBody() const;
 		std::string 	getHeaderField(std::string) const;
 
 		bool	isCGI() const;

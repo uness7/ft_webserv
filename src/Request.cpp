@@ -3,55 +3,70 @@
 #include <cctype>
 #include <iterator>
 #include <sstream>
+#include <vector>
 
-Request::Request(std::string entireRequest)
-    : _method(""), _path(""), _query(""), _mimetype(""), _body(""), _headers(),
-      _data(entireRequest) {
-  parseData();
+Request::Request(std::string entireRequest) : _method(""), _path(""), _query(""), _mimetype(""), _body(), _headers(), _data(entireRequest)
+{
+	parseData();
 }
 
 Request::~Request() {
-  //
 }
 
 Request::Request(const Request &cp) { *this = cp; }
 
-Request &Request::operator=(const Request &rhs) {
-  if (this != &rhs) {
-    this->_path = rhs.getPath();
-    this->_method = rhs.getMethod();
-    this->_mimetype = rhs.getMimeType();
-    this->_query = rhs._query;
-    this->_body = rhs._body;
-    this->_headers = rhs._headers;
-  }
-  return *this;
+Request	&Request::operator=(const Request &rhs)
+{
+	if (this != &rhs)
+	{
+		this->_path = rhs.getPath();
+		this->_method = rhs.getMethod();
+		this->_mimetype = rhs.getMimeType();
+		this->_query = rhs._query;
+		this->_body = rhs._body;
+		this->_headers = rhs._headers;
+	}
+	return *this;
 }
 
 void	Request::parseData(void)
 {
-	std::stringstream request(_data);
-	std::string method;
-	std::string path;
-	std::string line;
-	bool isBody = false;
+	std::stringstream	requestStream(_data);
+	std::string 		method;
+	std::string 		path;
+	std::string 		line;
+	bool 			isBody = false;
+	std::vector<char>	data_bin;
 
-	request >> method;
-	request >> path;
+	// printing stringstream 
+	std::string requestContent = requestStream.str();
+	std::cout << "Request Stream Content:\n" << requestContent << std::endl;
+
+
+	requestStream >> method;
+	requestStream >> path;
 	setPath(path);
 	setMethod(method);
-	std::getline(request, line);
-	std::string body;
-	while (std::getline(request, line)) {
+	std::getline(requestStream, line);
+	std::vector<char>	body;
+
+	while (std::getline(requestStream, line))
+	{
 		if (line.empty()) {
 			isBody = true;
 			continue;
 		}
-		if (isBody) {
-			body += line + "\n";
-		} else {
+		if (isBody)
+		{
+			body.insert(body.end(), line.begin(), line.end());
+			body.push_back('\n');
+
+		}
+		else
+		{
 			std::size_t found = line.find(":");
-			if (found == std::string::npos) {
+			if (found == std::string::npos)
+			{
 				isBody = true;
 				continue;
 			}
@@ -61,27 +76,27 @@ void	Request::parseData(void)
 			_headers.insert(std::make_pair(key, value));
 		}
 	}
-	if (!body.empty() && body[body.size() - 1] == '\n') {
-		body.erase(body.size() - 1);
-	}
-
-	// Set the body of the request
-	if (!body.empty()) {
+	if (!body.empty() && body.back() == '\n')
+		body.pop_back();
+	if (!body.empty())
 		_body = body;
-	}
 }
 
-void Request::setMethod(std::string s) { this->_method = s; }
+void	Request::setMethod(std::string s)
+{
+	this->_method = s;
+}
 
-void Request::setPath(std::string s) {
-  std::size_t found = s.find("?");
+void	Request::setPath(std::string s)
+{
+	std::size_t found = s.find("?");
 
-  if (found != std::string::npos) {
-    this->_path = s.substr(0, found);
-    this->_query = s.substr(found + 1);
-  } else
-    this->_path = s;
-  setMimeType();
+	if (found != std::string::npos) {
+		this->_path = s.substr(0, found);
+		this->_query = s.substr(found + 1);
+	} else
+		this->_path = s;
+	setMimeType();
 }
 
 void Request::setMimeType() {
@@ -115,17 +130,25 @@ std::string Request::getPath() const { return this->_path; }
 
 std::string Request::getMimeType() const { return this->_mimetype; }
 
-std::string Request::getQuery() const { return this->_query; }
-
-std::string Request::getBody() const { return this->_body; }
-
-std::string Request::getHeaderField(std::string field) const {
-  if (_headers.count(field))
-    return _headers.at(field);
-  return "";
+std::string Request::getQuery() const
+{
+	return this->_query;
 }
 
-std::ostream &operator<<(std::ostream &out, const Request &req) {
-  out << req._data << std::endl;
-  return out;
+std::vector<char>	Request::getBody() const
+{
+	return this->_body;
+}
+
+std::string Request::getHeaderField(std::string field) const
+{
+	if (_headers.count(field))
+		return _headers.at(field);
+	return "";
+}
+
+std::ostream &operator<<(std::ostream &out, const Request &req)
+{
+	out << req._data << std::endl;
+	return out;
 }

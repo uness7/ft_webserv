@@ -1,11 +1,10 @@
 #include "CGIResponse.hpp"
+# include <vector>
+# include <iomanip>
 
 CGIResponse::CGIResponse(Client *client) : _client(client), _cgiPath("/usr/bin/python3")
 {
 	this->_scriptPath = Utils::getCgiScriptForKey(this->_client->getConfig(), "/");
-	//std::cout <<"header length " << this->_client->getRequest().getHeaderField("content-length") << std::endl;
-	std::cout << this->_client->getRequest().getBody() << std::endl;
-
 	setCgiEnv();
 }
 
@@ -41,6 +40,25 @@ char 	**mapToEnvArray(const std::map<std::string, std::string> &envMap)
 	return envArray;
 }
 
+bool contains_null_terminator(const char *buffer, size_t length) {
+	for (size_t i = 0; i < length; ++i) {
+		if (buffer[i] == '\0') {
+			return true;  // Null terminator found
+		}
+	}
+	return false;  // No null terminator found
+}
+
+void	printAsHex(std::vector<char>& vec)
+{
+	for (size_t i = 0; i < vec.size(); ++i)
+	{
+		unsigned char ch = vec[i];
+		std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(ch) << " ";
+	}
+	std::cout << std::dec << std::endl;
+}
+
 std::string 	CGIResponse::execute(void)
 {
 	char	*const argv[] = {
@@ -52,12 +70,12 @@ std::string 	CGIResponse::execute(void)
 	int	in_pipe[2];
 	pid_t	pid;
 
+	std::cout << "Tourabi" <<_client->getRequest().getBody().data() << "tourabi" << std::endl;
 	if (pipe(out_pipe) == -1 || pipe(in_pipe) == -1)
 	{
 		perror("pipe");
 		return "Internal Server Error";
 	}
-//	std::cout << "Body : " << this->_client->getRequest().getBody().c_str() << std::endl;
 	pid = fork();
 	if (pid < 0)
 	{
@@ -66,7 +84,7 @@ std::string 	CGIResponse::execute(void)
 	}
 	else if (pid == 0)
 	{
-		 close(out_pipe[0]);
+		close(out_pipe[0]);
 		 dup2(out_pipe[1], STDOUT_FILENO);
 		 close(out_pipe[1]);
 
@@ -98,8 +116,8 @@ std::string 	CGIResponse::execute(void)
 			close(in_pipe[0]);
 			write(
 				in_pipe[1], 
-				_client->getRequest().getBody().c_str(), 
-				_client->getRequest().getBody().length()
+				_client->getRequest().getBody().data(),
+				_client->getRequest().getBody().size()
 			);
 			close(in_pipe[1]);
 		}
@@ -109,9 +127,10 @@ std::string 	CGIResponse::execute(void)
 			close(in_pipe[1]);
 		}
 
-		char	buffer[1024];
+		char	buffer[2048];
 		std::string	res;
 		ssize_t		bytes_read;
+
 		while ((bytes_read = read(out_pipe[0], buffer, sizeof(buffer))) > 0)
 			res.append(buffer, bytes_read);
 		close(out_pipe[0]);
@@ -124,4 +143,3 @@ std::string 	CGIResponse::execute(void)
 		return res;
 	}
 }
-

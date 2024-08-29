@@ -39,17 +39,16 @@ std::vector<std::string> splitString(const std::string &str)
 	{
 		result.push_back(part);
 		if (std::getline(iss, part))
-		{
 			result.push_back(part);
-		}
 	}
 	return result;
 }
 
-void    Response::updateResponse(unsigned short statusCode, std::string contentType, std::string buffer) {
-		setStatusCode(statusCode);
-		_contentType = contentType;
-		_buffer = buffer;
+void    Response::updateResponse(unsigned short statusCode, std::string contentType, std::string buffer)
+{
+	setStatusCode(statusCode);
+	_contentType = contentType;
+	_buffer = buffer;
 }
 
 void	Response::buildError()
@@ -75,7 +74,8 @@ void	Response::buildPath()
 	std::map<std::string, LocationConfig> lc = _client->getConfig().locations;
 	std::map<std::string, LocationConfig>::const_iterator it;
 	std::string path = request.getPath();
-	int path_max = -1;
+	int	path_max = -1;
+
 	LocationConfig target;
 	for (it = lc.begin(); it != lc.end(); it++)
 	{
@@ -95,7 +95,7 @@ void	Response::buildPath()
 		request.setPath(target.root + "/" + end_s);
 }
 
-const std::string Response::getResponse() const
+const std::string	Response::getResponse() const
 {
 	return this->_value;
 }
@@ -230,14 +230,11 @@ void	Response::build(void)
 		.locations.begin()->second.allowed_methods;
 	long long 			bodySize = std::atoll(request.getHeaderField("content-length").c_str());
 
-
 	if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end())
 		updateResponse(405, "text/plain", "Method Not Allowed");
 	else if (request.getHeaderField("content-length") != "" && 
 			(bodySize > _client->getConfig().client_max_body_size))
-	{
 		updateResponse(413, "text/plain", "Payload Too Large");
-	}
 	else
 	{
 		std::string	path = request.getPath();
@@ -247,12 +244,10 @@ void	Response::build(void)
 			updateResponse(200, "application/json", "{\"message\": \"This is dynamic data!\"}");
 		else if (path == "/api/info")
 			updateResponse(200, "application/json", "{\"info\": \"This is some info!\"}");
-		else if (request.isCGI()) // TODO: CHECK IF CGI IS PRESENT ON CONFIG
+		else if (request.isCGI())
 			handleCGI(request);
 		else 
 			handleStaticFiles(request);
 	}
 	finalizeHTMLResponse();
 }
-
-

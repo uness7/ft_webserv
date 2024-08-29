@@ -89,7 +89,6 @@ void	Config::parseServerLine(std::ifstream &configFile, const std::string &line,
 	{
 		std::string	locationPath = extractLocationPath(line);
 		LocationConfig 	locationConfig;
-
 		parseLocation(configFile, locationConfig);
 		serverConfig.locations[locationPath] = locationConfig;
 	}

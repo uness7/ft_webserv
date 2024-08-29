@@ -41,17 +41,28 @@ Request &Client::getRequest()
 	return this->_request;
 }
 
+
 int	Client::readRequest()
 {
-	char	buffer[BUFFER_SIZE];
-	memset(buffer, 0, BUFFER_SIZE);
-	int byteReceived = read(getFd(), buffer, BUFFER_SIZE);
-	if (byteReceived > 0)
-	{
-		_request = Request(buffer);
-		_response = new Response(this);
-	}
-	return byteReceived;
+    std::vector<char>	buffer(BUFFER_SIZE);
+    ssize_t byteReceived = read(getFd(), buffer.data(), BUFFER_SIZE);
+
+    std::cout << "Bytes Received: " << byteReceived << std::endl;
+
+    if (byteReceived > 0)
+    {
+	    //buffer.resize(byteReceived);
+	    std::string requestData(buffer.begin(), buffer.end());
+	    _request = Request(requestData);
+	    _response = new Response(this);
+    }
+    else if (byteReceived < 0)
+    {
+        std::cerr << "Error reading from socket" << std::endl;
+        return -1;  // Indicate an error occurred
+    }
+
+    return byteReceived;
 }
 
 const std::string	Client::getResponseToString() const
@@ -69,8 +80,7 @@ void	Client::sendResponse()
 	long		bytesSent;
 	std::string 	response = getResponseToString();
 
-	bytesSent = write(getFd(), response.c_str() + getDataSent(),
-			response.size() - getDataSent());
+	bytesSent = write(getFd(), response.c_str() + getDataSent(), response.size() - getDataSent());
 	if (bytesSent + getDataSent() == static_cast<long>(response.size()))
 		setDataSent(0);
 	else

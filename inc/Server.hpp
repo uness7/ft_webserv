@@ -15,23 +15,23 @@
 #include <map>
 
 class Server {
-private:
-  std::vector<TCPSocket *> _sockets;  // Vector to store pointers to TCPSocket instances
-  std::map<unsigned short, Client *> _clients;  // Map to store connected clients
-  int _epoll_fd;
+	private:
+		std::vector<TCPSocket *> _sockets;  // Vector to store pointers to TCPSocket instances
+		std::map<unsigned short, Client *> _clients;  // Map to store connected clients
+		int _epoll_fd;
 
-  void startToListenClients();
-  void acceptConnection(TCPSocket *s);
-  void handleClientRequest(int fd, struct epoll_event *ev);
-  void handleResponse(Client *);
+		void startToListenClients();
+		void acceptConnection(TCPSocket *s);
+		void handleClientRequest(int fd, struct epoll_event *ev);
+		void handleResponse(Client *);
 
-  void removeClient(int keyFD);
-  TCPSocket *getSocketByFD(int targetFD) const;
-  void closeAllSockets();
+		void removeClient(int keyFD);
+		TCPSocket *getSocketByFD(int targetFD) const;
+		void closeAllSockets();
 
-  static void updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev);
-public:
-  Server(std::vector<TCPSocket *> sockets);
-  ~Server();
-  void runServers();
+		static void updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev);
+	public:
+		Server(std::vector<TCPSocket *> sockets);
+		~Server();
+		void runServers();
 };

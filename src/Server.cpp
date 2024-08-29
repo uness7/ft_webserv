@@ -10,20 +10,20 @@
 #include <vector>
 
 // Global variable to control the server shutdown
-static volatile bool stopListening = false;
+static volatile bool	stopListening = false;
 
 // Log a message to the standard output
-void log(const std::string &message) { std::cout << message << std::endl; }
+void	log(const std::string &message) { std::cout << message << std::endl; }
 
 // Exit the program with a failure message
-void exitWithFailure(std::string s)
+void	exitWithFailure(std::string s)
 {
 	std::cerr << s << std::endl;
 	exit(1);
 }
 
 // Signal handler to stop the server on SIGINT (Ctrl+C)
-void handleSignal(int sig)
+void	handleSignal(int sig)
 {
 	if (sig == SIGINT)
 		stopListening = true;
@@ -37,7 +37,8 @@ Server::Server(std::vector<TCPSocket *> s) : _sockets(s), _clients()
 
 // Destructor for Server class
 Server::~Server() {}
-TCPSocket *Server::getSocketByFD(int targetFD) const
+
+TCPSocket	*Server::getSocketByFD(int targetFD) const
 {
 	for (size_t i = 0; i < _sockets.size(); i++)
 	{
@@ -46,8 +47,9 @@ TCPSocket *Server::getSocketByFD(int targetFD) const
 	}
 	return NULL;
 }
+
 // Accept a new client connection
-void Server::acceptConnection(TCPSocket *s)
+void	Server::acceptConnection(TCPSocket *s)
 {
 	int newClient = accept(s->getSocketFD(), (sockaddr *)&s->getSocketAdress(), &s->getSocketAddressLength());
 	if (newClient < 0)
@@ -66,7 +68,7 @@ void Server::acceptConnection(TCPSocket *s)
 	Server::updateEpoll(_epoll_fd, EPOLL_CTL_ADD, newClient, NULL);
 }
 
-void Server::updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev)
+void	Server::updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev)
 {
 	if (action == EPOLL_CTL_ADD)
 	{
@@ -74,29 +76,21 @@ void Server::updateEpoll(int epollFD, short action, int targetFD, struct epoll_e
 		event.data.fd = targetFD;
 		event.events = EPOLLIN;
 		if (epoll_ctl(epollFD, EPOLL_CTL_ADD, targetFD, &event) == -1)
-		{
 			exitWithFailure("epoll ctl problem");
-		}
 	}
 	else if (action == EPOLL_CTL_MOD)
 	{
 		ev->events = EPOLLOUT;
 		if (epoll_ctl(epollFD, EPOLL_CTL_MOD, targetFD, ev) == -1)
-		{
 			exitWithFailure("epoll ctl_mod problem");
-		}
 	}
 	else if (action == EPOLL_CTL_DEL)
-	{
 		if (epoll_ctl(epollFD, EPOLL_CTL_DEL, targetFD, NULL) == -1)
-		{
 			exitWithFailure("epoll ctl_del problem");
-		}
-	}
 }
 
 // Initialize server sockets to listen to clients
-void Server::startToListenClients()
+void	Server::startToListenClients()
 {
 	// Iterate over all the server sockets
 	for (size_t i = 0; i < _sockets.size(); i++)
@@ -128,8 +122,7 @@ void Server::startToListenClients()
 	}
 }
 
-
-void Server::handleClientRequest(int fd, struct epoll_event *ev)
+void	Server::handleClientRequest(int fd, struct epoll_event *ev)
 {
 	Client *client = _clients.at(fd);
 	int byteReceived = client->readRequest();
@@ -144,7 +137,7 @@ void Server::handleClientRequest(int fd, struct epoll_event *ev)
 }
 
 // Main loop to manage all sockets
-void Server::runServers(void)
+void	Server::runServers(void)
 {
 	const int MAX_EVENT = 1000;
 	struct epoll_event events[MAX_EVENT];
@@ -155,7 +148,6 @@ void Server::runServers(void)
 
 	// Initialize server sockets to listen for client connections
 	startToListenClients();
-
 	while (true)
 	{
 		if (stopListening)
@@ -197,7 +189,7 @@ void Server::runServers(void)
 }
 
 // Handle client response
-void Server::handleResponse(Client *client)
+void	Server::handleResponse(Client *client)
 {
 	client->sendResponse();
 	std::string conn = client->getRequest().getHeaderField("Connection");
@@ -207,7 +199,7 @@ void Server::handleResponse(Client *client)
 
 
 // Close all server sockets
-void Server::closeAllSockets()
+void	Server::closeAllSockets()
 {
 	for (size_t i = 0; i < _sockets.size(); i++)
 	{
@@ -221,7 +213,7 @@ void Server::closeAllSockets()
 }
 
 // Remove a client from the server
-void Server::removeClient(int keyFD)
+void	Server::removeClient(int keyFD)
 {
 	std::map<unsigned short, Client *>::iterator element = _clients.find(keyFD);
 	if (element == _clients.end())
