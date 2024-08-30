@@ -1,41 +1,50 @@
 #pragma once
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <ostream>
 #include <sstream>
-#include <map>
-# include <vector>
+#include <string>
+#include <vector>
+#include "Utils.hpp"
 
-class Request
-{
-	private:
-		std::string 		_method;
-		std::string 		_path;
-		std::string 		_query;
-		std::string 		_mimetype;
-		std::vector<char>	_body;
-		std::map<std::string, std::string>	_headers;
+class Request {
+private:
+  std::string _method;
+  std::string _path;
+  std::string _query;
+  std::string _mimetype;
+  std::vector<char> _body;
+  std::map<std::string, std::string> _headers;
 
-		void	parseData();
+  void parseData();
 
-	public:
-		std::string 	_data;
-		Request(std::string);
-		Request(const Request &);
-		Request &operator=(const Request &);
-		~Request();
+public:
+  std::string _data;
+  Request();
+  Request(std::string);
+  Request(const Request &);
+  Request &operator=(const Request &);
+  ~Request();
 
-		std::string 	getMethod() const;
-		std::string 	getPath() const;
-		std::string 	getMimeType() const;
-		std::string 	getQuery() const;
-		std::vector<char>	getBody() const;
-		std::string 	getHeaderField(std::string) const;
+  void readFromSocket(unsigned int);
+  void handleFirstLineHeader(unsigned int);
+  void saveHeaderLine(std::string &);
 
-		bool	isCGI() const;
-		void	setMethod(std::string);
-		void 	setPath(std::string);
-		void 	setMimeType();
+  std::string getMethod() const;
+  std::string getPath() const;
+  std::string getMimeType() const;
+  std::string getQuery() const;
+  std::vector<char> getBody() const;
+  std::string getHeaderField(std::string) const;
+
+  bool isCGI() const;
+
+  void setHeaders(std::string &);
+  void appendToBody();
+  void setMethod(std::string);
+  void setPath(std::string);
+  void setMimeType();
 };
 
 std::ostream &operator<<(std::ostream &out, const Request &);

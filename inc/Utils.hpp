@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <iostream>
+#include <sstream>
+#include <sys/socket.h>
 # include "Config.hpp"
 
 class Utils
@@ -12,9 +15,7 @@ class Utils
 		static std::string	vectorToString(const std::vector<std::string>& vec);
 		static void 		printLocationConfigMap(const std::map<std::string, LocationConfig>& myMap);
 		static std::string     	getCgiScriptForKey(const ServerConfig& serverConfig, const std::string& key);
-
-
+		static std::ostringstream get_next_line(unsigned int fd);
 };
 
-#endif 
-
+#endif

@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <cstring>
-#define BUFFER_SIZE 30720 * 100
+#define BUFFER_SIZE 40960
 
 class Response;
 
