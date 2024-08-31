@@ -1,13 +1,21 @@
 S = src
 BUILD = build
 
-SRCS = $(S)/main.cpp $(S)/Server.cpp $(S)/Request.cpp $(S)/TCPSocket.cpp
+SRCS =  $(S)/main.cpp \
+	$(S)/Server.cpp  \
+	$(S)/Request.cpp \
+	$(S)/Response.cpp \
+	$(S)/CGIResponse.cpp \
+	$(S)/TCPSocket.cpp \
+	$(S)/Client.cpp \
+	$(S)/Config.cpp \
+	$(S)/Utils.cpp \
 
 INCDIR = inc
 
 CXX = c++
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR)
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR) -g
 
 TARGET = WebServ
 

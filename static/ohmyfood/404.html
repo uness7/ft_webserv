@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+	body, html {
+	  height: 80vh;
+	}
+	.main > div {
+	    display:flex;
+	    justify-content: center;
+	    align-items: center;
+	    flex-direction: column;
+	    padding: 5rem;
+	    height: 100%;
+	}
+
+	.main  h2 {
+	    color: red;
+	    text-align:center;
+	}
+</style>
+</head>
+<body class="main" >
+    <div>
+        <h2>
+            Oops! The page you are looking for cannot be found. Please check the URL or try navigating back to the homepage.
+        </h2>
+        <p>
+            Try <a id="redirect">INDEX</a>
+        </p>
+    </div>
+<script>
+const target = document.querySelector("#redirect");
+target.href = location.protocol + '//' + location.host;
+</script>
+</body>
+</html>

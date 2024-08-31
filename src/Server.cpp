@@ -1,160 +1,226 @@
 #include "../inc/Server.hpp"
+#include <algorithm>
 #include <csignal>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <fcntl.h>
+#include <sys/poll.h>
+#include <utility>
 #include <vector>
 
-static volatile bool stopListening = false;
+// Global variable to control the server shutdown
+static volatile bool	stopListening = false;
 
-void log(const std::string &message) { std::cout << message << std::endl; }
+// Log a message to the standard output
+void	log(const std::string &message) { std::cout << message << std::endl; }
 
-void exitWithFailure(std::string s) {
-  std::cerr << s << std::endl;
-  exit(1);
+// Exit the program with a failure message
+void	exitWithFailure(std::string s)
+{
+	std::cerr << s << std::endl;
+	exit(1);
 }
 
-void handleSignal(int sig) {
-  if (sig == SIGINT)
-    stopListening = true;
+// Signal handler to stop the server on SIGINT (Ctrl+C)
+void	handleSignal(int sig)
+{
+	if (sig == SIGINT)
+		stopListening = true;
 }
 
-Server::Server(std::vector<TCPSocket> &s) : _sockets(s) {
-  std::signal(SIGINT, handleSignal);
+// Constructor for Server class
+Server::Server(std::vector<TCPSocket *> s) : _sockets(s), _clients()
+{
+	std::signal(SIGINT, handleSignal);
 }
 
+// Destructor for Server class
 Server::~Server() {}
 
-void Server::acceptConnection(TCPSocket &s) {
-  s._newSocket =
-      accept(s._socket, (sockaddr *)&s._socketAddress, &s._socketAddressLength);
-  if (s._newSocket < 0) {
-    std::ostringstream ss;
-    ss << "Server failed to accept incoming connection from ADDRESS: "
-       << inet_ntoa(s._socketAddress.sin_addr)
-       << "; PORT: " << ntohs(s._socketAddress.sin_port);
-    exitWithFailure(ss.str());
-  }
-}
-void Server::initToListen() {
-  for (size_t i = 0; i < _sockets.size(); i++) {
-    _sockets[i].initSocket();
-    if (listen(_sockets[i]._socket, 20) < 0)
-      exitWithFailure("Socket listen failed");
-    std::ostringstream ss;
-    ss << "\n*** Listening on ADDRESS: "
-       << inet_ntoa(_sockets[i]._socketAddress.sin_addr)
-       << " PORT: " << ntohs(_sockets[i]._socketAddress.sin_port) << " ***\n\n";
-    log(ss.str());
-  }
+TCPSocket	*Server::getSocketByFD(int targetFD) const
+{
+	for (size_t i = 0; i < _sockets.size(); i++)
+	{
+		if (_sockets[i]->getSocketFD() == targetFD)
+			return _sockets[i];
+	}
+	return NULL;
 }
 
-void Server::startListen(void) {
-  int byteReceived;
-
-  initToListen();
-
-  struct pollfd fds[_sockets.size()];
-  for (size_t i = 0; i < _sockets.size(); i++) {
-    fds[i].fd = _sockets[i]._socket;
-    fds[i].events = POLLIN;
-  }
-
-  while (true) {
-    log("====== Waiting for a new connection ======\n");
-    if (stopListening)
-      break;
-    int ret = poll(fds, _sockets.size(), -1);
-    if (stopListening)
-      break;
-    if (ret < 0)
-      exitWithFailure("Poll error");
-
-    for (size_t i = 0; i < _sockets.size(); i++) {
-      if (fds[i].revents & POLLIN) {
-        acceptConnection(_sockets[i]);
-        std::cout << _sockets[i]._newSocket << std::endl;
-        char buffer[BUFFER_SIZE];
-        memset(&buffer, 0, BUFFER_SIZE);
-        byteReceived = read(_sockets[i]._newSocket, buffer, BUFFER_SIZE);
-        if (byteReceived < 0)
-          exitWithFailure("Failed to read bytes from client socket connection");
-
-        std::ostringstream ss;
-        ss << "------ Received Request from client ------\n"
-           << buffer << std::endl;
-        log(ss.str());
-
-        sendResponse(_sockets[i], buildResponse(std::string(buffer)));
-
-        close(_sockets[i]._newSocket);
-      }
-    }
-  }
-  closeAllSockets();
+// Accept a new client connection
+void	Server::acceptConnection(TCPSocket *s)
+{
+	int newClient = accept(s->getSocketFD(), (sockaddr *)&s->getSocketAdress(), &s->getSocketAddressLength());
+	if (newClient < 0)
+	{
+		std::ostringstream ss;
+		ss << "Server failed to accept incoming connection from ADDRESS: "
+		   << inet_ntoa(s->getSocketAdress().sin_addr)
+		   << "; PORT: " << ntohs(s->getSocketAdress().sin_port);
+		exitWithFailure(ss.str());
+	}
+	if (fcntl(newClient, F_SETFL, O_NONBLOCK) < 0)
+		exitWithFailure("Failed to set non-blocking mode for client socket");
+	Client *n = new Client(newClient, s->getServerConfig());
+	_clients.insert(std::make_pair(newClient, n));
+	std::cout << "[NEW CLIENT]: FD -> " << newClient << " on " << s->getIpAddress() << ":" << s->getPort() << std::endl;
+	Server::updateEpoll(_epoll_fd, EPOLL_CTL_ADD, newClient, NULL);
 }
 
-void Server::closeAllSockets() const {
-  for (size_t i = 0; i < _sockets.size(); i++)
-    _sockets[i].closeServer();
+void	Server::updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev)
+{
+	if (action == EPOLL_CTL_ADD)
+	{
+		struct epoll_event event;
+		event.data.fd = targetFD;
+		event.events = EPOLLIN;
+		if (epoll_ctl(epollFD, EPOLL_CTL_ADD, targetFD, &event) == -1)
+			exitWithFailure("epoll ctl problem");
+	}
+	else if (action == EPOLL_CTL_MOD)
+	{
+		ev->events = EPOLLOUT;
+		if (epoll_ctl(epollFD, EPOLL_CTL_MOD, targetFD, ev) == -1)
+			exitWithFailure("epoll ctl_mod problem");
+	}
+	else if (action == EPOLL_CTL_DEL)
+		if (epoll_ctl(epollFD, EPOLL_CTL_DEL, targetFD, NULL) == -1)
+			exitWithFailure("epoll ctl_del problem");
 }
 
-std::string get_mime_type(const std::string &file_path) {
-  if (file_path.length() >= 5 &&
-      file_path.substr(file_path.length() - 5) == ".html") {
-    return "text/html";
-  } else if (file_path.length() >= 4 &&
-             file_path.substr(file_path.length() - 4) == ".css") {
-    return "text/css";
-  } else if (file_path.length() >= 4 &&
-             file_path.substr(file_path.length() - 4) == ".jpg") {
-    return "image/jpg";
-  } else if (file_path.length() >= 3 &&
-             file_path.substr(file_path.length() - 3) == ".js") {
-    return "application/javascript";
-  } else {
-    return "text/plain";
-  }
+// Initialize server sockets to listen to clients
+void	Server::startToListenClients()
+{
+	// Iterate over all the server sockets
+	for (size_t i = 0; i < _sockets.size(); i++)
+	{
+		try
+		{
+			// Initialize the socket
+			_sockets[i]->initSocket();
+
+			// Set the socket to listen for incoming connections
+			if (listen(_sockets[i]->getSocketFD(), 0) < 0)
+				exitWithFailure("Socket listen failed");
+
+			// Log the address and port the server is listening on
+			std::ostringstream ss;
+			ss << "\n*** Listening on ADDRESS: "
+			   << inet_ntoa(_sockets[i]->getSocketAdress().sin_addr)		  // Convert the IP address to a string
+			   << " PORT: " << ntohs(_sockets[i]->getSocketAdress().sin_port) // Convert the port number to host byte order
+			   << " ***\n";
+			log(ss.str());
+			if (fcntl(_sockets[i]->getSocketFD(), F_SETFL, O_NONBLOCK) < 0)
+				exitWithFailure("Failed to set non-blocking mode for client socket");
+			Server::updateEpoll(_epoll_fd, EPOLL_CTL_ADD, _sockets[i]->getSocketFD(), NULL);
+		}
+		catch (const std::exception &e)
+		{
+			throw;
+		}
+	}
 }
 
-std::string Server::buildResponse(std::string req) {
-  Request r(req);
-  std::string path = r.getPath();
-  std::string mimetype = get_mime_type(path);
-  std::ifstream inFile(
-      std::string("." + path)
-          .c_str()); // Problem when path is a directory ("/" | "/static")
-  std::stringstream buffer;
-  if (inFile.is_open()) {
-    buffer << inFile.rdbuf();
-    inFile.close();
-  } else {
-    std::cerr << "Unable to open file " << path << std::endl;
-    return "HTTP/1.1 302 Found\nLocation: /static/index.html\n\n"; // Redirect
-                                                                   // the
-                                                                   // browser
-                                                                   // to
-                                                                   // "/static/index.html"
-                                                                   // path to
-                                                                   // display
-                                                                   // the
-                                                                   // error
-                                                                   // page.
-  }
-  std::string fileRequested = buffer.str();
-  std::ostringstream ss;
-  ss << "HTTP/1.1 200 OK\nContent-Type: " << mimetype
-     << "\nContent-Length: " << fileRequested.size() << "\n\n"
-     << fileRequested;
-  return ss.str();
+void	Server::handleClientRequest(int fd, struct epoll_event *ev)
+{
+	Client *client = _clients.at(fd);
+	int byteReceived = client->readRequest();
+	if (byteReceived > 0)
+	{
+		Server::updateEpoll(_epoll_fd, EPOLL_CTL_MOD, fd, ev);
+	}
+	else
+	{
+		this->removeClient(fd);
+	}
 }
 
-void Server::sendResponse(const TCPSocket s, std::string response) {
-  long bytesSent;
+// Main loop to manage all sockets
+void	Server::runServers(void)
+{
+	const int MAX_EVENT = 1000;
+	struct epoll_event events[MAX_EVENT];
 
-  bytesSent = write(s._newSocket, response.c_str(), response.size());
-  if (bytesSent == static_cast<long>(response.size()))
-    log("------ Server Response sent to client ------\n");
-  else
-    log("Error sending response to client");
+	_epoll_fd = epoll_create1(0);
+	if (_epoll_fd == -1)
+		exitWithFailure("Error with Epoll_fd");
+
+	// Initialize server sockets to listen for client connections
+	startToListenClients();
+	while (true)
+	{
+		if (stopListening)
+			break;
+
+		int nfds = epoll_wait(_epoll_fd, events, MAX_EVENT, -1);
+		if (stopListening)
+			break;
+		if (nfds == -1)
+			exitWithFailure("Error with epoll_wait");
+
+		for (int i = 0; i < nfds; i++)
+		{
+			int fd_triggered = events[i].data.fd;
+			short ev = events[i].events;
+			if (ev & EPOLLHUP || ev & EPOLLERR)
+			{
+				std::cout << "Error on client: " << fd_triggered << std::endl;
+				this->removeClient(fd_triggered);
+			}
+			else if (ev & EPOLLIN)
+			{
+				if (_clients.count(fd_triggered))
+					handleClientRequest(fd_triggered, &events[i]);
+				else
+				{
+					TCPSocket *server = getSocketByFD(fd_triggered);
+					acceptConnection(server);
+				}
+			}
+			else if (_clients.count(fd_triggered) && ev & EPOLLOUT)
+			{
+				Client *client = _clients.at(fd_triggered);
+				handleResponse(client);
+			}
+		}
+	}
+	closeAllSockets();
+}
+
+// Handle client response
+void	Server::handleResponse(Client *client)
+{
+	client->sendResponse();
+	std::string conn = client->getRequest().getHeaderField("Connection");
+	if (client->getDataSent() <= 0 && conn.compare(" keep-alive") != 0)
+		removeClient(client->getFd());
+}
+
+
+// Close all server sockets
+void	Server::closeAllSockets()
+{
+	for (size_t i = 0; i < _sockets.size(); i++)
+	{
+		delete _sockets[i];
+	}
+	std::map<unsigned short, Client *>::iterator it;
+	for (it = _clients.begin(); it != _clients.end(); it++)
+	{
+		delete it->second;
+	}
+}
+
+// Remove a client from the server
+void	Server::removeClient(int keyFD)
+{
+	std::map<unsigned short, Client *>::iterator element = _clients.find(keyFD);
+	if (element == _clients.end())
+		return;
+	Server::updateEpoll(_epoll_fd, EPOLL_CTL_DEL, keyFD, NULL);
+	std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on " << element->second->getConfig().port << std::endl;
+	close(keyFD);
+	_clients.erase(element);
+	delete element->second;
 }
