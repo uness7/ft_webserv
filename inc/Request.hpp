@@ -17,18 +17,15 @@ private:
   std::vector<char> _body;
   std::map<std::string, std::string> _headers;
 
-  void parseData();
-
 public:
   std::string _data;
   Request();
-  Request(std::string);
   Request(const Request &);
   Request &operator=(const Request &);
   ~Request();
 
-  void readFromSocket(unsigned int);
-  void handleFirstLineHeader(unsigned int);
+  long readFromSocket(unsigned int);
+  long handleFirstLineHeader(unsigned int);
   void saveHeaderLine(std::string &);
 
   std::string getMethod() const;

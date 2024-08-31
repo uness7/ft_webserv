@@ -6,18 +6,11 @@
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <sys/_types/_size_t.h>
 #include <vector>
 
 Request::Request()
     : _method(""), _path(""), _query(""), _mimetype(""), _body(), _headers(),
-      _data() {}
-Request::Request(std::string entireRequest)
-    : _method(""), _path(""), _query(""), _mimetype(""), _body(), _headers(),
-      _data(entireRequest) {
-  parseData();
-}
-
+    _data() {}
 Request::~Request() {}
 
 Request::Request(const Request &cp) { *this = cp; }
@@ -34,57 +27,18 @@ Request &Request::operator=(const Request &rhs) {
   return *this;
 }
 
-void Request::parseData(void) {
-  std::stringstream requestStream(_data);
-  std::string method;
-  std::string path;
-  std::string line;
-  bool isBody = false;
-  std::vector<char> data_bin;
-
-  // printing stringstream
-  std::string requestContent = requestStream.str();
-  requestStream >> method;
-  requestStream >> path;
-  setPath(path);
-  setMethod(method);
-  std::getline(requestStream, line);
-  std::vector<char> body;
-
-  while (std::getline(requestStream, line)) {
-    if (line.empty()) {
-      isBody = true;
-      continue;
-    }
-    if (isBody) {
-      body.insert(body.end(), line.begin(), line.end());
-      body.push_back('\n');
-    } else {
-      std::size_t found = line.find(":");
-      if (found == std::string::npos) {
-        isBody = true;
-        continue;
-      }
-      std::string key = line.substr(0, found);
-      std::string value = line.substr(found + 1);
-      std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-      _headers.insert(std::make_pair(key, value));
-    }
-  }
-  if (!body.empty() && body.back() == '\n')
-    body.pop_back();
-  if (!body.empty())
-    _body = body;
-}
-
-void Request::handleFirstLineHeader(unsigned int socketFd) {
-  std::ostringstream lineStream = Utils::get_next_line(socketFd);
+long Request::handleFirstLineHeader(unsigned int socketFd) {
+  std::ostringstream lineStream; 
+  long bytesRead = Utils::get_next_line(socketFd, lineStream);
+  if (bytesRead < 0)
+      return bytesRead;
   std::istringstream iss(lineStream.str());
   std::string method;
   std::string path;
   iss >> method >> path;
   setMethod(method);
   setPath(path);
+  return bytesRead;
 }
 
 void Request::saveHeaderLine(std::string &line) {
@@ -97,12 +51,15 @@ void Request::saveHeaderLine(std::string &line) {
   }
 }
 
-void Request::readFromSocket(unsigned int socketFd) {
+long Request::readFromSocket(unsigned int socketFd) {
   std::ifstream client;
   handleFirstLineHeader(socketFd);
+  std::ostringstream lineStream;
 
   while (true) {
-    std::ostringstream lineStream = Utils::get_next_line(socketFd);
+    long bytesRead = Utils::get_next_line(socketFd, lineStream);
+    if (bytesRead < 0)
+        return bytesRead;
     std::string line = lineStream.str();
     if (line.empty() ||
         line.find_first_not_of(" \t\r\n") == std::string::npos) {
@@ -114,18 +71,20 @@ void Request::readFromSocket(unsigned int socketFd) {
 
   std::string contentLengthStr = getHeaderField("content-length");
   if (contentLengthStr.empty())
-    return;
+    return 1;
 
-  size_t contentLength = std::stol(contentLengthStr);
+  long long contentLength = atoll(contentLengthStr.c_str());
 
   std::cout << "ct: " << contentLength << std::endl;
   _body = std::vector<char>(contentLength);
 
   size_t totalRead = 0;
 
-  while (totalRead < contentLength) {
-    std::ostringstream bodyStream = Utils::get_next_line(socketFd);
-    std::string chunk = bodyStream.str() + "\n";
+  while (static_cast<long long>(totalRead) < contentLength) {
+    long bytesRead = Utils::get_next_line(socketFd, lineStream);;
+    if (bytesRead < 0)
+        return bytesRead;
+    std::string chunk = lineStream.str() + "\n";
     if (chunk.size() == 0)
       break;
     // std::cout << "chunk: " << chunk << " | " << chunk.size() << std::endl;
@@ -135,6 +94,7 @@ void Request::readFromSocket(unsigned int socketFd) {
     // std::cout << "body: " << _body.data() << " | " << _body.size() << std::endl;
     std::cout << "body: " << totalRead << std::endl;
   }
+  return 1;
 }
 
 void Request::appendToBody() {}

@@ -1,5 +1,5 @@
 #include "../inc/Utils.hpp"
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 
 std::string     Utils::getCgiScriptForKey(const ServerConfig& serverConfig, const std::string& key)
 {
@@ -9,28 +9,29 @@ std::string     Utils::getCgiScriptForKey(const ServerConfig& serverConfig, cons
         return "";
 }
 
-std::ostringstream Utils::get_next_line(unsigned int fd) {
+long Utils::get_next_line(unsigned int fd, std::ostringstream &oss) {
   static char buffer[BUFFER_SIZE];
   static ssize_t bytesRead = 0;
   static size_t currentPos = 0;
-  std::ostringstream oss;
+  oss.str("");
   while (true) {
     if (static_cast<ssize_t>(currentPos) >= bytesRead) {
       bytesRead = recv(fd, buffer, BUFFER_SIZE, 0);
       currentPos = 0;
       if (bytesRead <= 0) {
-        return oss;
+        return bytesRead;
       }
     }
 
     while (static_cast<ssize_t>(currentPos) < bytesRead) {
       if (buffer[currentPos] == '\n') {
         currentPos++;
-        return oss;
+        return oss.str().size();
       }
       oss << buffer[currentPos++];
     }
   }
+  return oss.str().size();
 }
 
 std::string Utils::vectorToString(const std::vector<std::string> &vec) {
