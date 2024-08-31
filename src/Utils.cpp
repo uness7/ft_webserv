@@ -19,7 +19,7 @@ long Utils::get_next_line(unsigned int fd, std::ostringstream &oss) {
       bytesRead = recv(fd, buffer, BUFFER_SIZE, 0);
       currentPos = 0;
       if (bytesRead <= 0) {
-        return bytesRead;
+        break;
       }
     }
 
