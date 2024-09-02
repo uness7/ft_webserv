@@ -1,13 +1,25 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Response.hpp                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/02 14:54:21 by yzioual           #+#    #+#             */
+/*   Updated: 2024/09/02 14:54:23 by yzioual          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #pragma once
 
-#include "Request.hpp"
-#include "Client.hpp"
-#include <iostream>
-#include <cstring>
-#include <string>
-#include <cstdlib>
-#include <algorithm>
-#include <map>
+# include "Request.hpp"
+# include "Client.hpp"
+# include <iostream>
+# include <cstring>
+# include <string>
+# include <cstdlib>
+# include <algorithm>
+# include <map>
 
 
 struct STATUS_CODE {

@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   CGIResponse.hpp                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/02 14:54:01 by yzioual           #+#    #+#             */
+/*   Updated: 2024/09/02 14:54:05 by yzioual          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CGIRESPONSE_HPP
 #define CGIRESPONSE_HPP
 
@@ -12,6 +24,8 @@
 # include <cstdlib>
 # include <cstdio>
 # include <unistd.h>
+# include <iomanip>
+# include <vector>
 # include "Utils.hpp"
 
 class Client;

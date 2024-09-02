@@ -1,12 +1,27 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/02 14:54:10 by yzioual           #+#    #+#             */
+/*   Updated: 2024/09/02 14:54:11 by yzioual          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #pragma once
 
-#include "Config.hpp"
-#include "Request.hpp"
-#include "Response.hpp"
-#include <unistd.h>
-#include <cstdlib>
-#include <cstring>
-#define BUFFER_SIZE 40960
+# include "Config.hpp"
+# include "Request.hpp"
+# include "Response.hpp"
+# include <unistd.h>
+# include <cstdlib>
+# include <cstring>
+# include <cerrno>
+# include <cstring>
+
+# define BUFFER_SIZE 40960
 
 class Response;
 

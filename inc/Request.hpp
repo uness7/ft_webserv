@@ -1,12 +1,16 @@
 #pragma once
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include "Utils.hpp"
+# include <fstream>
+# include <iostream>
+# include <map>
+# include <ostream>
+# include <sstream>
+# include <string>
+# include <vector>
+# include <algorithm>
+# include <cctype>
+# include <fstream>
+# include <iterator>
+# include "Utils.hpp"
 
 class Request {
 private:

@@ -1,18 +1,27 @@
 #pragma once
 
-#include "Client.hpp"
-#include "Request.hpp"
-#include "TCPSocket.hpp"
-#include <arpa/inet.h>
-#include <iostream>
-#include <netinet/in.h>
-#include <sys/epoll.h>
-#include <sstream>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <vector>
-#include <map>
+# include "Client.hpp"
+# include "Request.hpp"
+# include "TCPSocket.hpp"
+# include <arpa/inet.h>
+# include <iostream>
+# include <netinet/in.h>
+# include <sys/epoll.h>
+# include <sstream>
+# include <sys/socket.h>
+# include <sys/types.h>
+# include <unistd.h>
+# include <vector>
+# include <map>
+# include <algorithm>
+# include <csignal>
+# include <cstddef>
+# include <cstdlib>
+# include <fcntl.h>
+# include <sys/poll.h>
+# include <utility>
+
+# define MAX_EVENT 100
 
 class Server {
 	private:

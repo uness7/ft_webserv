@@ -1,5 +1,16 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   TCPSocket.cpp                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/02 14:52:03 by yzioual           #+#    #+#             */
+/*   Updated: 2024/09/02 14:52:30 by yzioual          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../inc/TCPSocket.hpp"
-#include <algorithm>
 
 void	exitWithFailure(std::string s, int port)
 {
@@ -67,24 +78,16 @@ void	TCPSocket::closeServer() const
 
 void	TCPSocket::initSocket()
 {
-	// Create a new socket
 	_socketFD = socket(AF_INET, SOCK_STREAM, 0);
 	if (_socketFD < 0)
 		throw CreateSocketException();
-
-	// Option value to set for socket options
 	int opt = 1;
-
-	// Set socket options to allow reuse of local addresses
 	if (setsockopt(_socketFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
 		throw InitSocketException();
-
-	// Bind the socket to the specified address and port
 	if (bind(_socketFD, (sockaddr *)&_socketAddress, _socketAddressLength) < 0)
 		throw InitSocketException();
 }
 
-// Function to create sockets based on the server configurations
 std::vector<TCPSocket *>	createSockets(const std::vector<ServerConfig> &serverConfigs)
 {
 	std::vector<TCPSocket *> sockets;

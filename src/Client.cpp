@@ -1,6 +1,16 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/02 14:23:14 by yzioual           #+#    #+#             */
+/*   Updated: 2024/09/02 14:23:17 by yzioual          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../inc/Client.hpp"
-#include <cerrno>
-#include <cstring>
 
 Client::Client(unsigned short fd, ServerConfig config)
     : _fd(fd), _dataSent(0), _request(), _config(config) {

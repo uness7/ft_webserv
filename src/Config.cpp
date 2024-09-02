@@ -1,13 +1,19 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Config.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/02 14:23:22 by yzioual           #+#    #+#             */
+/*   Updated: 2024/09/02 14:24:35 by yzioual          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../inc/Config.hpp"
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-#include <iostream>
-#include <cstring>
 
 Config::Config(const std::string &fileName)
 {
-	/* Parse the config file */
 	parseConfigFile(fileName);
 }
 

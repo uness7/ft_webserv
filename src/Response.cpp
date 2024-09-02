@@ -1,6 +1,17 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Response.cpp                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/02 14:26:18 by yzioual           #+#    #+#             */
+/*   Updated: 2024/09/02 14:26:20 by yzioual          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../inc/Response.hpp"
 #include "CGIResponse.hpp"
-#include <cstdlib>
 
 Response::Response() : _value(""), _statusCode(), _contentType(""), _buffer(""), _client(NULL) {}
 

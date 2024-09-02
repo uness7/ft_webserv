@@ -1,9 +1,26 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Config.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/02 14:54:15 by yzioual           #+#    #+#             */
+/*   Updated: 2024/09/02 14:54:17 by yzioual          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #pragma once
 
-#include <vector>
-#include <string>
-#include <stdexcept>
-#include <map>
+# include <vector>
+# include <string>
+# include <stdexcept>
+# include <map>
+# include <cstring>
+# include <sstream>
+# include <fstream>
+# include <iostream>
+
 
 struct LocationConfig
 {
