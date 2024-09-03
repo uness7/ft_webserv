@@ -41,7 +41,7 @@ class Response
 
 		void	build();
 		void	buildError();
-		void	buildPath();
+		bool	buildPath();
         	void    updateResponse(unsigned short statusCode, std::string contentType, std::string buffer);
 
 	public:
@@ -54,8 +54,8 @@ class Response
 		const std::string	getResponse() const;
 		void 		setStatusCode(STATUS_CODE);
 		void		setStatusCode(unsigned short code);
-		void		handleCGI(Request& req);
-		void		handleStaticFiles(Request &req);
+		void		handleCGI(void);
+		void		handleStaticFiles(void);
 		void		finalizeHTMLResponse(void) ;
 		STATUS_CODE 	getStatusCode() const;
 		std::string 	getStatusToString() const;

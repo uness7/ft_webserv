@@ -12,7 +12,7 @@
 
 #include "../inc/Request.hpp"
 
-Request::Request() : _method(""), _path(""), _query(""), _mimetype(""), _body(), _headers(), _data() {}
+Request::Request() : _method(""), _path(""), _query(""), _mimetype(""), _body(), _headers() {}
 
 Request::~Request() {}
 
@@ -34,7 +34,7 @@ Request &Request::operator=(const Request &rhs)
 
 long	Request::handleFirstLineHeader(unsigned int socketFd)
 {
-	std::ostringstream 	lineStream; 
+	std::ostringstream 	lineStream;
 	long			bytesRead = Utils::get_next_line(socketFd, lineStream);
 
 	if (bytesRead < 0)
@@ -56,6 +56,8 @@ void	Request::saveHeaderLine(std::string &line)
 	{
 		std::string key = line.substr(0, found);
 		std::string value = line.substr(found + 1);
+		if (value[0] == ' ')
+		  value.erase(0, 1);
 		std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 		_headers.insert(std::make_pair(key, value));
 	}
@@ -64,45 +66,46 @@ void	Request::saveHeaderLine(std::string &line)
 long	Request::readFromSocket(unsigned int socketFd)
 {
 	std::ifstream client;
-	handleFirstLineHeader(socketFd);
+	long bytesRead = handleFirstLineHeader(socketFd);
+	if (bytesRead <= 0)
+	  return bytesRead;
+
 	std::ostringstream lineStream;
 
 	while (true)
 	{
-		long	bytesRead = Utils::get_next_line(socketFd, lineStream);
+		long	lineRead = Utils::get_next_line(socketFd, lineStream);
 
-		if (bytesRead < 0)
-			return bytesRead;
+		if (lineRead < 0)
+			return lineRead;
 		std::string line = lineStream.str();
 		if (line.empty() ||
 				line.find_first_not_of(" \t\r\n") == std::string::npos) {
 			break;
 		}
-
+		bytesRead += lineRead;
 		saveHeaderLine(line);
 	}
 
 	std::string contentLengthStr = getHeaderField("content-length");
 	if (contentLengthStr.empty())
-		return 1;
+		return bytesRead;
 	long long	contentLength = atoll(contentLengthStr.c_str());
-	std::cout << "ct: " << contentLength << std::endl;
 	_body = std::vector<char>(contentLength);
 	size_t totalRead = 0;
 	while (static_cast<long long>(totalRead) < contentLength)
 	{
-		long bytesRead = Utils::get_next_line(socketFd, lineStream);;
-		if (bytesRead < 0)
-			return bytesRead;
+		long lineRead = Utils::get_next_line(socketFd, lineStream);;
+		if (lineRead < 0)
+			return lineRead;
+		bytesRead += lineRead;
 		std::string chunk = lineStream.str() + "\n";
 		if (chunk.size() == 0)
 			break;
-		std::cout << "chunk: " << chunk.size() << std::endl;
 		std::copy(chunk.begin(), chunk.begin() + chunk.size(), _body.begin() + totalRead);
 		totalRead += chunk.size();
-		std::cout << "body: " << totalRead << std::endl;
 	}
-	return 1;
+	return bytesRead;
 }
 
 void	Request::setMethod(std::string s)
@@ -164,12 +167,9 @@ std::vector<char> Request::getBody() const { return this->_body; }
 std::string Request::getHeaderField(std::string field) const
 {
 	if (_headers.count(field))
-		return _headers.at(field);
+	{
+  	std::string target = _headers.at(field);
+   return target;
+	}
 	return "";
-}
-
-std::ostream &operator<<(std::ostream &out, const Request &req)
-{
-	out << req._data << std::endl;
-	return out;
 }

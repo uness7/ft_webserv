@@ -15,7 +15,7 @@
 
 # include <string>
 # include <map>
-# include <Client.hpp>
+# include <../inc/Client.hpp>
 # include <unistd.h>
 # include <sys/wait.h>
 # include <iostream>
@@ -45,4 +45,4 @@ class CGIResponse
 		std::map<std::string, std::string>	_envMap;
 };
 
-#endif 
+#endif

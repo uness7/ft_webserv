@@ -38,9 +38,9 @@ void Client::setFd(unsigned short fd) { this->_fd = fd; }
 
 Request &Client::getRequest() { return this->_request; }
 
-int Client::readRequest() {
+long Client::readRequest() {
   _request = Request();
-  return _request.readFromSocket(getFd()) < 0 ? -1 : 1;
+  return _request.readFromSocket(getFd());
 }
 
 const std::string Client::getResponseToString() const {
@@ -54,16 +54,18 @@ void Client::sendResponse() {
   _response = new Response(this);
   std::string response = getResponseToString();
 
-  bytesSent = write(getFd(), response.c_str() + getDataSent(),
-                    response.size() - getDataSent());
-  if (bytesSent + getDataSent() == static_cast<long>(response.size()))
+  bytesSent = send(getFd(), response.c_str() + getDataSent(),
+                    response.size() - getDataSent(), 0);
+  if(bytesSent <= 0)
+    setDataSent(-1);
+  else if (bytesSent + getDataSent() == static_cast<long>(response.size()))
     setDataSent(0);
   else
     setDataSent(getDataSent() + bytesSent);
 }
 
-int Client::getDataSent() const { return _dataSent; }
+long Client::getDataSent() const { return _dataSent; }
 
-void Client::setDataSent(int dataSent) { this->_dataSent = dataSent; }
+void Client::setDataSent(long dataSent) { this->_dataSent = dataSent; }
 
 const ServerConfig Client::getConfig() const { return this->_config; }
