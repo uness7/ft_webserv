@@ -112,29 +112,22 @@ void Server::updateKqueue(int kqFD, short action, int targetFD) {
 }
 #endif
 
-// Initialize server sockets to listen to clients
 void Server::startToListenClients() {
-  // Iterate over all the server sockets
   for (size_t i = 0; i < _sockets.size(); i++) {
     try {
-      // Initialize the socket
       _sockets[i]->initSocket();
 
-      // Set the socket to listen for incoming connections
       if (listen(_sockets[i]->getSocketFD(), 0) < 0)
         exitWithFailure("Socket listen failed");
 
-      // Log the address and port the server is listening on
       std::ostringstream ss;
       ss << "\n*** Listening on ADDRESS: "
          << inet_ntoa(_sockets[i]
                           ->getSocketAdress()
-                          .sin_addr) // Convert the IP address to a string
-         << " PORT: "
+                          .sin_addr) << " PORT: "
          << ntohs(_sockets[i]
                       ->getSocketAdress()
-                      .sin_port) // Convert the port number to host byte order
-         << " ***\n";
+                      .sin_port) << " ***\n";
       log(ss.str());
       if (fcntl(_sockets[i]->getSocketFD(), F_SETFL, O_NONBLOCK) < 0)
         exitWithFailure("Failed to set non-blocking mode for client socket");
@@ -261,8 +254,10 @@ void Server::runServers(void) {
 #endif
 void Server::handleResponse(Client *client) {
   client->sendResponse();
-  std::string conn = client->getRequest().getHeaderField("connection");
-  if ((client->getDataSent() <= 0 && conn.compare(0, 10, "keep-alive") != 0))
+  // Voir comment check le connection: keep-alive (comportement bizarre lorsqu il est mit en place)
+  /* std::string conn = client->getRequest().getHeaderField("connection"); */
+  /* if (client->getDataSent() <= 0 && conn.compare(0, 10, "keep-alive") != 0) */
+  if (client->getDataSent() <= 0)
   {
     removeClient(client->getFd());
   }

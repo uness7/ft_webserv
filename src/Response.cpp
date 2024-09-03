@@ -129,13 +129,13 @@ STATUS_CODE Response::getStatusCode() const
 void	Response::handleCGI(void)
 {
 
-  CGIResponse 	cgi = CGIResponse(this->_client);
+    CGIResponse 	cgi = CGIResponse(this->_client);
 	std::string 	resp = cgi.execute();
 
 	if (!resp.empty())
 		updateResponse(200, "text/html", resp);
 	else{
-  	buildError();
+        buildError();
 	}
 }
 
@@ -155,7 +155,7 @@ void	Response::handleStaticFiles(void)
 	}
 	else
 	{
-    buildError();
+        buildError();
 	}
 }
 
@@ -221,13 +221,10 @@ void	Response::build(void)
 		updateResponse(413, "text/plain", "Payload Too Large");
 	else
 	{
-	std::cout << "bepath: " << request.getPath() << std::endl;
 		if (!buildPath()) {
 		  buildError();
 		  return finalizeHTMLResponse();
 		}
-		std::cout << "afpath: " << request.getPath() << std::endl;
-
 		if (request.isCGI())
 			handleCGI();
 		else
