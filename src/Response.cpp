@@ -221,19 +221,14 @@ void	Response::build(void)
 		updateResponse(413, "text/plain", "Payload Too Large");
 	else
 	{
-		std::string	path = request.getPath();
-		std::string 	server_root = _client->getConfig().locations.begin()->second.root;
-
+	std::cout << "bepath: " << request.getPath() << std::endl;
 		if (!buildPath()) {
 		  buildError();
 		  return finalizeHTMLResponse();
 		}
+		std::cout << "afpath: " << request.getPath() << std::endl;
 
-		if (path == "/api/data")
-			return updateResponse(200, "application/json", "{\"message\": \"This is dynamic data!\"}");
-		else if (path == "/api/info")
-			updateResponse(200, "application/json", "{\"info\": \"This is some info!\"}");
-		else if (request.isCGI())
+		if (request.isCGI())
 			handleCGI();
 		else
 			handleStaticFiles();

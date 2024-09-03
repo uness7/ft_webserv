@@ -173,7 +173,6 @@ void Server::handleClientRequest(int fd) {
 #endif
 
 #if __linux
-// Main loop to manage all sockets
 void Server::runServers(void) {
   const int MAX_EVENT = 1000;
   struct epoll_event events[MAX_EVENT];
@@ -182,7 +181,6 @@ void Server::runServers(void) {
   if (_event_fd == -1)
     exitWithFailure("Error with Epoll_fd");
 
-  // Initialize server sockets to listen for client connections
   startToListenClients();
 
   while (true) {
@@ -261,7 +259,6 @@ void Server::runServers(void) {
   closeAllSockets();
 }
 #endif
-// Handle client response
 void Server::handleResponse(Client *client) {
   client->sendResponse();
   std::string conn = client->getRequest().getHeaderField("connection");
@@ -271,7 +268,6 @@ void Server::handleResponse(Client *client) {
   }
 }
 
-// Close all server sockets
 void Server::closeAllSockets() {
   for (size_t i = 0; i < _sockets.size(); i++) {
     delete _sockets[i];
@@ -282,7 +278,6 @@ void Server::closeAllSockets() {
   }
 }
 
-// Remove a client from the server
 void Server::removeClient(int keyFD) {
   std::map<unsigned short, Client *>::iterator element = _clients.find(keyFD);
   if (element == _clients.end())
