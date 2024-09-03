@@ -65,21 +65,23 @@ void    Response::updateResponse(unsigned short statusCode, std::string contentT
 void	Response::buildError()
 {
 	Request &request = _client->getRequest();
+
+	if (_client->getConfig().error_page.empty())
+	 return;
 	std::vector<std::string> error_page = splitString(_client->getConfig().error_page);
 	if (error_page.size() != 2)
 		return;
-	std::string newPath = _client->getConfig().locations.begin()->second.root + error_page[1];
+	std::string newPath = error_page[1];
 	_client->getRequest().setPath(newPath);
 	std::stringstream buffer;
 	std::ifstream inFile(std::string("." + request.getPath()).c_str());
 	buffer << inFile.rdbuf();
 	inFile.close();
-	setStatusCode(atoi(error_page[0].c_str()));
-	_buffer = buffer.str();
-	_contentType = request.getMimeType();
+	updateResponse(atoi(error_page[0].c_str()), request.getMimeType(), buffer.str());
+	return;
 }
 
-void	Response::buildPath()
+bool	Response::buildPath()
 {
 	Request &request = _client->getRequest();
 	std::map<std::string, LocationConfig> lc = _client->getConfig().locations;
@@ -97,19 +99,143 @@ void	Response::buildPath()
 			path_max = key_size;
 		}
 	}
+	if (path_max == -1)
+	 return false;
 	std::string end_s = path.substr(path_max);
 	if (!target.root.empty() && target.root.compare(1, target.root.size()-1 , end_s, 0, target.root.size()-1) == 0)
-		return;
+		return true;
 	if (end_s.empty() && !target.index.empty())
 		request.setPath(target.root + "/" + target.index);
-	else	
+	else
 		request.setPath(target.root + "/" + end_s);
+	return true;
 }
 
 const std::string	Response::getResponse() const
 {
 	return this->_value;
 }
+void Response::setStatusCode(STATUS_CODE statusCode)
+{
+	this->_statusCode.code = statusCode.code;
+	this->_statusCode.status = statusCode.status;
+}
+
+STATUS_CODE Response::getStatusCode() const
+{
+	return this->_statusCode;
+}
+
+void	Response::handleCGI(void)
+{
+
+  CGIResponse 	cgi = CGIResponse(this->_client);
+	std::string 	resp = cgi.execute();
+
+	if (!resp.empty())
+		updateResponse(200, "text/html", resp);
+	else{
+  	buildError();
+	}
+}
+
+void	Response::handleStaticFiles(void)
+{
+  Request &request = _client->getRequest();
+	std::string newPath = request.getPath();
+	std::string mimetype = request.getMimeType();
+	std::ifstream inFile(std::string("." + newPath).c_str());
+	std::stringstream buffer;
+
+	if (inFile.is_open())
+	{
+		buffer << inFile.rdbuf();
+		inFile.close();
+		updateResponse(200, request.getMimeType(), buffer.str());
+	}
+	else
+	{
+    buildError();
+	}
+}
+
+void	Response::finalizeHTMLResponse(void)
+{
+	if (_buffer.empty()) {
+        std::string errorDefault = std::string(
+            "<!DOCTYPE html>"
+            "<html lang='en'>"
+            "<head>"
+            "<meta charset='UTF-8'>"
+            "<title>404 - Page Not Found</title>"
+            "<style>"
+            "body {"
+            "    font-family: Arial, sans-serif;"
+            "    background-color: #f8f9fa;"
+            "    color: #333;"
+            "    text-align: center;"
+            "    padding: 50px;"
+            "}"
+            "h1 {"
+            "    font-size: 50px;"
+            "}"
+            "p {"
+            "    font-size: 20px;"
+            "}"
+            "</style>"
+            "</head>"
+            "<body>"
+            "<h1>404 - Page Not Found</h1>"
+            "<p>Sorry, the page you are looking for does not exist.</p>"
+            "</body>"
+            "</html>"
+        );
+        updateResponse(404, "text/html", errorDefault);
+    }
+	std::ostringstream ss;
+	ss << "HTTP/1.1 " << this->getStatusToString() << "\nContent-Type: " << _contentType
+		<< "\nContent-Length: " << _buffer.size() << "\n\n"
+		<< _buffer;
+	this->_value = ss.str();
+}
+
+std::string	Response::getStatusToString() const
+{
+	std::stringstream ss;
+	ss << _statusCode.code << " " << _statusCode.status;
+	return ss.str();
+}
+
+void	Response::build(void)
+{
+	Request				&request = _client->getRequest();
+	std::string 			method = request.getMethod();
+	std::vector<std::string> 	allowed_methods = _client->getConfig()
+		.locations.begin()->second.allowed_methods;
+	long long 			bodySize = std::atoll(request.getHeaderField("content-length").c_str());
+
+	if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end())
+		updateResponse(405, "text/plain", "Method Not Allowed");
+	else if (request.getHeaderField("content-length") != "" &&
+			(bodySize > _client->getConfig().client_max_body_size))
+		updateResponse(413, "text/plain", "Payload Too Large");
+	else
+	{
+	std::cout << "bepath: " << request.getPath() << std::endl;
+		if (!buildPath()) {
+		  buildError();
+		  return finalizeHTMLResponse();
+		}
+		std::cout << "afpath: " << request.getPath() << std::endl;
+
+		if (request.isCGI())
+			handleCGI();
+		else
+			handleStaticFiles();
+	}
+	finalizeHTMLResponse();
+}
+
 
 void Response::setStatusCode(unsigned short code)
 {
@@ -175,90 +301,4 @@ void Response::setStatusCode(unsigned short code)
 		_statusCode.status = "Internal Server Error";
 		break;
 	}
-}
-
-void Response::setStatusCode(STATUS_CODE statusCode)
-{
-	this->_statusCode.code = statusCode.code;
-	this->_statusCode.status = statusCode.status;
-}
-
-STATUS_CODE Response::getStatusCode() const
-{
-	return this->_statusCode;
-}
-
-void	Response::handleCGI(Request& req)
-{
-	(void)req;
-
-	CGIResponse 	cgi = CGIResponse(this->_client);
-	std::string 	resp = cgi.execute();
-
-	if (!resp.empty())
-		updateResponse(200, "text/html", resp);
-	else 
-		buildError();
-}
-
-void	Response::handleStaticFiles(Request &request)
-{
-	buildPath();
-	std::string newPath = request.getPath();
-	std::string mimetype = request.getMimeType();
-	std::ifstream inFile(std::string("." + newPath).c_str());
-	std::stringstream buffer;
-	if (inFile.is_open())
-	{
-		buffer << inFile.rdbuf();
-		inFile.close();
-		updateResponse(200, request.getMimeType(), buffer.str());
-	}
-	else
-		buildError();
-}
-void	Response::finalizeHTMLResponse(void) 
-{
-	std::ostringstream ss;
-	ss << "HTTP/1.1 " << this->getStatusToString() << "\nContent-Type: " << _contentType
-		<< "\nContent-Length: " << _buffer.size() << "\n\n"
-		<< _buffer;
-	this->_value = ss.str();
-}
-
-std::string	Response::getStatusToString() const
-{
-	std::stringstream ss;
-	ss << _statusCode.code << " " << _statusCode.status;
-	return ss.str();
-}
-
-void	Response::build(void)
-{
-	Request				&request = _client->getRequest();
-	std::string 			method = request.getMethod();
-	std::vector<std::string> 	allowed_methods = _client->getConfig()
-		.locations.begin()->second.allowed_methods;
-	long long 			bodySize = std::atoll(request.getHeaderField("content-length").c_str());
-
-	if (std::find(allowed_methods.begin(), allowed_methods.end(), method) == allowed_methods.end())
-		updateResponse(405, "text/plain", "Method Not Allowed");
-	else if (request.getHeaderField("content-length") != "" && 
-			(bodySize > _client->getConfig().client_max_body_size))
-		updateResponse(413, "text/plain", "Payload Too Large");
-	else
-	{
-		std::string	path = request.getPath();
-		std::string 	server_root = _client->getConfig().locations.begin()->second.root;
-
-		if (path == "/api/data")
-			updateResponse(200, "application/json", "{\"message\": \"This is dynamic data!\"}");
-		else if (path == "/api/info")
-			updateResponse(200, "application/json", "{\"info\": \"This is some info!\"}");
-		else if (request.isCGI())
-			handleCGI(request);
-		else 
-			handleStaticFiles(request);
-	}
-	finalizeHTMLResponse();
 }

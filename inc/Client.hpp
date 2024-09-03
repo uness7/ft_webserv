@@ -15,6 +15,7 @@
 # include "Config.hpp"
 # include "Request.hpp"
 # include "Response.hpp"
+#include <sys/unistd.h>
 # include <unistd.h>
 # include <cstdlib>
 # include <cstring>
@@ -29,7 +30,7 @@ class Client
 {
 	private:
 		unsigned short 	_fd;
-		int 		_dataSent;
+		long 		_dataSent;
 		Request 	_request;
 		Response *	_response;
 		ServerConfig 	_config;
@@ -42,10 +43,10 @@ class Client
 
 		unsigned short 		getFd() const;
 		void 			setFd(unsigned short);
-		int 			getDataSent() const;
-		void			setDataSent(int);
+		long 			getDataSent() const;
+		void			setDataSent(long);
 		Request&		getRequest();
-		int 			readRequest();
+	  long 			readRequest();
 		const std::string 	getResponseToString() const;
 		const Response 		*getResponse() const;
 		void			sendResponse();

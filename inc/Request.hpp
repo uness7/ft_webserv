@@ -22,7 +22,6 @@ private:
   std::map<std::string, std::string> _headers;
 
 public:
-  std::string _data;
   Request();
   Request(const Request &);
   Request &operator=(const Request &);
@@ -47,5 +46,3 @@ public:
   void setPath(std::string);
   void setMimeType();
 };
-
-std::ostream &operator<<(std::ostream &out, const Request &);

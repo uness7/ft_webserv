@@ -15,7 +15,7 @@
 
 std::string     Utils::getCgiScriptForKey(const ServerConfig& serverConfig, const std::string& key)
 {
-        std::map<std::string, LocationConfig>::const_iterator   it = serverConfig.locations.find(key);
+        std::map<std::string, LocationConfig>::const_iterator it = serverConfig.locations.find(key);
         if (it != serverConfig.locations.end())
                 return it->second.cgi_script;
         return "";

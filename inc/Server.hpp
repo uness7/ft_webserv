@@ -1,46 +1,47 @@
 #pragma once
 
-# include "Client.hpp"
-# include "Request.hpp"
-# include "TCPSocket.hpp"
-# include <arpa/inet.h>
-# include <iostream>
-# include <netinet/in.h>
-# include <sys/epoll.h>
-# include <sstream>
-# include <sys/socket.h>
-# include <sys/types.h>
-# include <unistd.h>
-# include <vector>
-# include <map>
-# include <algorithm>
-# include <csignal>
-# include <cstddef>
-# include <cstdlib>
-# include <fcntl.h>
-# include <sys/poll.h>
-# include <utility>
+#include "Client.hpp"
+#include "Request.hpp"
+#include "TCPSocket.hpp"
+#include <arpa/inet.h>
+#include <iostream>
+#include <netinet/in.h>
+#include <sstream>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <vector>
+#include <map>
 
-# define MAX_EVENT 100
+#if __linux__
+  #include <sys/epoll.h>
+#elif __APPLE__
+  #include <sys/event.h>
+#endif
 
 class Server {
-	private:
-		std::vector<TCPSocket *> _sockets;  // Vector to store pointers to TCPSocket instances
-		std::map<unsigned short, Client *> _clients;  // Map to store connected clients
-		int _epoll_fd;
+private:
+  std::vector<TCPSocket *> _sockets;
+  std::map<unsigned short, Client *> _clients;
+  int _event_fd;
 
-		void startToListenClients();
-		void acceptConnection(TCPSocket *s);
-		void handleClientRequest(int fd, struct epoll_event *ev);
-		void handleResponse(Client *);
+  void startToListenClients();
+  void acceptConnection(TCPSocket *s);
+  void handleResponse(Client *);
 
-		void removeClient(int keyFD);
-		TCPSocket *getSocketByFD(int targetFD) const;
-		void closeAllSockets();
+  void removeClient(int keyFD);
+  TCPSocket *getSocketByFD(int targetFD) const;
+  void closeAllSockets();
 
-		static void updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev);
-	public:
-		Server(std::vector<TCPSocket *> sockets);
-		~Server();
-		void runServers();
+#if __linux__
+  void handleClientRequest(int fd, struct epoll_event *ev);
+  static void updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev);
+#elif __APPLE__
+  void handleClientRequest(int fd);
+  static void updateKqueue(int kqFD, short action, int targetFD);
+#endif
+public:
+  Server(std::vector<TCPSocket *> sockets);
+  ~Server();
+  void runServers();
 };

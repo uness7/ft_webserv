@@ -10,11 +10,13 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "CGIResponse.hpp"
+#include "../inc/CGIResponse.hpp"
+#include <iterator>
 
 CGIResponse::CGIResponse(Client *client) : _client(client), _cgiPath("/usr/bin/python3")
 {
-	this->_scriptPath = Utils::getCgiScriptForKey(this->_client->getConfig(), "/");
+
+	this->_scriptPath = "." + this->_client->getRequest().getPath();
 	setCgiEnv();
 }
 
@@ -53,7 +55,7 @@ char 	**mapToEnvArray(const std::map<std::string, std::string> &envMap)
 std::string 	CGIResponse::execute(void)
 {
 	char	*const argv[] = {
-		(char *)_cgiPath.c_str(), 
+		(char *)_cgiPath.c_str(),
 		(char *)_scriptPath.c_str(), NULL
 	};
 	char	**envp = mapToEnvArray(_envMap);
@@ -61,7 +63,6 @@ std::string 	CGIResponse::execute(void)
 	int	in_pipe[2];
 	pid_t	pid;
 
-	std::cout << "Tourabi" <<_client->getRequest().getBody().data() << "tourabi" << std::endl;
 	if (pipe(out_pipe) == -1 || pipe(in_pipe) == -1)
 	{
 		perror("pipe");
@@ -100,7 +101,7 @@ std::string 	CGIResponse::execute(void)
 		{
 			close(in_pipe[0]);
 			write(
-				in_pipe[1], 
+				in_pipe[1],
 				_client->getRequest().getBody().data(),
 				_client->getRequest().getBody().size()
 			);
