@@ -26,5 +26,6 @@ print(f"""\
 Content-Type: text/html\n
 <html><body>
 <p>{message}</p>
+<li><a href="http://localhost:8070">Go back to homepage</a></li>
 </body></html>
 """)

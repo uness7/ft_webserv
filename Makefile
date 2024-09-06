@@ -41,11 +41,13 @@ $(BUILD):
 
 clean:
 	rm -f $(OBJS)
+	rm -rf uploads
 	printf "$(YELLOW)Object files removed$(WHITE)\n"
 
 fclean: clean
 	rm -f $(TARGET)
 	rm -rf $(BUILD)
+	rm -rf uploads
 	printf "$(YELLOW)Directory is cleaned$(WHITE)\n"
 
 re: fclean all
