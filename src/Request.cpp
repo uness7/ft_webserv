@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "../inc/Request.hpp"
-#include <sys/_types/_ssize_t.h>
 
 Request::Request() : _method(""), _path(""), _query(""), _mimetype(""), _body(), _headers(), _contentLength(0), _valid(true) {}
 
