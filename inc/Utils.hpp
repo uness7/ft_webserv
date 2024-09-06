@@ -27,7 +27,7 @@ class Utils
 		static std::string	vectorToString(const std::vector<std::string>& vec);
 		static void 		printLocationConfigMap(const std::map<std::string, LocationConfig>& myMap);
 		static std::string     	getCgiScriptForKey(const ServerConfig& serverConfig, const std::string& key);
-		static long get_next_line(unsigned int fd, std::ostringstream &oss);
+		static long get_next_line(int fd, std::ostringstream &oss);
 };
 
 #endif

@@ -37,12 +37,11 @@ class Response
 		std::string 				_contentType;
 		std::string 				_buffer;
 		Client 					    *_client;
-		std::map<std::string, std::string>	envMap;
 
 		void	build();
 		void	buildError();
-		bool	buildPath();
-        	void    updateResponse(unsigned short statusCode, std::string contentType, std::string buffer);
+		void  buildPath(LocationConfig &target, short index_max);
+    void  updateResponse(unsigned short statusCode, std::string contentType, std::string buffer);
 
 	public:
 		Response();

@@ -11,8 +11,9 @@
 /* ************************************************************************** */
 
 #include "../inc/Request.hpp"
+#include <sys/_types/_ssize_t.h>
 
-Request::Request() : _method(""), _path(""), _query(""), _mimetype(""), _body(), _headers() {}
+Request::Request() : _method(""), _path(""), _query(""), _mimetype(""), _body(), _headers(), _contentLength(0), _valid(true) {}
 
 Request::~Request() {}
 
@@ -28,6 +29,8 @@ Request &Request::operator=(const Request &rhs)
 		this->_query = rhs._query;
 		this->_body = rhs._body;
 		this->_headers = rhs._headers;
+		this->_contentLength = rhs._contentLength;
+		this->_valid = rhs._valid;
 	}
 	return *this;
 }
@@ -60,10 +63,25 @@ void	Request::saveHeaderLine(std::string &line)
 		  value.erase(0, 1);
 		std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 		_headers.insert(std::make_pair(key, value));
+		if (key == "content-length")
+		  _contentLength = atoll(value.c_str());
 	}
 }
 
-long	Request::readFromSocket(unsigned int socketFd)
+bool Request::checkHeaderLocation(ServerConfig &config) {
+  LocationConfig target;
+  short found = config.getLocationByPathRequested(_path, target);
+  if (found < 0 || config.client_max_body_size < _contentLength)
+    return false;
+
+  std::vector<std::string> &allowed_methods = target.allowed_methods;
+  if (allowed_methods.size() && std::find(allowed_methods.begin(), allowed_methods.end(), getMethod()) == allowed_methods.end())
+    return false;
+
+  return true;
+}
+
+long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)
 {
 	std::ifstream client;
 	long bytesRead = handleFirstLineHeader(socketFd);
@@ -87,15 +105,20 @@ long	Request::readFromSocket(unsigned int socketFd)
 		saveHeaderLine(line);
 	}
 
-	std::string contentLengthStr = getHeaderField("content-length");
-	if (contentLengthStr.empty())
+	// TROUVER UNE SOLUTION POUR NE PLUS ECOUTER SUR LE PORT DANS LE CAS OU LE HEADER N EST PAS BON
+	if (!checkHeaderLocation(config)) {
+  	  Utils::get_next_line(-1, lineStream);
+			_valid = false;
+     return bytesRead;
+	}
+
+	if (_contentLength == 0)
 		return bytesRead;
-	long long	contentLength = atoll(contentLengthStr.c_str());
-	_body = std::vector<char>(contentLength);
+	_body = std::vector<char>(_contentLength);
 	size_t totalRead = 0;
-	while (static_cast<long long>(totalRead) < contentLength)
+	while (static_cast<long long>(totalRead) < _contentLength)
 	{
-		long lineRead = Utils::get_next_line(socketFd, lineStream);;
+		long lineRead = Utils::get_next_line(socketFd, lineStream);
 		if (lineRead < 0)
 			return lineRead;
 		bytesRead += lineRead;
@@ -126,6 +149,9 @@ void	Request::setPath(std::string s)
 		this->_path = s;
 	setMimeType();
 }
+bool Request::isValid() const {
+ return _valid;
+}
 
 void	Request::setMimeType()
 {
@@ -155,6 +181,8 @@ bool	Request::isCGI() const
 }
 
 std::string Request::getMethod() const { return this->_method; }
+
+long long Request::getContentLength() const { return this->_contentLength; }
 
 std::string Request::getPath() const { return this->_path; }
 

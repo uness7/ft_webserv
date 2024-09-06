@@ -164,12 +164,12 @@ void	Config::parseLocationLine(const std::string &line, LocationConfig &location
 	}
 	else if (line.find("upload_store") != std::string::npos)
 		locationConfig.upload_store = extractValue(line, "upload_store");
-	else if (line.find("allowed_methods") != std::string::npos)  
+	else if (line.find("allowed_methods") != std::string::npos)
 	{
-		std::string methods = extractValue(line, "allowed_methods");  
-		std::istringstream iss(methods);  
-		std::string method;  
-		while (iss >> method) 
+		std::string methods = extractValue(line, "allowed_methods");
+		std::istringstream iss(methods);
+		std::string method;
+		while (iss >> method)
 			locationConfig.allowed_methods.push_back(method);
 	}
 	else if (line.find("cgi_script") != std::string::npos)
@@ -177,7 +177,7 @@ void	Config::parseLocationLine(const std::string &line, LocationConfig &location
 }
 
 
-std::vector<ServerConfig> Config::getServerConfigs() const 
+std::vector<ServerConfig> Config::getServerConfigs() const
 {
 	return _serverConfigs;
 }
@@ -219,4 +219,22 @@ void	Config::printLocationConfig(const std::string& locationPath, const Location
 		std::cout << "  Upload store: " << locationConfig.upload_store << std::endl;
 	if (!locationConfig.cgi_script.empty())
 		std::cout << " CGI Script : " << locationConfig.cgi_script << std::endl;
+}
+
+
+short ServerConfig::getLocationByPathRequested(std::string path, LocationConfig &target) {
+  std::map<std::string, LocationConfig> lc = locations;
+	std::map<std::string, LocationConfig>::const_iterator it;
+	int	path_max = -1;
+
+	for (it = lc.begin(); it != lc.end(); it++)
+	{
+		int key_size = it->first.size();
+		int found = it->first.compare(0, key_size, path, 0, key_size);
+		if (found == 0 && path_max < key_size) {
+			target = it->second;
+			path_max = key_size;
+		}
+	}
+	return path_max;
 }

@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
+#include <sys/types.h>
 #include <utility>
 #include <vector>
 
@@ -156,6 +157,11 @@ void Server::handleClientRequest(int fd, struct epoll_event *ev) {
 #elif __APPLE__
 void Server::handleClientRequest(int fd) {
   Client *client = _clients.at(fd);
+  if (!client->getRequest().isValid()) {
+    std::cout << "NOT VALID" << std::endl;
+    Server::updateKqueue(_event_fd, (EV_ADD | EV_ENABLE), fd);
+    return;
+  }
   int byteReceived = client->readRequest();
   if (byteReceived > 0) {
     Server::updateKqueue(_event_fd, (EV_ADD | EV_ENABLE), fd);
@@ -224,7 +230,7 @@ void Server::runServers(void) {
     if (nfds == -1) {
       std::cout << "ERROR ON KEVENT" << std::endl;
       if (errno == EINTR)
-        continue; // handle signal interruption
+        continue;
       exitWithFailure("Error with kevent() in loop");
     }
     if (stopListening)

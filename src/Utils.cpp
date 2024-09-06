@@ -21,12 +21,20 @@ std::string     Utils::getCgiScriptForKey(const ServerConfig& serverConfig, cons
         return "";
 }
 
-long	Utils::get_next_line(unsigned int fd, std::ostringstream &oss)
+long	Utils::get_next_line(int fd, std::ostringstream &oss)
 {
 	static char buffer[BUFFER_SIZE];
 	static ssize_t bytesRead = 0;
 	static size_t currentPos = 0;
 	oss.str("");
+	if (fd < 0)
+	{
+  	memset(&buffer, 0, BUFFER_SIZE);
+  	bytesRead = 0;
+		currentPos = 0;
+    return 0;
+	}
+
 	while (true) {
 		if (static_cast<ssize_t>(currentPos) >= bytesRead) {
 			bytesRead = recv(fd, buffer, BUFFER_SIZE, 0);

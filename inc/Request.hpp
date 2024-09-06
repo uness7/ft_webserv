@@ -10,6 +10,7 @@
 # include <cctype>
 # include <fstream>
 # include <iterator>
+#include "Config.hpp"
 # include "Utils.hpp"
 
 class Request {
@@ -20,6 +21,12 @@ private:
   std::string _mimetype;
   std::vector<char> _body;
   std::map<std::string, std::string> _headers;
+  long long _contentLength;
+  bool _valid;
+
+  long handleFirstLineHeader(unsigned int);
+  void saveHeaderLine(std::string &);
+  bool checkHeaderLocation(ServerConfig &config);
 
 public:
   Request();
@@ -27,9 +34,7 @@ public:
   Request &operator=(const Request &);
   ~Request();
 
-  long readFromSocket(unsigned int);
-  long handleFirstLineHeader(unsigned int);
-  void saveHeaderLine(std::string &);
+  long readFromSocket(unsigned int, ServerConfig &config);
 
   std::string getMethod() const;
   std::string getPath() const;
@@ -37,6 +42,8 @@ public:
   std::string getQuery() const;
   std::vector<char> getBody() const;
   std::string getHeaderField(std::string) const;
+  long long getContentLength() const;
+  bool isValid() const;
 
   bool isCGI() const;
 

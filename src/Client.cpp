@@ -39,8 +39,7 @@ void Client::setFd(unsigned short fd) { this->_fd = fd; }
 Request &Client::getRequest() { return this->_request; }
 
 long Client::readRequest() {
-  _request = Request();
-  return _request.readFromSocket(getFd());
+  return _request.readFromSocket(getFd(), _config);
 }
 
 const std::string Client::getResponseToString() const {
