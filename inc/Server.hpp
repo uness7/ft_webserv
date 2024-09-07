@@ -4,6 +4,7 @@
 #include "Request.hpp"
 #include "TCPSocket.hpp"
 #include <arpa/inet.h>
+#include <exception>
 #include <iostream>
 #include <netinet/in.h>
 #include <sstream>
@@ -31,7 +32,7 @@ private:
 
   void removeClient(int keyFD);
   TCPSocket *getSocketByFD(int targetFD) const;
-  void closeAllSockets();
+  void clearServer();
 
 #if __linux__
   void handleClientRequest(int fd, struct epoll_event *ev);
@@ -44,4 +45,32 @@ public:
   Server(std::vector<TCPSocket *> sockets);
   ~Server();
   void runServers();
+
+
+
+  class ServerException : public std::exception {
+				protected:
+					std::string	msg;
+
+				public:
+					ServerException(const std::string& msg = "") : std::exception() {
+						this->msg = msg;
+					}
+					virtual ~ServerException() throw() {}
+					virtual const char	*what() const throw() {
+						return this->msg.c_str();
+					}
+			};
+
+			class InitClientException: public ServerException {
+				public:
+				    InitClientException(std::string address) : ServerException() {
+						std::ostringstream ss;
+
+						ss << "Init client failed on addess " << address;
+
+						this->msg = ss.str();
+					}
+			};
+
 };

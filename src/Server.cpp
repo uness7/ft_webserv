@@ -9,10 +9,8 @@
 #include <utility>
 #include <vector>
 
-// Global variable to control the server shutdown
 static volatile bool stopListening = false;
 
-// Log a message to the standard output
 void log(const std::string &message) { std::cout << message << std::endl; }
 
 // Exit the program with a failure message
@@ -35,7 +33,6 @@ Server::Server(std::vector<TCPSocket *> s) : _sockets(s), _clients() {
 #endif
 }
 
-// Destructor for Server class
 Server::~Server() {}
 TCPSocket *Server::getSocketByFD(int targetFD) const {
   for (size_t i = 0; i < _sockets.size(); i++) {
@@ -44,23 +41,19 @@ TCPSocket *Server::getSocketByFD(int targetFD) const {
   }
   return NULL;
 }
-// Accept a new client connection
+
 void Server::acceptConnection(TCPSocket *s) {
-  int newClient = accept(s->getSocketFD(), (sockaddr *)&s->getSocketAdress(),
+  int newClient = accept(s->getSocketFD(), (sockaddr *)&s->getSocketAddress(),
                          &s->getSocketAddressLength());
-  if (newClient < 0) {
-    std::ostringstream ss;
-    ss << "Server failed to accept incoming connection from ADDRESS: "
-       << inet_ntoa(s->getSocketAdress().sin_addr)
-       << "; PORT: " << ntohs(s->getSocketAdress().sin_port);
-    exitWithFailure(ss.str());
-  }
-  if (fcntl(newClient, F_SETFL, O_NONBLOCK) < 0)
-    exitWithFailure("Failed to set non-blocking mode for client socket");
+  if (newClient < 0 || fcntl(newClient, F_SETFL, O_NONBLOCK) < 0)
+    throw InitClientException(s->getSocketAddressToString());
+
   Client *n = new Client(newClient, s->getServerConfig());
   _clients.insert(std::make_pair(newClient, n));
+
   std::cout << "[NEW CLIENT]: FD -> " << newClient << " on "
             << s->getIpAddress() << ":" << s->getPort() << std::endl;
+
 #if __linux__
   Server::updateEpoll(_event_fd, EPOLL_CTL_ADD, newClient, NULL);
 #elif __APPLE__
@@ -124,10 +117,10 @@ void Server::startToListenClients() {
       std::ostringstream ss;
       ss << "\n*** Listening on ADDRESS: "
          << inet_ntoa(_sockets[i]
-                          ->getSocketAdress()
+                          ->getSocketAddress()
                           .sin_addr) << " PORT: "
          << ntohs(_sockets[i]
-                      ->getSocketAdress()
+                      ->getSocketAddress()
                       .sin_port) << " ***\n";
       log(ss.str());
       if (fcntl(_sockets[i]->getSocketFD(), F_SETFL, O_NONBLOCK) < 0)
@@ -157,11 +150,6 @@ void Server::handleClientRequest(int fd, struct epoll_event *ev) {
 #elif __APPLE__
 void Server::handleClientRequest(int fd) {
   Client *client = _clients.at(fd);
-  if (!client->getRequest().isValid()) {
-    std::cout << "NOT VALID" << std::endl;
-    Server::updateKqueue(_event_fd, (EV_ADD | EV_ENABLE), fd);
-    return;
-  }
   int byteReceived = client->readRequest();
   if (byteReceived > 0) {
     Server::updateKqueue(_event_fd, (EV_ADD | EV_ENABLE), fd);
@@ -190,7 +178,10 @@ void Server::runServers(void) {
     if (stopListening)
       break;
     if (nfds == -1)
-      exitWithFailure("Error with epoll_wait");
+    {
+      // clearServer();
+      throw std::exception("Error with epoll_wait");
+    }
 
     for (int i = 0; i < nfds; i++) {
       int fd_triggered = events[i].data.fd;
@@ -201,8 +192,14 @@ void Server::runServers(void) {
         if (_clients.count(fd_triggered))
           handleClientRequest(fd_triggered, &events[i]);
         else {
-          TCPSocket *server = getSocketByFD(fd_triggered);
-          acceptConnection(server);
+          try {
+            TCPSocket *server = getSocketByFD(fd_triggered);
+            if (!server)
+              throw std::exception("Server not exist");
+            acceptConnection(server);
+          } catch (std::exception &e) {
+            std::cerr << e.what() << std::endl;
+          }
         }
       } else if (_clients.count(fd_triggered) && ev & EPOLLOUT) {
         Client *client = _clients.at(fd_triggered);
@@ -255,7 +252,7 @@ void Server::runServers(void) {
       }
     }
   }
-  closeAllSockets();
+  clearServer();
 }
 #endif
 void Server::handleResponse(Client *client) {
@@ -264,18 +261,18 @@ void Server::handleResponse(Client *client) {
   /* std::string conn = client->getRequest().getHeaderField("connection"); */
   /* if (client->getDataSent() <= 0 && conn.compare(0, 10, "keep-alive") != 0) */
   if (client->getDataSent() <= 0)
-  {
     removeClient(client->getFd());
-  }
 }
 
-void Server::closeAllSockets() {
-  for (size_t i = 0; i < _sockets.size(); i++) {
-    delete _sockets[i];
-  }
+void Server::clearServer() {
   std::map<unsigned short, Client *>::iterator it;
   for (it = _clients.begin(); it != _clients.end(); it++) {
+    std::cout << "Removed client fd -> " << it->first << std::endl;
     delete it->second;
+  }
+
+  for (size_t i = 0; i < _sockets.size(); i++) {
+    delete _sockets[i];
   }
 }
 

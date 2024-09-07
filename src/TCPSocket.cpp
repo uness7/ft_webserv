@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../inc/TCPSocket.hpp"
+#include <sstream>
 
 void	exitWithFailure(std::string s, int port)
 {
@@ -56,7 +57,12 @@ int TCPSocket::getPort() const { return this->_port; }
 
 std::string TCPSocket::getIpAddress() const { return this->_ipAddress; }
 
-struct sockaddr_in &TCPSocket::getSocketAdress()
+std::string TCPSocket::getSocketAddressToString() {
+  std::ostringstream address;
+  address << getIpAddress() <<  "::" << getPort();
+  return address.str();
+}
+struct sockaddr_in &TCPSocket::getSocketAddress()
 {
 	return this->_socketAddress;
 }

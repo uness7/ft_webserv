@@ -32,11 +32,11 @@ class TCPSocket
 	private:
 		ServerConfig _serverConfig;
 		int _socketFD;
-		std::string _ipAddress; 
+		std::string _ipAddress;
 		int _port;
-		struct sockaddr_in _socketAddress; 
+		struct sockaddr_in _socketAddress;
 		unsigned int _socketAddressLength;
-		TCPSocket(); 
+		TCPSocket();
 
 	public:
 		TCPSocket(const ServerConfig&);
@@ -44,12 +44,13 @@ class TCPSocket
 		TCPSocket &operator=(const TCPSocket &);
 		~TCPSocket();
 
-		void initSocket(); 
-		void closeServer() const; 
+		void initSocket();
+		void closeServer() const;
 		int getSocketFD() const;
 		int getPort() const;
 		std::string getIpAddress() const;
-		struct sockaddr_in &getSocketAdress();
+		struct sockaddr_in &getSocketAddress();
+		std::string getSocketAddressToString();
 		unsigned int &getSocketAddressLength();
 		ServerConfig &getServerConfig();
 		class CreateSocketException : public std::exception {
