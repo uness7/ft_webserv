@@ -179,8 +179,8 @@ void Server::runServers(void) {
       break;
     if (nfds == -1)
     {
-      // clearServer();
-      throw std::exception("Error with epoll_wait");
+      clearServer();
+      throw std::runtime_error("Error with epoll_wait");
     }
 
     for (int i = 0; i < nfds; i++) {
@@ -195,7 +195,7 @@ void Server::runServers(void) {
           try {
             TCPSocket *server = getSocketByFD(fd_triggered);
             if (!server)
-              throw std::exception("Server not exist");
+              throw std::runtime_error("Server not exist");
             acceptConnection(server);
           } catch (std::exception &e) {
             std::cerr << e.what() << std::endl;
@@ -207,7 +207,7 @@ void Server::runServers(void) {
       }
     }
   }
-  closeAllSockets();
+  clearServer();
 }
 #elif __APPLE__
 void Server::runServers(void) {
