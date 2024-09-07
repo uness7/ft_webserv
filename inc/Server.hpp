@@ -22,55 +22,56 @@
 
 class Server {
 private:
-  std::vector<TCPSocket *> _sockets;
-  std::map<unsigned short, Client *> _clients;
-  int _event_fd;
+      std::vector<TCPSocket *> _sockets;
+      std::map<unsigned short, Client *> _clients;
+      int _event_fd;
 
-  void startToListenClients();
-  void acceptConnection(TCPSocket *s);
-  void handleResponse(Client *);
+      void startToListenClients();
+      void acceptConnection(TCPSocket *s);
+      void handleResponse(Client *);
 
-  void removeClient(int keyFD);
-  TCPSocket *getSocketByFD(int targetFD) const;
-  void clearServer();
+      void removeClient(int keyFD);
+      TCPSocket *getSocketByFD(int targetFD) const;
+      Server(void);
 
 #if __linux__
-  void handleClientRequest(int fd, struct epoll_event *ev);
-  static void updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev);
+      void handleClientRequest(int fd, struct epoll_event *ev);
+      static void updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev);
 #elif __APPLE__
-  void handleClientRequest(int fd);
-  static void updateKqueue(int kqFD, short action, int targetFD);
+      void handleClientRequest(int fd);
+      static void updateKqueue(int kqFD, short action, int targetFD);
 #endif
-public:
-  Server(std::vector<TCPSocket *> sockets);
-  ~Server();
-  void runServers();
+    public:
+      Server(std::vector<TCPSocket *> sockets);
+      ~Server();
+      void runServers();
+      void clearServer();
 
 
 
-  class ServerException : public std::exception {
-				protected:
-					std::string	msg;
+      class ServerException : public std::exception {
+                    protected:
+                        std::string	msg;
 
-				public:
-					ServerException(const std::string& msg = "") : std::exception() {
-						this->msg = msg;
-					}
-					virtual ~ServerException() throw() {}
-					virtual const char	*what() const throw() {
-						return this->msg.c_str();
-					}
-			};
+                    public:
+                        ServerException(const std::string& msg = "") : std::exception() {
+                            this->msg = msg;
+                        }
+                        virtual ~ServerException() throw() {}
+                        virtual const char	*what() const throw() {
+                            return this->msg.c_str();
+                        }
+      };
 
-			class InitClientException: public ServerException {
-				public:
-				    InitClientException(std::string address) : ServerException() {
-						std::ostringstream ss;
+      class AcceptConnectionException: public ServerException {
+                    public:
+                         AcceptConnectionException(std::string address) : ServerException() {
+                            std::ostringstream ss;
 
-						ss << "Init client failed on addess " << address;
+                            ss << "Failed to accept client on address " << address;
 
-						this->msg = ss.str();
-					}
-			};
+                            this->msg = ss.str();
+                    }
+      };
 
 };

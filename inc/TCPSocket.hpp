@@ -53,18 +53,32 @@ class TCPSocket
 		std::string getSocketAddressToString();
 		unsigned int &getSocketAddressLength();
 		ServerConfig &getServerConfig();
-		class CreateSocketException : public std::exception {
-			public:
-				const char * what() const throw() {
-					return "Cannot create socket";
-				}
-		};
-		class InitSocketException : public std::exception {
-			public:
-				const char * what() const throw() {
-					return "Cannot init socket";
-				}
-		};
+
+      class SocketException : public std::exception {
+                    protected:
+                        std::string	msg;
+
+                    public:
+                        SocketException(const std::string& msg = "") : std::exception() {
+                            this->msg = msg;
+                        }
+                        virtual ~SocketException() throw() {}
+                        virtual const char	*what() const throw() {
+                            return this->msg.c_str();
+                        }
+      };
+
+
+      class SocketInitException: public SocketException {
+                    public:
+                         SocketInitException(std::string errorMessage, std::string address) : SocketException() {
+                            std::ostringstream ss;
+
+                            ss << errorMessage << address;
+
+                            this->msg = ss.str();
+                    }
+      };
 };
 
 std::vector<TCPSocket*> createSockets(const std::vector<ServerConfig>& serverConfigs);

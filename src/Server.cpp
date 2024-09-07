@@ -13,19 +13,16 @@ static volatile bool stopListening = false;
 
 void log(const std::string &message) { std::cout << message << std::endl; }
 
-// Exit the program with a failure message
 void exitWithFailure(std::string s) {
   std::cerr << "error: " <<  s << std::endl;
   exit(1);
 }
 
-// Signal handler to stop the server on SIGINT (Ctrl+C)
 void handleSignal(int sig) {
   if (sig == SIGINT)
     stopListening = true;
 }
 
-// Constructor for Server class
 Server::Server(std::vector<TCPSocket *> s) : _sockets(s), _clients() {
   std::signal(SIGINT, handleSignal);
 #if __APPLE__
@@ -33,7 +30,9 @@ Server::Server(std::vector<TCPSocket *> s) : _sockets(s), _clients() {
 #endif
 }
 
-Server::~Server() {}
+Server::~Server() {
+    clearServer();
+} 
 TCPSocket *Server::getSocketByFD(int targetFD) const {
   for (size_t i = 0; i < _sockets.size(); i++) {
     if (_sockets[i]->getSocketFD() == targetFD)
@@ -46,7 +45,7 @@ void Server::acceptConnection(TCPSocket *s) {
   int newClient = accept(s->getSocketFD(), (sockaddr *)&s->getSocketAddress(),
                          &s->getSocketAddressLength());
   if (newClient < 0 || fcntl(newClient, F_SETFL, O_NONBLOCK) < 0)
-    throw InitClientException(s->getSocketAddressToString());
+    throw AcceptConnectionException(s->getSocketAddressToString());
 
   Client *n = new Client(newClient, s->getServerConfig());
   _clients.insert(std::make_pair(newClient, n));
@@ -88,13 +87,13 @@ void Server::updateKqueue(int kqFD, short action, int targetFD) {
     struct kevent event;
     EV_SET(&event, targetFD, EVFILT_READ, EV_ADD, 0, 0, nullptr);
     if (kevent(kqFD, &event, 1, nullptr, 0, nullptr) == -1) {
-      exitWithFailure("kevent ev add problem");
+      log("Failed to delete event from kqueue");
     }
   } else if (action == (EV_ADD | EV_ENABLE)) {
     struct kevent evSet;
     EV_SET(&evSet, targetFD, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, nullptr);
     if (kevent(kqFD, &evSet, 1, nullptr, 0, nullptr) == -1) {
-      exitWithFailure("Failed to modify client socket in kqueue");
+      log("Failed to delete event from kqueue");
     }
   } else if (action == EV_DELETE) {
     struct kevent event;
@@ -111,8 +110,8 @@ void Server::startToListenClients() {
     try {
       _sockets[i]->initSocket();
 
-      if (listen(_sockets[i]->getSocketFD(), 0) < 0)
-        exitWithFailure("Socket listen failed");
+      if (listen(_sockets[i]->getSocketFD(), 100) < 0)
+		throw TCPSocket::SocketInitException("Impossible to listen socket to address ", _sockets[i]->getSocketAddressToString());
 
       std::ostringstream ss;
       ss << "\n*** Listening on ADDRESS: "
@@ -124,7 +123,8 @@ void Server::startToListenClients() {
                       .sin_port) << " ***\n";
       log(ss.str());
       if (fcntl(_sockets[i]->getSocketFD(), F_SETFL, O_NONBLOCK) < 0)
-        exitWithFailure("Failed to set non-blocking mode for client socket");
+		throw TCPSocket::SocketInitException("Failed to set non-blocking mode for client socket ", _sockets[i]->getSocketAddressToString());
+
 #if __linux__
       Server::updateEpoll(_event_fd, EPOLL_CTL_ADD, _sockets[i]->getSocketFD(),
                           NULL);
@@ -159,62 +159,58 @@ void Server::handleClientRequest(int fd) {
 }
 #endif
 
-#if __linux
+#if __linux__
 void Server::runServers(void) {
-  const int MAX_EVENT = 1000;
-  struct epoll_event events[MAX_EVENT];
+    const int MAX_EVENT = 1000;
+    struct epoll_event events[MAX_EVENT];
 
-  _event_fd = epoll_create1(0);
-  if (_event_fd == -1)
-    exitWithFailure("Error with Epoll_fd");
-
-  startToListenClients();
-
-  while (true) {
-    if (stopListening)
-      break;
-
-    int nfds = epoll_wait(_event_fd, events, MAX_EVENT, -1);
-    if (stopListening)
-      break;
-    if (nfds == -1)
-    {
-      clearServer();
+    _event_fd = epoll_create1(0);
+    if (_event_fd == -1)
       throw std::runtime_error("Error with epoll_wait");
-    }
 
-    for (int i = 0; i < nfds; i++) {
-      int fd_triggered = events[i].data.fd;
-      short ev = events[i].events;
-      if (ev & EPOLLHUP || ev & EPOLLERR) {
-        this->removeClient(fd_triggered);
-      } else if (ev & EPOLLIN) {
-        if (_clients.count(fd_triggered))
-          handleClientRequest(fd_triggered, &events[i]);
-        else {
-          try {
-            TCPSocket *server = getSocketByFD(fd_triggered);
-            if (!server)
-              throw std::runtime_error("Server not exist");
-            acceptConnection(server);
-          } catch (std::exception &e) {
-            std::cerr << e.what() << std::endl;
+    startToListenClients();
+
+    while (true) {
+        if (stopListening)
+          break;
+
+        int nfds = epoll_wait(_event_fd, events, MAX_EVENT, -1);
+        if (stopListening)
+          break;
+        if (nfds == -1)
+          throw std::runtime_error("Error with epoll_wait");
+
+        for (int i = 0; i < nfds; i++) {
+          int fd_triggered = events[i].data.fd;
+          short ev = events[i].events;
+          if (ev & EPOLLHUP || ev & EPOLLERR) {
+            this->removeClient(fd_triggered);
+          } else if (ev & EPOLLIN) {
+            if (_clients.count(fd_triggered))
+              handleClientRequest(fd_triggered, &events[i]);
+            else {
+              try {
+                TCPSocket *server = getSocketByFD(fd_triggered);
+                if (!server)
+                  throw std::runtime_error("Server not found");
+                acceptConnection(server);
+              } catch (std::exception &e) {
+                std::cerr << e.what() << std::endl;
+              }
+            }
+          } else if (_clients.count(fd_triggered) && ev & EPOLLOUT) {
+                Client *client = _clients.at(fd_triggered);
+                handleResponse(client);
           }
         }
-      } else if (_clients.count(fd_triggered) && ev & EPOLLOUT) {
-        Client *client = _clients.at(fd_triggered);
-        handleResponse(client);
-      }
     }
-  }
-  clearServer();
 }
 #elif __APPLE__
 void Server::runServers(void) {
 
   _event_fd = kqueue();
   if (_event_fd == -1)
-    exitWithFailure("Error with kqueue()");
+    throw std::runtime_error("Error with kqueue");
   struct kevent events[1000];
 
   startToListenClients();
@@ -228,7 +224,7 @@ void Server::runServers(void) {
       std::cout << "ERROR ON KEVENT" << std::endl;
       if (errno == EINTR)
         continue;
-      exitWithFailure("Error with kevent() in loop");
+      throw std::runtime_error("Error with kevent");
     }
     if (stopListening)
       break;
@@ -277,17 +273,20 @@ void Server::clearServer() {
 }
 
 void Server::removeClient(int keyFD) {
-  std::map<unsigned short, Client *>::iterator element = _clients.find(keyFD);
-  if (element == _clients.end())
-    return;
+    std::map<unsigned short, Client *>::iterator element = _clients.find(keyFD);
+    if (element == _clients.end())
+    {
+        /* std::cout << keyFD << " already freed !" << std::endl; */
+        return;
+    }
 #if __linux__
-  Server::updateEpoll(_event_fd, EPOLL_CTL_DEL, keyFD, NULL);
+    Server::updateEpoll(_event_fd, EPOLL_CTL_DEL, keyFD, NULL);
 #elif __APPLE__
-  Server::updateKqueue(_event_fd, EV_DELETE, keyFD);
+    Server::updateKqueue(_event_fd, EV_DELETE, keyFD);
 #endif
-  std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on "
-            << element->second->getConfig().port << std::endl;
-  close(keyFD);
-  _clients.erase(element);
-  delete element->second;
+    std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on "
+            << element->second->getConfig().listen << "::"  << element->second->getConfig().port << std::endl;
+    close(keyFD);
+    _clients.erase(element);
+    delete element->second;
 }

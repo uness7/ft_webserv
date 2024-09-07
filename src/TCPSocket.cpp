@@ -13,11 +13,6 @@
 #include "../inc/TCPSocket.hpp"
 #include <sstream>
 
-void	exitWithFailure(std::string s, int port)
-{
-	std::cerr << port << " -> " << s << std::endl;
-	exit(1);
-}
 
 TCPSocket::TCPSocket(const ServerConfig &serverConfig)
     : _serverConfig(serverConfig), _socketFD(-1), _ipAddress(serverConfig.listen), _port(serverConfig.port), _socketAddress(), _socketAddressLength(sizeof(_socketAddress))
@@ -86,12 +81,13 @@ void	TCPSocket::initSocket()
 {
 	_socketFD = socket(AF_INET, SOCK_STREAM, 0);
 	if (_socketFD < 0)
-		throw CreateSocketException();
+		throw SocketInitException("Failed to create socket on address " , getSocketAddressToString());
 	int opt = 1;
 	if (setsockopt(_socketFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-		throw InitSocketException();
+		throw SocketInitException("Impossible to reuse address ", getSocketAddressToString());
+
 	if (bind(_socketFD, (sockaddr *)&_socketAddress, _socketAddressLength) < 0)
-		throw InitSocketException();
+		throw SocketInitException("Impossible to bind socket to address ", getSocketAddressToString());
 }
 
 std::vector<TCPSocket *>	createSockets(const std::vector<ServerConfig> &serverConfigs)
