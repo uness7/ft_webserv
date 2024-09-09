@@ -116,7 +116,10 @@ std::string 	CGIResponse::execute(void)
 		std::string	res;
 		ssize_t		bytes_read;
 		while ((bytes_read = read(out_pipe[0], buffer, sizeof(buffer))) > 0)
+		{
 			res.append(buffer, bytes_read);
+			std::cout << "buffer " << buffer << " buffer" << std::endl;
+		}
 		close(out_pipe[0]);
 		int	status;
 		waitpid(pid, &status, 0);

@@ -13,13 +13,12 @@ C['password'] = password
 
 C['username']['path'] = '/'
 C['password']['path'] = '/'
-C['username']['expires'] = 3600  # Cookie expires in 1 hour (optional)
-C['password']['expires'] = 3600  # Cookie expires in 1 hour (optional)
+C['username']['expires'] = 3600  
+C['password']['expires'] = 3600 
 
 print("Content-type: text/html\r\n")  # Content-type header first
 print(C);
 
-# Print the HTML content
 print("<html><body>")
 print(
     '<a href="http://localhost:8070/cookies/index.html">'

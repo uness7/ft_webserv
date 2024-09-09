@@ -134,6 +134,10 @@ void	Response::handleCGI(void)
 
 	if (!resp.empty())
 	{
+		std::cout << "Response inside handleCGI function" << std::endl;
+		std::cout << resp << std::endl;
+		std::cout << "Response inside handleCGI function" << std::endl;
+
 		std::string	headers;
 		std::string	body;
 		std::size_t	pos = resp.find("\r\n\r\n");
@@ -149,8 +153,13 @@ void	Response::handleCGI(void)
 		std::string 		line;
 
 		while (std::getline(headerStream, line))
+		{
 			if (line.find("Set-Cookie:") == 0)
+			{
 				_cookies.push_back(line);
+				std::cout << "Line " << line << " Line" << std::endl;
+			}
+		}
 		updateResponse(200, "text/html", resp);
 	}
 	else 
@@ -175,44 +184,29 @@ void	Response::handleStaticFiles(void)
 		buildError();
 }
 
-void	Response::finalizeHTMLResponse(void) {
+void	Response::finalizeHTMLResponse(void)
+{
 	if (_buffer.empty())
 	{
-		std::string errorDefault =
-			std::string("<!DOCTYPE html>"
-					"<html lang='en'>"
-					"<head>"
-					"<meta charset='UTF-8'>"
-					"<title>404 - Page Not Found</title>"
-					"<style>"
-					"body {"
-					"    font-family: Arial, sans-serif;"
-					"    background-color: #f8f9fa;"
-					"    color: #333;"
-					"    text-align: center;"
-					"    padding: 50px;"
-					"}"
-					"h1 {"
-					"    font-size: 50px;"
-					"}"
-					"p {"
-					"    font-size: 20px;"
-					"}"
-					"</style>"
-					"</head>"
-					"<body>"
-					"<h1>404 - Page Not Found</h1>"
-					"<p>Sorry, the page you are looking for does not exist.</p>"
-					"</body>"
-					"</html>");
+		std::ifstream 	file("/static/404.html");
+		std::string	errorDefault; 
+		if (file)
+		{
+			std::ostringstream	ss;
+			ss << file.rdbuf(); 
+			errorDefault = ss.str(); 
+		}
+		else
+			std::string errorDefault = "<p>404 page is not found, that is why you are seeing this message!</p>";
 		updateResponse(404, "text/html", errorDefault);
 	}
-	std::ostringstream ss;
-	ss << "HTTP/1.1 " << this->getStatusToString()
+	std::ostringstream	ss;
+	ss << "HTTP/1.1 " 
+		<< this->getStatusToString()
 		<< "\r\nContent-Type: " << _contentType
-		<< "\r\nContent-Length: " << _buffer.size() << "\n\n";
+		<< "\r\nContent-Length: " << _buffer.size() << "\r\n";
 	for (std::vector<std::string>::iterator it = _cookies.begin(); it != _cookies.end(); ++it)
-		ss << *it;
+		ss << *it << "\r\n";
 	ss << "\r\n" << _buffer;
 	this->_value = ss.str();
 }

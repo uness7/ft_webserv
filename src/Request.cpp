@@ -12,13 +12,31 @@
 
 #include "../inc/Request.hpp"
 
-Request::Request() : _method(""), _path(""), _query(""), _mimetype(""), _body(), _headers(), _contentLength(0), _valid(true) {}
+Request::Request() 
+	: 
+	_method(""), 
+	_path(""), 
+	_query(""), 
+	_mimetype(""), 
+	_body(), 
+	_headers(), 
+	_contentLength(0), 
+	_valid(true)
+{
+	/* Default Constructor */
+}
 
-Request::~Request() {}
+Request::~Request()
+{
+	/* Deconstructor */
+}
 
-Request::Request(const Request &cp) { *this = cp; }
+Request::Request(const Request &cp)
+{
+	*this = cp;
+}
 
-Request &Request::operator=(const Request &rhs)
+Request	&Request::operator=(const Request &rhs)
 {
 	if (this != &rhs)
 	{
@@ -67,16 +85,21 @@ void	Request::saveHeaderLine(std::string &line)
 	}
 }
 
-bool Request::checkHeaderLocation(ServerConfig &config) {
-	LocationConfig target;
+bool	Request::checkHeaderLocation(ServerConfig &config)
+{
+	LocationConfig	target;
+
 	short found = config.getLocationByPathRequested(_path, target);
 	if (found < 0 || config.client_max_body_size < _contentLength)
 		return false;
 
 	std::vector<std::string> &allowed_methods = target.allowed_methods;
-	if (allowed_methods.size() && std::find(allowed_methods.begin(), allowed_methods.end(), getMethod()) == allowed_methods.end())
+	if (allowed_methods.size() && 
+			std::find(
+				allowed_methods.begin(), 
+				allowed_methods.end(), 
+				getMethod()) == allowed_methods.end())
 		return false;
-
 	return true;
 }
 
@@ -106,6 +129,7 @@ long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)
 	
 
 	// print header
+	std::cout << "Header is being printed: " << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 		std::cout << it->first << ": " << it->second << std::endl;
 
@@ -187,6 +211,8 @@ bool	Request::isCGI() const
 {
 	return getMimeType() == "application/python" ? true : false;
 }
+
+/* Getters Methods */
 
 std::string Request::getMethod() const { return this->_method; }
 
