@@ -209,8 +209,8 @@ void	Response::finalizeHTMLResponse(void) {
 	}
 	std::ostringstream ss;
 	ss << "HTTP/1.1 " << this->getStatusToString()
-		<< "\nContent-Type: " << _contentType
-		<< "\nContent-Length: " << _buffer.size() << "\n\n";
+		<< "\r\nContent-Type: " << _contentType
+		<< "\r\nContent-Length: " << _buffer.size() << "\n\n";
 	for (std::vector<std::string>::iterator it = _cookies.begin(); it != _cookies.end(); ++it)
 		ss << *it;
 	ss << "\r\n" << _buffer;

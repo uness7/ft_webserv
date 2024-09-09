@@ -1,15 +1,8 @@
 S = src
+
 BUILD = build
 
-SRCS =  $(S)/main.cpp \
-	$(S)/Server.cpp  \
-	$(S)/Request.cpp \
-	$(S)/Response.cpp \
-	$(S)/CGIResponse.cpp \
-	$(S)/TCPSocket.cpp \
-	$(S)/Client.cpp \
-	$(S)/Config.cpp \
-	$(S)/Utils.cpp \
+SRCS = $(wildcard $(S)/*.cpp)  
 
 INCDIR = inc
 
@@ -21,6 +14,7 @@ TARGET = WebServ
 
 OBJS = $(SRCS:$(S)/%.cpp=$(BUILD)/%.o)
 
+# Colors
 BLUE		=	\033[34m
 YELLOW		=	\033[33m
 GREEN		=	\033[32m
