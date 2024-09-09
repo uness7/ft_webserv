@@ -6,7 +6,7 @@
 /*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/02 14:26:18 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/02 14:26:20 by yzioual          ###   ########.fr       */
+/*   Updated: 2024/09/09 09:43:52 by yzioual          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,14 +134,10 @@ void	Response::handleCGI(void)
 
 	if (!resp.empty())
 	{
-		std::cout << "Response inside handleCGI function" << std::endl;
-		std::cout << resp << std::endl;
-		std::cout << "Response inside handleCGI function" << std::endl;
 
 		std::string	headers;
 		std::string	body;
-		std::size_t	pos = resp.find("\r\n\r\n");
-
+		std::size_t	pos = resp.find("\r\n");
 		if (pos != std::string::npos)
 		{
 			headers = resp.substr(0, pos);
@@ -149,16 +145,14 @@ void	Response::handleCGI(void)
 		}
 		else
 			body = resp;
-		std::istringstream 	headerStream(headers);
+
+		std::istringstream 	headerStream(body);
 		std::string 		line;
 
 		while (std::getline(headerStream, line))
 		{
 			if (line.find("Set-Cookie:") == 0)
-			{
 				_cookies.push_back(line);
-				std::cout << "Line " << line << " Line" << std::endl;
-			}
 		}
 		updateResponse(200, "text/html", resp);
 	}

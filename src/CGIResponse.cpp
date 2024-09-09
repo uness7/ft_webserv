@@ -6,7 +6,7 @@
 /*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/02 14:18:38 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/06 12:02:35 by yzioual          ###   ########.fr       */
+/*   Updated: 2024/09/09 09:52:38 by yzioual          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ void	CGIResponse::setCgiEnv()
 	_envMap["REQUEST_METHOD"] = _client->getRequest().getMethod();
 	_envMap["CONTENT_TYPE"] = _client->getRequest().getHeaderField("content-type");
 	_envMap["CONTENT_LENGTH"] = _client->getRequest().getHeaderField("content-length");
+	_envMap["HTTP_COOKIE"] = _client->getRequest().getHeaderField("cookie");
 }
 
 char 	**mapToEnvArray(const std::map<std::string, std::string> &envMap)
