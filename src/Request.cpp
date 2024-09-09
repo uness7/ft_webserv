@@ -63,21 +63,21 @@ void	Request::saveHeaderLine(std::string &line)
 		std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 		_headers.insert(std::make_pair(key, value));
 		if (key == "content-length")
-		  _contentLength = atoll(value.c_str());
+			_contentLength = atoll(value.c_str());
 	}
 }
 
 bool Request::checkHeaderLocation(ServerConfig &config) {
-  LocationConfig target;
-  short found = config.getLocationByPathRequested(_path, target);
-  if (found < 0 || config.client_max_body_size < _contentLength)
-    return false;
+	LocationConfig target;
+	short found = config.getLocationByPathRequested(_path, target);
+	if (found < 0 || config.client_max_body_size < _contentLength)
+		return false;
 
-  std::vector<std::string> &allowed_methods = target.allowed_methods;
-  if (allowed_methods.size() && std::find(allowed_methods.begin(), allowed_methods.end(), getMethod()) == allowed_methods.end())
-    return false;
+	std::vector<std::string> &allowed_methods = target.allowed_methods;
+	if (allowed_methods.size() && std::find(allowed_methods.begin(), allowed_methods.end(), getMethod()) == allowed_methods.end())
+		return false;
 
-  return true;
+	return true;
 }
 
 long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)
@@ -85,7 +85,7 @@ long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)
 	std::ifstream client;
 	long bytesRead = handleFirstLineHeader(socketFd);
 	if (bytesRead <= 0)
-	  return bytesRead;
+		return bytesRead;
 
 	std::ostringstream lineStream;
 
@@ -103,18 +103,25 @@ long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)
 		bytesRead += lineRead;
 		saveHeaderLine(line);
 	}
+	
+
+	// print header
+	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+		std::cout << it->first << ": " << it->second << std::endl;
+
 
 	// TROUVER UNE SOLUTION POUR NE PLUS ECOUTER SUR LE PORT DANS LE CAS OU LE HEADER N EST PAS BON
 	if (!checkHeaderLocation(config)) {
-  	  Utils::get_next_line(-1, lineStream);
-			_valid = false;
-     return bytesRead;
+		Utils::get_next_line(-1, lineStream);
+		_valid = false;
+		return bytesRead;
 	}
 
 	if (_contentLength == 0)
 		return bytesRead;
 	_body = std::vector<char>(_contentLength);
 	size_t totalRead = 0;
+
 	while (static_cast<long long>(totalRead) < _contentLength)
 	{
 		long lineRead = Utils::get_next_line(socketFd, lineStream);
@@ -148,8 +155,10 @@ void	Request::setPath(std::string s)
 		this->_path = s;
 	setMimeType();
 }
-bool Request::isValid() const {
- return _valid;
+
+bool Request::isValid() const
+{
+	return _valid;
 }
 
 void	Request::setMimeType()
@@ -191,12 +200,12 @@ std::string Request::getQuery() const { return this->_query; }
 
 std::vector<char> Request::getBody() const { return this->_body; }
 
-std::string Request::getHeaderField(std::string field) const
+std::string	Request::getHeaderField(std::string field) const
 {
 	if (_headers.count(field))
 	{
-  	std::string target = _headers.at(field);
-   return target;
+  		std::string target = _headers.at(field);
+   		return target;
 	}
 	return "";
 }

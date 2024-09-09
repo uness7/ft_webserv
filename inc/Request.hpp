@@ -14,42 +14,42 @@
 # include "Utils.hpp"
 
 class Request {
-private:
-  std::string _method;
-  std::string _path;
-  std::string _query;
-  std::string _mimetype;
-  std::vector<char> _body;
-  std::map<std::string, std::string> _headers;
-  long long _contentLength;
-  bool _valid;
+	private:
+		std::string _method;
+		std::string _path;
+		std::string _query;
+		std::string _mimetype;
+		std::vector<char> _body;
+		std::map<std::string, std::string> _headers;
+		long long _contentLength;
+		bool _valid;
 
-  long handleFirstLineHeader(unsigned int);
-  void saveHeaderLine(std::string &);
-  bool checkHeaderLocation(ServerConfig &config);
+		long handleFirstLineHeader(unsigned int);
+		void saveHeaderLine(std::string &);
+		bool checkHeaderLocation(ServerConfig &config);
 
-public:
-  Request();
-  Request(const Request &);
-  Request &operator=(const Request &);
-  ~Request();
+	public:
+		Request();
+		Request(const Request &);
+		Request &operator=(const Request &);
+		~Request();
 
-  long readFromSocket(unsigned int, ServerConfig &config);
+		long readFromSocket(unsigned int, ServerConfig &config);
 
-  std::string getMethod() const;
-  std::string getPath() const;
-  std::string getMimeType() const;
-  std::string getQuery() const;
-  std::vector<char> getBody() const;
-  std::string getHeaderField(std::string) const;
-  long long getContentLength() const;
-  bool isValid() const;
+		std::string getMethod() const;
+		std::string getPath() const;
+		std::string getMimeType() const;
+		std::string getQuery() const;
+		std::vector<char> getBody() const;
+		std::string getHeaderField(std::string) const;
+		long long getContentLength() const;
+		bool isValid() const;
 
-  bool isCGI() const;
+		bool isCGI() const;
 
-  void setHeaders(std::string &);
-  void appendToBody();
-  void setMethod(std::string);
-  void setPath(std::string);
-  void setMimeType();
+		void setHeaders(std::string &);
+		void appendToBody();
+		void setMethod(std::string);
+		void setPath(std::string);
+		void setMimeType();
 };

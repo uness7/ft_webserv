@@ -1,25 +1,27 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
-import os
-from http import cookies
+import cgi
+import cgitb
+from os import environ
 
-# Retrieve cookies from the environment
-cookie = cookies.SimpleCookie(os.environ.get("HTTP_COOKIE"))
+# Enable debugging
+cgitb.enable()
 
-# Print content-type header
-print("Content-Type: text/html\n")
+# Output the header for HTML
+print("Content-Type: text/html")
+print()  # End of headers
 
-# Start HTML output
-print("<html><body>")
-print("<h1>Saved Cookies</h1>")
-
-# Check if any cookies are saved
-if cookie:
-    for key, morsel in cookie.items():
-        print(f"<p>{key}: {morsel.value}</p>")
+# Check if there are cookies in the environment
+if 'HTTP_COOKIE' in environ:
+    cookies = environ['HTTP_COOKIE']
+    
+    # Split cookies by ';' and process each one
+    for cookie in cookies.split(';'):
+        cookie = cookie.strip()  # Remove any leading/trailing whitespace
+        if '=' in cookie:
+            key, value = cookie.split('=', 1)  # Split at the first '='
+            print(f"key: {key}<br>")
+            print(f"value: {value}<br>")
 else:
-    print("<p>No cookies found</p>")
-
-print('<a href="http://localhost:8070/cookies/index.html">Go back to homepage</a>')
-print("</body></html>")
+    print("No cookies found.")
 

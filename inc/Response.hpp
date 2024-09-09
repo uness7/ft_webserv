@@ -20,6 +20,7 @@
 # include <cstdlib>
 # include <algorithm>
 # include <map>
+# include <vector>
 
 
 struct STATUS_CODE {
@@ -37,6 +38,7 @@ class Response
 		std::string 				_contentType;
 		std::string 				_buffer;
 		Client 					    *_client;
+		std::vector<std::string>		_cookies;
 
 		void	build();
 		void	buildError();
@@ -58,4 +60,8 @@ class Response
 		void		finalizeHTMLResponse(void) ;
 		STATUS_CODE 	getStatusCode() const;
 		std::string 	getStatusToString() const;
+
+
+		static const std::map<unsigned short, std::string>& getStatusCodes();
+
 };
