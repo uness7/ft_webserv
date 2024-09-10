@@ -46,9 +46,10 @@ class Client
 		long 			getDataSent() const;
 		void			setDataSent(long);
 		Request&		getRequest();
-	  long 			readRequest();
+	    long 			readRequest();
 		const std::string 	getResponseToString() const;
 		const Response 		*getResponse() const;
 		void			sendResponse();
 		const ServerConfig 	getConfig() const;
+		void              clear();
 };

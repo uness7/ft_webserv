@@ -258,9 +258,13 @@ void Server::runServers(void) {
 
 void Server::handleResponse(Client *client, struct epoll_event *ev) {
     client->sendResponse();
+
     std::string conn = client->getRequest().getHeaderField("connection");
     if (client->getDataSent() == 0 && conn.compare(0, 10, "keep-alive") == 0)
+    {
         updateEpoll(_event_fd, EPOLL_CTL_ADD, client->getFd(), ev);
+        client->clear();
+    }
     else if (client->getDataSent() <= 0)
         removeClient(client->getFd());
 }

@@ -30,7 +30,13 @@ Client &Client::operator=(const Client &rhs) {
   return *this;
 }
 
-Client::~Client() {}
+Client::~Client() { }
+
+void  Client::clear() {
+    _request = Request();
+    _dataSent = 0;
+    delete _response;
+}
 
 unsigned short Client::getFd() const { return this->_fd; }
 
