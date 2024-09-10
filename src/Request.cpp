@@ -12,15 +12,15 @@
 
 #include "../inc/Request.hpp"
 
-Request::Request() 
-	: 
-	_method(""), 
-	_path(""), 
-	_query(""), 
-	_mimetype(""), 
-	_body(), 
-	_headers(), 
-	_contentLength(0), 
+Request::Request()
+	:
+	_method(""),
+	_path(""),
+	_query(""),
+	_mimetype(""),
+	_body(),
+	_headers(),
+	_contentLength(0),
 	_valid(true)
 {
 	/* Default Constructor */
@@ -94,10 +94,10 @@ bool	Request::checkHeaderLocation(ServerConfig &config)
 		return false;
 
 	std::vector<std::string> &allowed_methods = target.allowed_methods;
-	if (allowed_methods.size() && 
+	if (allowed_methods.size() &&
 			std::find(
-				allowed_methods.begin(), 
-				allowed_methods.end(), 
+				allowed_methods.begin(),
+				allowed_methods.end(),
 				getMethod()) == allowed_methods.end())
 		return false;
 	return true;
@@ -126,12 +126,12 @@ long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)
 		bytesRead += lineRead;
 		saveHeaderLine(line);
 	}
-	
+
 
 	// print header
-	std::cout << "Header is being printed: " << std::endl;
-	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
-		std::cout << it->first << ": " << it->second << std::endl;
+	// std::cout << "Header is being printed: " << std::endl;
+	// for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+	// 	std::cout << it->first << ": " << it->second << std::endl;
 
 
 	// TROUVER UNE SOLUTION POUR NE PLUS ECOUTER SUR LE PORT DANS LE CAS OU LE HEADER N EST PAS BON

@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
+#include <sys/epoll.h>
 #include <sys/types.h>
 #include <utility>
 #include <vector>
@@ -32,7 +33,7 @@ Server::Server(std::vector<TCPSocket *> s) : _sockets(s), _clients() {
 
 Server::~Server() {
     clearServer();
-} 
+}
 TCPSocket *Server::getSocketByFD(int targetFD) const {
   for (size_t i = 0; i < _sockets.size(); i++) {
     if (_sockets[i]->getSocketFD() == targetFD)
@@ -64,12 +65,19 @@ void Server::acceptConnection(TCPSocket *s) {
 void Server::updateEpoll(int epollFD, short action, int targetFD,
                          struct epoll_event *ev) {
   if (action == EPOLL_CTL_ADD) {
-    struct epoll_event event;
-    event.data.fd = targetFD;
-    event.events = EPOLLIN;
-    if (epoll_ctl(epollFD, EPOLL_CTL_ADD, targetFD, &event) == -1) {
-      exitWithFailure("epoll ctl problem");
-    }
+      if (!ev) {
+          struct epoll_event event;
+          event.data.fd = targetFD;
+          event.events = EPOLLIN;
+          if (epoll_ctl(epollFD, EPOLL_CTL_ADD, targetFD, &event) == -1) {
+            exitWithFailure("epoll ctl problem");
+          }
+      } else {
+          ev->events = EPOLLIN;
+          if (epoll_ctl(epollFD, EPOLL_CTL_MOD, targetFD, ev) == -1) {
+            exitWithFailure("epoll ctl problem");
+          }
+      }
   } else if (action == EPOLL_CTL_MOD) {
     ev->events = EPOLLOUT;
     if (epoll_ctl(epollFD, EPOLL_CTL_MOD, targetFD, ev) == -1) {
@@ -200,7 +208,7 @@ void Server::runServers(void) {
             }
           } else if (_clients.count(fd_triggered) && ev & EPOLLOUT) {
                 Client *client = _clients.at(fd_triggered);
-                handleResponse(client);
+                handleResponse(client, &events[i]);
           }
         }
     }
@@ -251,13 +259,14 @@ void Server::runServers(void) {
   clearServer();
 }
 #endif
-void Server::handleResponse(Client *client) {
-  client->sendResponse();
-  // Voir comment check le connection: keep-alive (comportement bizarre lorsqu il est mit en place)
-  /* std::string conn = client->getRequest().getHeaderField("connection"); */
-  /* if (client->getDataSent() <= 0 && conn.compare(0, 10, "keep-alive") != 0) */
-  if (client->getDataSent() <= 0)
-    removeClient(client->getFd());
+
+void Server::handleResponse(Client *client, struct epoll_event *ev) {
+    client->sendResponse();
+    std::string conn = client->getRequest().getHeaderField("connection");
+    if (client->getDataSent() == 0 && conn.compare(0, 10, "keep-alive") == 0)
+        updateEpoll(_event_fd, EPOLL_CTL_ADD, client->getFd(), ev);
+    else if (client->getDataSent() <= 0)
+        removeClient(client->getFd());
 }
 
 void Server::clearServer() {

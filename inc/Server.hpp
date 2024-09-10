@@ -28,7 +28,11 @@ private:
 
       void startToListenClients();
       void acceptConnection(TCPSocket *s);
+#if __linux__
+      void handleResponse(Client *, struct epoll_event *ev);
+#elif __APPLE__
       void handleResponse(Client *);
+#endif
 
       void removeClient(int keyFD);
       TCPSocket *getSocketByFD(int targetFD) const;
@@ -46,8 +50,6 @@ private:
       ~Server();
       void runServers();
       void clearServer();
-
-
 
       class ServerException : public std::exception {
                     protected:
