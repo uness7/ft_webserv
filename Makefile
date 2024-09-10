@@ -42,6 +42,7 @@ fclean: clean
 	rm -f $(TARGET)
 	rm -rf $(BUILD)
 	rm -rf uploads
+	rm home.html
 	printf "$(YELLOW)Directory is cleaned$(WHITE)\n"
 
 re: fclean all

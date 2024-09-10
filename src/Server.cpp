@@ -297,6 +297,6 @@ void Server::removeClient(int keyFD)
 	std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on "
 		<< element->second->getConfig().listen << "::"  << element->second->getConfig().port << std::endl;
 	close(keyFD);
-	_clients.erase(element);
 	delete element->second;
+	_clients.erase(element);
 }
