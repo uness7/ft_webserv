@@ -6,7 +6,7 @@
 /*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/02 14:26:18 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/09 09:43:52 by yzioual          ###   ########.fr       */
+/*   Updated: 2024/09/10 15:23:32 by yzioual          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,11 +141,10 @@ void	Response::handleCGI(void)
 		if (pos != std::string::npos)
 		{
 			headers = resp.substr(0, pos);
-			body = resp.substr(pos + 4);
+			body = resp.substr(pos + 3);
 		}
 		else
 			body = resp;
-
 		std::istringstream 	headerStream(body);
 		std::string 		line;
 
@@ -182,16 +181,33 @@ void	Response::finalizeHTMLResponse(void)
 {
 	if (_buffer.empty())
 	{
-		std::ifstream 	file("/static/404.html");
-		std::string	errorDefault; 
-		if (file)
-		{
-			std::ostringstream	ss;
-			ss << file.rdbuf(); 
-			errorDefault = ss.str(); 
-		}
-		else
-			std::string errorDefault = "<p>404 page is not found, that is why you are seeing this message!</p>";
+		std::string errorDefault =
+			std::string("<!DOCTYPE html>"
+					"<html lang='en'>"
+					"<head>"
+					"<meta charset='UTF-8'>"
+					"<title>404 - Page Not Found</title>"
+					"<style>"
+					"body {"
+					"    font-family: Arial, sans-serif;"
+					"    background-color: #f8f9fa;"
+					"    color: #333;"
+					"    text-align: center;"
+					"    padding: 50px;"
+					"}"
+					"h1 {"
+					"    font-size: 50px;"
+					"}"
+					"p {"
+					"    font-size: 20px;"
+					"}"
+					"</style>"
+					"</head>"
+					"<body>"
+					"<h1>404 - Page Not Found</h1>"
+					"<p>Sorry, the page you are looking for does not exist.</p>"
+					"</body>"
+					"</html>");
 		updateResponse(404, "text/html", errorDefault);
 	}
 	std::ostringstream	ss;

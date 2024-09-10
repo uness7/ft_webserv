@@ -26,7 +26,7 @@ $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 	printf "$(GREEN)Compilation finished\n$(WHITE)"
 
-$(BUILD)/%.o: $(S)/%.cpp | $(BUILD)
+$(BUILD)/%.o: $(S)/%.cpp $(INCDIR) | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 	printf "$(BLUE)> $<$(WHITE)\n"
 

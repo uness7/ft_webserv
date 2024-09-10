@@ -6,7 +6,7 @@
 /*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/02 14:18:38 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/09 09:52:38 by yzioual          ###   ########.fr       */
+/*   Updated: 2024/09/10 15:24:38 by yzioual          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,10 +117,7 @@ std::string 	CGIResponse::execute(void)
 		std::string	res;
 		ssize_t		bytes_read;
 		while ((bytes_read = read(out_pipe[0], buffer, sizeof(buffer))) > 0)
-		{
 			res.append(buffer, bytes_read);
-			std::cout << "buffer " << buffer << " buffer" << std::endl;
-		}
 		close(out_pipe[0]);
 		int	status;
 		waitpid(pid, &status, 0);

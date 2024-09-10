@@ -14,11 +14,6 @@ static volatile bool stopListening = false;
 
 void log(const std::string &message) { std::cout << message << std::endl; }
 
-void exitWithFailure(std::string s) {
-  std::cerr << "error: " <<  s << std::endl;
-  exit(1);
-}
-
 void handleSignal(int sig) {
   if (sig == SIGINT)
     stopListening = true;
@@ -62,33 +57,34 @@ void Server::acceptConnection(TCPSocket *s) {
 }
 
 #if __linux__
-void Server::updateEpoll(int epollFD, short action, int targetFD,
-                         struct epoll_event *ev) {
-  if (action == EPOLL_CTL_ADD) {
-      if (!ev) {
-          struct epoll_event event;
-          event.data.fd = targetFD;
-          event.events = EPOLLIN;
-          if (epoll_ctl(epollFD, EPOLL_CTL_ADD, targetFD, &event) == -1) {
-            exitWithFailure("epoll ctl problem");
-          }
-      } else {
-          ev->events = EPOLLIN;
-          if (epoll_ctl(epollFD, EPOLL_CTL_MOD, targetFD, ev) == -1) {
-            exitWithFailure("epoll ctl problem");
-          }
-      }
-  } else if (action == EPOLL_CTL_MOD) {
-    ev->events = EPOLLOUT;
-    if (epoll_ctl(epollFD, EPOLL_CTL_MOD, targetFD, ev) == -1) {
-      exitWithFailure("epoll ctl_mod problem");
-    }
-  } else if (action == EPOLL_CTL_DEL) {
-    if (epoll_ctl(epollFD, EPOLL_CTL_DEL, targetFD, NULL) == -1) {
-      exitWithFailure("epoll ctl_del problem");
-    }
-  }
+void	Server::updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev)
+{
+	if (action == EPOLL_CTL_ADD) {
+		if (!ev) {
+			struct epoll_event event;
+			event.data.fd = targetFD;
+			event.events = EPOLLIN;
+			if (epoll_ctl(epollFD, EPOLL_CTL_ADD, targetFD, &event) == -1) {
+				log("epoll ctl problem");
+			}
+		} else {
+			ev->events = EPOLLIN;
+			if (epoll_ctl(epollFD, EPOLL_CTL_MOD, targetFD, ev) == -1) {
+				log("epoll ctl problem");
+			}
+		}
+	} else if (action == EPOLL_CTL_MOD) {
+		ev->events = EPOLLOUT;
+		if (epoll_ctl(epollFD, EPOLL_CTL_MOD, targetFD, ev) == -1) {
+			log("epoll ctl_mod problem");
+		}
+	} else if (action == EPOLL_CTL_DEL) {
+		if (epoll_ctl(epollFD, EPOLL_CTL_DEL, targetFD, NULL) == -1) {
+			log("epoll ctl_del problem");
+		}
+	}
 }
+
 #elif __APPLE__
 void Server::updateKqueue(int kqFD, short action, int targetFD) {
   if (action == EV_ADD) {
@@ -281,21 +277,22 @@ void Server::clearServer() {
   }
 }
 
-void Server::removeClient(int keyFD) {
-    std::map<unsigned short, Client *>::iterator element = _clients.find(keyFD);
-    if (element == _clients.end())
-    {
-        /* std::cout << keyFD << " already freed !" << std::endl; */
-        return;
-    }
+void Server::removeClient(int keyFD)
+{
+	std::map<unsigned short, Client *>::iterator element = _clients.find(keyFD);
+	if (element == _clients.end())
+	{
+		/* std::cout << keyFD << " already freed !" << std::endl; */
+		return;
+	}
 #if __linux__
-    Server::updateEpoll(_event_fd, EPOLL_CTL_DEL, keyFD, NULL);
+	Server::updateEpoll(_event_fd, EPOLL_CTL_DEL, keyFD, NULL);
 #elif __APPLE__
-    Server::updateKqueue(_event_fd, EV_DELETE, keyFD);
+	Server::updateKqueue(_event_fd, EV_DELETE, keyFD);
 #endif
-    std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on "
-            << element->second->getConfig().listen << "::"  << element->second->getConfig().port << std::endl;
-    close(keyFD);
-    _clients.erase(element);
-    delete element->second;
+	std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on "
+		<< element->second->getConfig().listen << "::"  << element->second->getConfig().port << std::endl;
+	close(keyFD);
+	_clients.erase(element);
+	delete element->second;
 }
