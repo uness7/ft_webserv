@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
-#include <sys/event.h>
 #include <sys/types.h>
 #include <utility>
 #include <vector>
@@ -310,7 +309,7 @@ void Server::removeClient(int keyFD)
 	std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on "
 		<< element->second->getConfig().listen << "::"  << element->second->getConfig().port << std::endl;
 	close(keyFD);
-    if (element->second != NULL)
-        delete element->second;
+    	if (element->second != NULL)
+		delete element->second;
 	_clients.erase(element);
 }

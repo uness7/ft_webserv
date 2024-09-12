@@ -93,8 +93,8 @@ bool	Request::checkHeaderLocation(ServerConfig &config)
 	if (found < 0 || config.client_max_body_size < _contentLength)
 		return false;
 
-    if (getMethod() == "HEAD")
-        return true;
+	if (getMethod() == "HEAD")
+		return true;
 	std::vector<std::string> &allowed_methods = target.allowed_methods;
 	if (allowed_methods.size() &&
 			std::find(

@@ -218,8 +218,8 @@ void	Response::finalizeHTMLResponse(void)
 	for (std::vector<std::string>::iterator it = _cookies.begin(); it != _cookies.end(); ++it)
 		ss << *it << "\r\n";
 	ss << "\r\n";
-    if (_client->getRequest().getMethod() != "HEAD")
-        ss << _buffer;
+	if (_client->getRequest().getMethod() != "HEAD")
+		ss << _buffer;
 	this->_value = ss.str();
 }
 
