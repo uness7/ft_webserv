@@ -14,10 +14,10 @@
 
 Client::Client(unsigned short fd, ServerConfig config)
     : _fd(fd), _dataSent(0), _request(), _config(config) {
-  this->_response = new Response();
+  this->_response = NULL;
 }
 
-Client::Client(const Client &cp) : _fd(0), _request() { *this = cp; }
+Client::Client(const Client &cp) : _fd(0),_dataSent(0), _request() { *this = cp; }
 
 Client &Client::operator=(const Client &rhs) {
   if (this != &rhs) {
@@ -35,7 +35,9 @@ Client::~Client() { }
 void  Client::clear() {
     _request = Request();
     _dataSent = 0;
-    delete _response;
+    _fd = 0;
+    if (_response != NULL)
+        delete _response;
 }
 
 unsigned short Client::getFd() const { return this->_fd; }

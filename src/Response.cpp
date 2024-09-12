@@ -111,7 +111,7 @@ void Response::build(void)
 	}
 
 	std::vector<std::string> &allowed_methods = target.allowed_methods;
-	if (allowed_methods.size() &&
+	if (request.getMethod() != "HEAD" && allowed_methods.size() &&
 			std::find(allowed_methods.begin(), allowed_methods.end(),
 				request.getMethod()) == allowed_methods.end())
 		updateResponse(405, "text/plain", "Method Not Allowed");
@@ -217,7 +217,9 @@ void	Response::finalizeHTMLResponse(void)
 		<< "\r\nContent-Length: " << _buffer.size() << "\r\n";
 	for (std::vector<std::string>::iterator it = _cookies.begin(); it != _cookies.end(); ++it)
 		ss << *it << "\r\n";
-	ss << "\r\n" << _buffer;
+	ss << "\r\n";
+    if (_client->getRequest().getMethod() != "HEAD")
+        ss << _buffer;
 	this->_value = ss.str();
 }
 
