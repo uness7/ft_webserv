@@ -13,9 +13,25 @@
 #include "../inc/Response.hpp"
 #include "CGIResponse.hpp"
 
-Response::Response() : _value(""), _statusCode(), _contentType(""), _buffer(""), _client(NULL) {}
+Response::Response()
+	:
+		_value(""), 
+		_statusCode(), 
+		_contentType(""), 
+		_buffer(""), 
+		_client(NULL)
+{
+	//
+}
 
-Response::Response(Client *client) : _value(""), _statusCode(), _contentType(""), _buffer(""), _client(client)
+Response::Response(Client *client)
+	: 
+		_value(""), 
+		_statusCode(), 
+		_contentType(""), 
+		_buffer(""), 
+		_client(client),
+		_redirect_path("")
 {
 	      this->build();
 }
@@ -102,8 +118,17 @@ void Response::build(void)
 	ServerConfig config = _client->getConfig();
 	LocationConfig target;
 	std::string path = request.getPath();
-	short index_max =
-		config.getLocationByPathRequested(request.getPath(), target);
+	short index_max = config.getLocationByPathRequested(request.getPath(), target);
+	std::string	redirect = "";
+
+	redirect = target.redirect;
+	this->_redirect_path = "";
+	if (!redirect.empty())
+	{
+		setRedirectPath(redirect);
+		setStatusCode(302);
+		return finalizeHTMLResponse();
+	}
 
 	if (index_max == -1) {
 		buildError();
@@ -179,48 +204,44 @@ void	Response::handleStaticFiles(void)
 
 void	Response::finalizeHTMLResponse(void)
 {
-	if (_buffer.empty())
+	std::ostringstream	ss;
+
+	if (!_redirect_path.empty())
+	{
+		ss << "HTTP/1.1 302 Found\r\n"
+			<< "Location: " << getRedirectPath() << "\r\n"
+			<< "Content-Length: 0\r\n"
+			<< "\r\n";
+	}
+	else if (_buffer.empty())
 	{
 		std::string errorDefault =
-			std::string("<!DOCTYPE html>"
-					"<html lang='en'>"
-					"<head>"
-					"<meta charset='UTF-8'>"
-					"<title>404 - Page Not Found</title>"
-					"<style>"
-					"body {"
-					"    font-family: Arial, sans-serif;"
-					"    background-color: #f8f9fa;"
-					"    color: #333;"
-					"    text-align: center;"
-					"    padding: 50px;"
-					"}"
-					"h1 {"
-					"    font-size: 50px;"
-					"}"
-					"p {"
-					"    font-size: 20px;"
-					"}"
-					"</style>"
-					"</head>"
-					"<body>"
-					"<h1>404 - Page Not Found</h1>"
-					"<p>Sorry, the page you are looking for does not exist.</p>"
-					"</body>"
-					"</html>");
+			"<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'>"
+			"<title>404 - Page Not Found</title><style>body {font-family: Arial, sans-serif; "
+			"background-color: #f8f9fa; color: #333; text-align: center; padding: 50px;} "
+			"h1 {font-size: 50px;} p {font-size: 20px;}</style></head><body>"
+			"<h1>404 - Page Not Found</h1>"
+			"<p>Sorry, the page you are looking for does not exist.</p></body></html>";
 		updateResponse(404, "text/html", errorDefault);
+		ss << "HTTP/1.1 404 Not Found\r\n"
+			<< "Content-Type: text/html\r\n"
+			<< "Content-Length: " << errorDefault.size() << "\r\n"
+			<< "\r\n"
+			<< errorDefault;
 	}
-	std::ostringstream	ss;
-	ss << "HTTP/1.1 " 
-		<< this->getStatusToString()
-		<< "\r\nContent-Type: " << _contentType
-		<< "\r\nContent-Length: " << _buffer.size() << "\r\n";
-	for (std::vector<std::string>::iterator it = _cookies.begin(); it != _cookies.end(); ++it)
-		ss << *it << "\r\n";
-	ss << "\r\n";
-	if (_client->getRequest().getMethod() != "HEAD")
-		ss << _buffer;
+	else
+	{
+		ss << "HTTP/1.1 " << this->getStatusToString() << "\r\n"
+			<< "Content-Type: " << _contentType << "\r\n"
+			<< "Content-Length: " << _buffer.size() << "\r\n";
+		for (std::vector<std::string>::iterator it = _cookies.begin(); it != _cookies.end(); ++it)
+			ss << *it << "\r\n";
+		ss << "\r\n";
+		if (_client->getRequest().getMethod() != "HEAD")
+			ss << _buffer;
+	}
 	this->_value = ss.str();
+	//std::cout << "Headers: \n" << ss.str() << "\nHeaders\n";
 }
 
 const std::map<unsigned short, std::string>& Response::getStatusCodes()
@@ -278,4 +299,15 @@ std::string Response::getStatusToString() const {
 	std::stringstream ss;
 	ss << _statusCode.code << " " << _statusCode.status;
 	return ss.str();
+}
+
+/* Getter and Setters for _redirect_path field */
+const std::string	Response::getRedirectPath() const
+{
+	return this->_redirect_path;
+}
+
+void	Response::setRedirectPath(std::string& path)
+{
+	this->_redirect_path = path;
 }

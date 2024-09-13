@@ -31,6 +31,7 @@ struct LocationConfig
 	std::string 			upload_store;
 	std::vector<std::string>	allowed_methods;
 	std::string			cgi_script;
+	std::string			redirect;
 };
 
 struct ServerConfig

@@ -174,6 +174,8 @@ void	Config::parseLocationLine(const std::string &line, LocationConfig &location
 	}
 	else if (line.find("cgi_script") != std::string::npos)
 		locationConfig.cgi_script = extractValue(line, "cgi_script");
+	else if (line.find("redirect") != std::string::npos)
+		locationConfig.redirect = extractValue(line, "redirect");
 }
 
 
@@ -219,6 +221,8 @@ void	Config::printLocationConfig(const std::string& locationPath, const Location
 		std::cout << "  Upload store: " << locationConfig.upload_store << std::endl;
 	if (!locationConfig.cgi_script.empty())
 		std::cout << " CGI Script : " << locationConfig.cgi_script << std::endl;
+	if (!locationConfig.redirect.empty())
+		std::cout << " redirect path : " << locationConfig.redirect << std::endl;
 }
 
 

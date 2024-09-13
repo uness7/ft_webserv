@@ -39,6 +39,7 @@ class Response
 		std::string 				_buffer;
 		Client 					    *_client;
 		std::vector<std::string>		_cookies;
+		std::string				_redirect_path;
 
 		void	build();
 		void	buildError();
@@ -53,6 +54,13 @@ class Response
 		~Response();
 
 		const std::string	getResponse() const;
+
+		// this->_redirect_path;
+		const std::string	getRedirectPath() const;
+		void		setRedirectPath(std::string& path);
+
+
+
 		void 		setStatusCode(STATUS_CODE);
 		void		setStatusCode(unsigned short code);
 		void		handleCGI(void);
