@@ -141,27 +141,6 @@ void Server::startToListenClients() {
   }
 }
 
-#if __linux__
-void Server::handleClientRequest(int fd, struct epoll_event *ev) {
-  Client *client = _clients.at(fd);
-  int byteReceived = client->readRequest();
-  if (byteReceived > 0) {
-    Server::updateEpoll(_event_fd, EPOLL_CTL_MOD, fd, ev);
-  } else {
-    this->removeClient(fd);
-  }
-}
-#elif __APPLE__
-void Server::handleClientRequest(int fd) {
-  Client *client = _clients.at(fd);
-  int byteReceived = client->readRequest();
-  if (byteReceived > 0) {
-    Server::updateKqueue(_event_fd, (EV_ADD | EV_ENABLE), EVFILT_WRITE, fd);
-  } else {
-    this->removeClient(fd);
-  }
-}
-#endif
 
 #if __linux__
 void Server::runServers(void) {
@@ -191,7 +170,10 @@ void Server::runServers(void) {
             this->removeClient(fd_triggered);
           } else if (ev & EPOLLIN) {
             if (_clients.count(fd_triggered))
+	    {
+  	      std::cout << fd_triggered << " socket can read" << std::endl;
               handleClientRequest(fd_triggered, &events[i]);
+	    }
             else {
               try {
                 TCPSocket *server = getSocketByFD(fd_triggered);
@@ -240,6 +222,7 @@ void Server::runServers(void) {
         this->removeClient(fd_triggered);
       else if (ev == EVFILT_READ) {
         if (_clients.count(fd_triggered)) {
+	
           handleClientRequest(fd_triggered);
         } else {
           TCPSocket *server = getSocketByFD(fd_triggered);
@@ -257,17 +240,41 @@ void Server::runServers(void) {
 #endif
 
 #if __linux__
+void Server::handleClientRequest(int fd, struct epoll_event *ev) {
+  Client *client = _clients.at(fd);
+  int byteReceived = client->readRequest();
+  std::cout << "byteReceived " << byteReceived << std::endl;
+  if (byteReceived > 0) {
+    Server::updateEpoll(_event_fd, EPOLL_CTL_MOD, fd, ev);
+  } else if (byteReceived == 0)
+	removeClient(fd);
+}
+#elif __APPLE__
+void Server::handleClientRequest(int fd) {
+  Client *client = _clients.at(fd);
+  int byteReceived = client->readRequest();
+  if (byteReceived > 0) {
+    Server::updateKqueue(_event_fd, (EV_ADD | EV_ENABLE), EVFILT_WRITE, fd);
+  } else {
+    this->removeClient(fd);
+  }
+}
+#endif
+
+#if __linux__
 void Server::handleResponse(Client *client, struct epoll_event *ev) {
     client->sendResponse();
-
     std::string conn = client->getRequest().getHeaderField("connection");
-    if (client->getDataSent() == 0 && conn.compare(0, 10, "keep-alive") == 0)
+    if (client->getDataSent() < 0 || conn.compare(0, 5, "close") == 0)
+    {
+	std::cout << client->getFd() << " will be closed with status connection " << conn << " -> dataSent: " << client->getDataSent() << std::endl;
+        removeClient(client->getFd());
+    }
+    else
     {
         updateEpoll(_event_fd, EPOLL_CTL_ADD, client->getFd(), ev);
         client->clear();
     }
-    else if (client->getDataSent() <= 0)
-        removeClient(client->getFd());
 }
 #elif __APPLE__ 
 void Server::handleResponse(Client *client) {

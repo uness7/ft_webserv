@@ -6,7 +6,7 @@
 /*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/02 14:52:43 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/02 14:53:45 by yzioual          ###   ########.fr       */
+/*   Updated: 2024/09/17 11:57:24 by otourabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,23 +29,26 @@ long	Utils::get_next_line(int fd, std::ostringstream &oss)
 	oss.str("");
 	if (fd < 0)
 	{
-  	memset(&buffer, 0, BUFFER_SIZE);
-  	bytesRead = 0;
+		memset(&buffer, 0, BUFFER_SIZE);
+		bytesRead = 0;
 		currentPos = 0;
-    return 0;
+		return 0;
 	}
 
 	while (true) {
 		if (static_cast<ssize_t>(currentPos) >= bytesRead) {
 			bytesRead = recv(fd, buffer, BUFFER_SIZE, 0);
 			currentPos = 0;
-			if (bytesRead <= 0) {
+			if (bytesRead == -1) {
+				return -1;
+			}
+			if (bytesRead == 0) {
 				break;
 			}
 		}
 
 		while (static_cast<ssize_t>(currentPos) < bytesRead) {
-			if (buffer[currentPos] == '\n') {
+			if (buffer[currentPos] == '\n' && buffer[currentPos-1] == '\r') {
 				currentPos++;
 				return oss.str().size();
 			}

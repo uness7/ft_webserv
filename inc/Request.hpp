@@ -10,8 +10,14 @@
 # include <cctype>
 # include <fstream>
 # include <iterator>
-#include "Config.hpp"
+# include "Config.hpp"
 # include "Utils.hpp"
+
+enum REQ_STATE {
+	EMPTY,
+	HEADER,
+	BODY
+};
 
 class Request {
 	private:
@@ -22,11 +28,12 @@ class Request {
 		std::vector<char> _body;
 		std::map<std::string, std::string> _headers;
 		long long _contentLength;
-		bool _valid;
+		REQ_STATE _state;
 
 		long handleFirstLineHeader(unsigned int);
 		void saveHeaderLine(std::string &);
 		bool checkHeaderLocation(ServerConfig &config);
+		void parseHeader(std::string &header);
 
 	public:
 		Request();
@@ -43,7 +50,6 @@ class Request {
 		std::vector<char> getBody() const;
 		std::string getHeaderField(std::string) const;
 		long long getContentLength() const;
-		bool isValid() const;
 
 		bool isCGI() const;
 

@@ -6,7 +6,7 @@
 /*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/02 14:14:41 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/02 14:17:57 by yzioual          ###   ########.fr       */
+/*   Updated: 2024/09/17 13:30:42 by otourabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ Request::Request()
 	_body(),
 	_headers(),
 	_contentLength(0),
-	_valid(true)
+	_state(EMPTY)
 {
 	/* Default Constructor */
 }
@@ -47,17 +47,23 @@ Request	&Request::operator=(const Request &rhs)
 		this->_body = rhs._body;
 		this->_headers = rhs._headers;
 		this->_contentLength = rhs._contentLength;
-		this->_valid = rhs._valid;
+		this->_state = rhs._state;
 	}
 	return *this;
 }
 
 long	Request::handleFirstLineHeader(unsigned int socketFd)
 {
+	if (_state != EMPTY)
+		return 1;
+	std::cout << "STATE1: " << _state << std::endl;
 	std::ostringstream 	lineStream;
 	long			bytesRead = Utils::get_next_line(socketFd, lineStream);
 
-	if (bytesRead < 0)
+	std::cout << bytesRead << " -> =" << lineStream.str() << "=" << std::endl;
+	if (lineStream.str().size() == 1 && lineStream.str()[0] == '\n')
+		return 0;
+	if (bytesRead < 0 && lineStream.str().empty())
 		return bytesRead;
 	std::istringstream iss(lineStream.str());
 	std::string method;
@@ -65,6 +71,8 @@ long	Request::handleFirstLineHeader(unsigned int socketFd)
 	iss >> method >> path;
 	setMethod(method);
 	setPath(path);
+	_state = HEADER;
+	std::cout << "STATE2: " << _state << std::endl;
 	return bytesRead;
 }
 
@@ -105,63 +113,93 @@ bool	Request::checkHeaderLocation(ServerConfig &config)
 	return true;
 }
 
-long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)
-{
-	std::ifstream client;
-	long bytesRead = handleFirstLineHeader(socketFd);
-	if (bytesRead <= 0)
-		return bytesRead;
-
-	std::ostringstream lineStream;
-
-	while (true)
-	{
-		long	lineRead = Utils::get_next_line(socketFd, lineStream);
-
-		if (lineRead < 0)
-			return lineRead;
-		std::string line = lineStream.str();
-		if (line.empty() ||
-				line.find_first_not_of(" \t\r\n") == std::string::npos) {
-			break;
-		}
-		bytesRead += lineRead;
-		saveHeaderLine(line);
-	}
-
-
-	// print header
-	// std::cout << "Header is being printed: " << std::endl;
-	// for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
-	// 	std::cout << it->first << ": " << it->second << std::endl;
-
-
-	// TROUVER UNE SOLUTION POUR NE PLUS ECOUTER SUR LE PORT DANS LE CAS OU LE HEADER N EST PAS BON
-	if (!checkHeaderLocation(config)) {
-		Utils::get_next_line(-1, lineStream);
-		_valid = false;
-		return bytesRead;
-	}
-
-	if (_contentLength == 0)
-		return bytesRead;
-	_body = std::vector<char>(_contentLength);
-	size_t totalRead = 0;
-
-	while (static_cast<long long>(totalRead) < _contentLength)
-	{
-		long lineRead = Utils::get_next_line(socketFd, lineStream);
-		if (lineRead < 0)
-			return lineRead;
-		bytesRead += lineRead;
-		std::string chunk = lineStream.str() + "\n";
-		if (chunk.size() == 0)
-			break;
-		std::copy(chunk.begin(), chunk.begin() + chunk.size(), _body.begin() + totalRead);
-		totalRead += chunk.size();
-	}
-	return bytesRead;
+void 	Request::parseHeader(std::string &header) {
 }
+
+long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config) {
+	(void)config;
+	char buffer[4096];
+	ssize_t bytesRead;	
+	std::ostringstream req;
+
+	while ((bytesRead = recv(socketFd, buffer, 4096, 0)) > 0) {
+		ssize_t i = 0;
+		while (i < bytesRead) {
+			req << buffer[i++];
+		}
+	}
+
+	std::size_t position = req.str().find("\r\n\r\n");
+	if (position == std::string::npos)
+		return -1;
+	std::string header = req.str().substr(0, position);
+	parseHeader(header);
+
+	std::cout << "position: " << position << std::endl;
+	std::cout << "bytesRead: " << bytesRead << std::endl;
+	std::cout << "req: " << req.str() << std::endl;
+	return 10;
+}
+
+//long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)
+//{
+//	std::ifstream client;
+//	long bytesRead = handleFirstLineHeader(socketFd);
+//	if (bytesRead <= 0)
+//		return bytesRead;
+//
+//	std::ostringstream lineStream;
+//
+//	while (_state == HEADER)
+//	{
+//		long	lineRead = Utils::get_next_line(socketFd, lineStream);
+//
+//		
+//		if (lineRead < 0 && lineStream.str().empty())
+//			return lineRead;
+//		std::string line = lineStream.str();
+//		std::cout << "STATE3: " << _state << std::endl;
+//		std::cout << "line: " << lineStream.str() << std::endl;
+//
+//		if (line.empty() ||
+//				line.find_first_not_of(" \t\r\n") == std::string::npos) {
+//			_state = BODY;
+//			break;
+//		}
+//		bytesRead += lineRead;
+//		saveHeaderLine(line);
+//	}
+//	std::cout << "STATE4: " << _state << std::endl;
+//
+//
+//	if (!checkHeaderLocation(config)) {
+//		Utils::get_next_line(-1, lineStream);
+//		return bytesRead;
+//	}
+//	std::cout << "STATE5: " << _state << std::endl;
+//	std::cout << "bytesRead: " << bytesRead << std::endl;
+//
+//	if (_contentLength == 0)
+//		return bytesRead;
+//	std::cout << "STATE6: " << _state << std::endl;
+//	std::cout << "bytesRead: " << bytesRead << std::endl;
+//	_body = std::vector<char>(_contentLength);
+//	size_t totalRead = 0;
+//
+//	while (static_cast<long long>(totalRead) < _contentLength)
+//	{
+//		long lineRead = Utils::get_next_line(socketFd, lineStream);
+//		if (lineRead < 0)
+//			return lineRead;
+//		bytesRead += lineRead;
+//		std::string chunk = lineStream.str() + "\n";
+//		if (chunk.size() == 0)
+//			break;
+//		std::copy(chunk.begin(), chunk.begin() + chunk.size(), _body.begin() + totalRead);
+//		totalRead += chunk.size();
+//	}
+//	return bytesRead;
+//}
 
 void	Request::setMethod(std::string s)
 {
@@ -182,10 +220,6 @@ void	Request::setPath(std::string s)
 	setMimeType();
 }
 
-bool Request::isValid() const
-{
-	return _valid;
-}
 
 void	Request::setMimeType()
 {

@@ -6,7 +6,7 @@
 /*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/02 14:26:18 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/10 15:23:32 by yzioual          ###   ########.fr       */
+/*   Updated: 2024/09/16 14:58:44 by otourabi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@ Response::Response()
 		_buffer(""), 
 		_client(NULL)
 {
-	//
 }
 
 Response::Response(Client *client)
@@ -301,7 +300,6 @@ std::string Response::getStatusToString() const {
 	return ss.str();
 }
 
-/* Getter and Setters for _redirect_path field */
 const std::string	Response::getRedirectPath() const
 {
 	return this->_redirect_path;
