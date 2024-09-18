@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
-#include <sys/event.h>
 #include <sys/types.h>
 #include <utility>
 #include <vector>
