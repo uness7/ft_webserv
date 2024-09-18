@@ -69,7 +69,7 @@ long	Request::handleFirstLineHeader(unsigned int socketFd)
 	iss >> method >> path >> httpv;
 	setMethod(method);
 	setPath(path);
-        _httpv = httpv;
+    _httpv = httpv;
 	_state = HEADER;
 	return bytesRead;
 }
@@ -109,25 +109,6 @@ bool	Request::checkHeaderLocation(ServerConfig &config)
 				getMethod()) == allowed_methods.end())
 		return false;
 	return true;
-}
-
-void Request::parseHeader(std::string &header) {
-    std::istringstream stream(header);
-    std::string line;
-
-    if (std::getline(stream, line)) {
-        std::istringstream iss(line);
-        std::string method;
-        std::string path;
-        std::string httpv;
-        iss >> method >> path >> httpv;
-        setMethod(method);
-        setPath(path);
-    }
-
-    while (std::getline(stream, line)) {
-		saveHeaderLine(line);
-    }
 }
 
 long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)

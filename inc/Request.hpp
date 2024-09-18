@@ -36,7 +36,6 @@ class Request {
 		long handleFirstLineHeader(unsigned int);
 		void saveHeaderLine(std::string &);
 		bool checkHeaderLocation(ServerConfig &config);
-		void parseHeader(std::string &header);
 		long get_next_line(int fd, std::ostringstream &oss);
 
 	public:

@@ -74,7 +74,6 @@ int	main(int argc, char *argv[])
 		Config::printConfigs(serverConfigs);
 		std::vector<TCPSocket*> sockets = createSockets(serverConfigs);
 
-		//
 		std::string	name = "home.html";
 		createHTMLFile(sockets, name);
 

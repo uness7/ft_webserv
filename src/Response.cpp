@@ -1,14 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Response.cpp                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/02 14:26:18 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/16 14:58:44 by otourabi         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "../inc/Response.hpp"
 #include "CGIResponse.hpp"
@@ -32,7 +21,7 @@ Response::Response(Client *client)
 		_client(client),
 		_redirect_path("")
 {
-	      this->build();
+      this->build();
 }
 
 Response::Response(const Response &cp) 

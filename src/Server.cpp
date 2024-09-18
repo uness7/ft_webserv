@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
+#include <sys/event.h>
 #include <sys/types.h>
 #include <utility>
 #include <vector>
@@ -48,7 +49,6 @@ void Server::acceptConnection(TCPSocket *s) {
 
 	  std::cout << "[NEW CLIENT]: FD -> " << newClient << " on "
 		    << s->getIpAddress() << ":" << s->getPort() << std::endl;
-
 #if __linux__
 	struct epoll_event ev;
 	ev.events = EPOLLIN;
@@ -56,29 +56,14 @@ void Server::acceptConnection(TCPSocket *s) {
 	if (epoll_ctl(_event_fd, EPOLL_CTL_ADD, newClient, &ev) == -1)
 	      log("epoll ctl problem (sockets)");
 #elif __APPLE__
-	updateKqueue(_event_fd, EV_ADD, EVFILT_READ, newClient);
-#endif
-}
-
-
-#if __APPLE__
-void Server::updateKqueue(int kqFD, short action, short envfilt, int targetFD) {
-  struct kevent event;
-  if (action == EV_ADD) {
-    EV_SET(&event, targetFD, envfilt, EV_ADD | EV_ENABLE, 0, 0, nullptr);
-    if (kevent(kqFD, &event, 1, nullptr, 0, nullptr) == -1) {
+    struct kevent event;
+    EV_SET(&event, newClient, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, nullptr);
+    if (kevent(_event_fd, &event, 1, nullptr, 0, nullptr) == -1) {
       log("Failed to add event from kqueue");
         log(strerror(errno));
     }
-  } else if (action == EV_DELETE) {
-    EV_SET(&event, targetFD, envfilt, EV_DELETE, 0, 0, nullptr);
-    if (kevent(kqFD, &event, 1, nullptr, 0, nullptr) == -1) {
-      log("Failed to delete event from kqueue");
-        log(strerror(errno));
-    }
-  }
-}
 #endif
+}
 
 void Server::startToListenClients() {
   for (size_t i = 0; i < _sockets.size(); i++) {
@@ -107,7 +92,12 @@ void Server::startToListenClients() {
       if (epoll_ctl(_event_fd, EPOLL_CTL_ADD, _sockets[i]->getSocketFD(), &ev) == -1)
 	      log("epoll ctl problem (sockets)");
 #elif __APPLE__
-      updateKqueue(_event_fd, EV_ADD, EVFILT_READ, _sockets[i]->getSocketFD());
+    struct kevent event;
+    EV_SET(&event, _sockets[i]->getSocketFD(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, nullptr);
+    if (kevent(_event_fd, &event, 1, nullptr, 0, nullptr) == -1) {
+        log("Failed to add event from kqueue");
+        log(strerror(errno));
+    }
 #endif
     } catch (const std::exception &e) {
       throw;
@@ -207,7 +197,6 @@ void Server::runServers(void) {
       }
     }
   }
-  clearServer();
 }
 #endif
 
@@ -226,13 +215,23 @@ void Server::handleClientRequest(int fd, struct epoll_event *ev) {
 
 #elif __APPLE__
 void Server::handleClientRequest(int fd) {
-  Client *client = _clients.at(fd);
-  int byteReceived = client->readRequest();
-  if (byteReceived > 0) {
-    Server::updateKqueue(_event_fd, EV_DELETE , EVFILT_READ, fd);
-    Server::updateKqueue(_event_fd, EV_ADD, EVFILT_WRITE, fd);
-  } else if (byteReceived == 0)
-	removeClient(fd);
+    Client *client = _clients.at(fd);
+    int byteReceived = client->readRequest();
+	if (byteReceived == 0)
+		removeClient(fd);
+	else if (byteReceived > 0) {
+        struct kevent event;
+        EV_SET(&event, fd, EVFILT_READ, EV_DELETE, 0, 0, nullptr);
+        if (kevent(_event_fd, &event, 1, nullptr, 0, nullptr) == -1) {
+            log("Failed to update event to write from kqueue");
+            log(strerror(errno));
+        }
+        EV_SET(&event, fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, nullptr);
+        if (kevent(_event_fd, &event, 1, nullptr, 0, nullptr) == -1) {
+            log("Failed to update event to write from kqueue");
+            log(strerror(errno));
+        }
+	}
 }
 #endif
 
@@ -256,15 +255,23 @@ void Server::handleResponse(Client *client, struct epoll_event *ev) {
 #elif __APPLE__ 
 void Server::handleResponse(Client *client) {
     client->sendResponse();
-    std::string conn = client->getRequest().getHeaderField("connection");
-    if (!client->getDataSent())
-        removeClient(client->getFd());
-    else if (client->getDataSent() < 0 || conn.compare(0, 5, "close") == 0)
-        removeClient(client->getFd());
-    else
+    std::string connection = client->getRequest().getHeaderField("connection");
+    if (client->getDataSent() < 0 || connection.compare(0, 5, "close") == 0)
     {
-        updateKqueue(_event_fd, EV_DELETE, EVFILT_WRITE, client->getFd());
-        updateKqueue(_event_fd, EV_ADD, EVFILT_READ, client->getFd());
+        removeClient(client->getFd());
+    } else if (client->getDataSent() == 0)
+    {
+        struct kevent event;
+        EV_SET(&event, client->getFd(), EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);
+        if (kevent(_event_fd, &event, 1, nullptr, 0, nullptr) == -1) {
+            log("Failed to delete write event from kqueue");
+            log(strerror(errno));
+        }
+        EV_SET(&event, client->getFd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, nullptr);
+        if (kevent(_event_fd, &event, 1, nullptr, 0, nullptr) == -1) {
+            log("Failed to update event from kqueue");
+            log(strerror(errno));
+        }
         client->clear();
     }
 }
@@ -277,7 +284,9 @@ void Server::clearServer() {
     delete it->second;
   }
 
+    std::cout << "this function will delete " << _sockets.size() << std::endl;
   for (size_t i = 0; i < _sockets.size(); i++) {
+    std::cout << i << " = server: " << _sockets[i]->getSocketFD() << " -> " <<_sockets[i]->getPort() << std::endl; 
     delete _sockets[i];
   }
 }
@@ -292,7 +301,12 @@ void Server::removeClient(int keyFD)
 		log("epoll ctl_del problem");
 	}
 #elif __APPLE__
-	Server::updateKqueue(_event_fd, EV_DELETE, EVFILT_WRITE, keyFD);
+    struct kevent event;
+    EV_SET(&event, keyFD, EVFILT_READ | EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);
+    if (kevent(_event_fd, &event, 1, nullptr, 0, nullptr) == -1) {
+        log("Failed to delete event from kqueue");
+        log(strerror(errno));
+    }
 #endif
 	std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on "
 		<< element->second->getConfig().listen << "::"  << element->second->getConfig().port << std::endl;
