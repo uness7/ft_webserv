@@ -15,14 +15,15 @@
 # include "Config.hpp"
 # include "Request.hpp"
 # include "Response.hpp"
-#include <sys/unistd.h>
+# include <sys/unistd.h>
+# include <sys/socket.h>
 # include <unistd.h>
 # include <cstdlib>
 # include <cstring>
 # include <cerrno>
 # include <cstring>
 
-# define BUFFER_SIZE 40960
+# define BUFFER_SIZE 4096
 
 class Response;
 

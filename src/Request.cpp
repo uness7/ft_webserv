@@ -56,11 +56,8 @@ long	Request::handleFirstLineHeader(unsigned int socketFd)
 {
 	if (_state != EMPTY)
 		return 1;
-	std::cout << "STATE1: " << _state << std::endl;
 	std::ostringstream 	lineStream;
-	long			bytesRead = Utils::get_next_line(socketFd, lineStream);
-
-	std::cout << bytesRead << " -> =" << lineStream.str() << "=" << std::endl;
+	long	bytesRead = get_next_line(socketFd, lineStream);
 	if (lineStream.str().size() == 1 && lineStream.str()[0] == '\n')
 		return 0;
 	if (bytesRead < 0 && lineStream.str().empty())
@@ -72,7 +69,6 @@ long	Request::handleFirstLineHeader(unsigned int socketFd)
 	setMethod(method);
 	setPath(path);
 	_state = HEADER;
-	std::cout << "STATE2: " << _state << std::endl;
 	return bytesRead;
 }
 
@@ -113,93 +109,176 @@ bool	Request::checkHeaderLocation(ServerConfig &config)
 	return true;
 }
 
-void 	Request::parseHeader(std::string &header) {
+void Request::parseHeader(std::string &header) {
+    std::istringstream stream(header);
+    std::string line;
+
+    if (std::getline(stream, line)) {
+        std::istringstream iss(line);
+        std::string method;
+        std::string path;
+        std::string httpv;
+        iss >> method >> path >> httpv;
+        setMethod(method);
+        setPath(path);
+        _httpv = httpv;
+    }
+
+    while (std::getline(stream, line)) {
+		saveHeaderLine(line);
+    }
 }
 
-long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config) {
-	(void)config;
-	char buffer[4096];
-	ssize_t bytesRead;	
-	std::ostringstream req;
+// long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config) {
+// 	(void)config;
+// 	char buffer[4096];
+// 	ssize_t bytesRead;	
+//
+// 	while ((bytesRead = recv(socketFd, buffer, 4096, 0)) > 0) {
+//         _all << buffer;
+// 	}
+//     std::size_t position = _all.str().find("\r\n\r\n");
+//
+//     if (position == std::string::npos) {
+//         return -1;
+//     }
+//
+// 	std::string header = _all.str().substr(0, position);
+// 	parseHeader(header);
+//
+//     int allBytesRead = _all.str().length();
+//
+//     if (_all.str().length() > position + 4)
+//         _all.str(_all.str().substr(position + 4));
+//     else 
+//         _all.clear();
+//
+//
+//     if (_contentLength)
+//     {
+//         _body = std::vector<char>(_contentLength);
+//         std::ostringstream chunkStream;
+//
+//         std::string rest = _all.str();
+//         std::copy(rest.begin(), rest.begin() + rest.size(), _body.begin());
+//         long long totalRead = rest.length();
+//         // std::cout << "content: " << _contentLength << std::endl;
+//         // std::cout << "totalRead: " << totalRead << std::endl;
+//
+//         while (true) {
+//             if (totalRead < _contentLength)
+//                 break;
+//             else if ((bytesRead = recv(socketFd, buffer, 4096, 0)) <= 0)
+//             {
+//                 std::cout << "Impossible to read: " << strerror(errno) << std::endl; 
+//                 break;
+//             }
+//             std::cout << "bytesRead: " << bytesRead << std::endl;
+//             chunkStream << buffer;
+//             std::string chunk = chunkStream.str() + '\n';
+//             std::copy(chunk.begin(), chunk.begin() + bytesRead, _body.begin() + totalRead);
+//             totalRead += bytesRead;
+//         }
+//         // std::cout << "bytesRead: " << bytesRead << std::endl;
+//         // std::cout << "error: " << strerror(errno) << std::endl;
+//         std::cout << "full content: " << _contentLength << std::endl;
+//         std::cout << "body content: " << _body.size() << std::endl;
+//
+//         // std::cout << "totalRead: " << totalRead << std::endl;
+//         return allBytesRead - rest.length() + _body.size();
+//     }
+// 	return allBytesRead;
+// }
+//
 
-	while ((bytesRead = recv(socketFd, buffer, 4096, 0)) > 0) {
-		ssize_t i = 0;
-		while (i < bytesRead) {
-			req << buffer[i++];
-		}
+long	Request::get_next_line(int fd, std::ostringstream &oss)
+{
+	static char buffer[BUFFER_SIZE];
+	static ssize_t bytesRead = 0;
+	static size_t currentPos = 0;
+	oss.str("");
+	if (fd < 0)
+	{
+		memset(&buffer, 0, BUFFER_SIZE);
+		bytesRead = 0;
+		currentPos = 0;
+		return 0;
 	}
 
-	std::size_t position = req.str().find("\r\n\r\n");
-	if (position == std::string::npos)
-		return -1;
-	std::string header = req.str().substr(0, position);
-	parseHeader(header);
+	while (true) {
+		if (static_cast<ssize_t>(currentPos) >= bytesRead) {
+			bytesRead = recv(fd, buffer, BUFFER_SIZE, 0);
+			currentPos = 0;
+			if (bytesRead == -1) {
+				return -1;
+			}
+			if (bytesRead == 0) {
+				break;
+			}
+		}
 
-	std::cout << "position: " << position << std::endl;
-	std::cout << "bytesRead: " << bytesRead << std::endl;
-	std::cout << "req: " << req.str() << std::endl;
-	return 10;
+		while (static_cast<ssize_t>(currentPos) < bytesRead) {
+			if (buffer[currentPos] == '\n' && buffer[currentPos-1] == '\r') {
+				currentPos++;
+				return oss.str().size();
+			}
+			oss << buffer[currentPos++];
+		}
+	}
+	return oss.str().size();
 }
 
-//long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)
-//{
-//	std::ifstream client;
-//	long bytesRead = handleFirstLineHeader(socketFd);
-//	if (bytesRead <= 0)
-//		return bytesRead;
-//
-//	std::ostringstream lineStream;
-//
-//	while (_state == HEADER)
-//	{
-//		long	lineRead = Utils::get_next_line(socketFd, lineStream);
-//
-//		
-//		if (lineRead < 0 && lineStream.str().empty())
-//			return lineRead;
-//		std::string line = lineStream.str();
-//		std::cout << "STATE3: " << _state << std::endl;
-//		std::cout << "line: " << lineStream.str() << std::endl;
-//
-//		if (line.empty() ||
-//				line.find_first_not_of(" \t\r\n") == std::string::npos) {
-//			_state = BODY;
-//			break;
-//		}
-//		bytesRead += lineRead;
-//		saveHeaderLine(line);
-//	}
-//	std::cout << "STATE4: " << _state << std::endl;
-//
-//
-//	if (!checkHeaderLocation(config)) {
-//		Utils::get_next_line(-1, lineStream);
-//		return bytesRead;
-//	}
-//	std::cout << "STATE5: " << _state << std::endl;
-//	std::cout << "bytesRead: " << bytesRead << std::endl;
-//
-//	if (_contentLength == 0)
-//		return bytesRead;
-//	std::cout << "STATE6: " << _state << std::endl;
-//	std::cout << "bytesRead: " << bytesRead << std::endl;
-//	_body = std::vector<char>(_contentLength);
-//	size_t totalRead = 0;
-//
-//	while (static_cast<long long>(totalRead) < _contentLength)
-//	{
-//		long lineRead = Utils::get_next_line(socketFd, lineStream);
-//		if (lineRead < 0)
-//			return lineRead;
-//		bytesRead += lineRead;
-//		std::string chunk = lineStream.str() + "\n";
-//		if (chunk.size() == 0)
-//			break;
-//		std::copy(chunk.begin(), chunk.begin() + chunk.size(), _body.begin() + totalRead);
-//		totalRead += chunk.size();
-//	}
-//	return bytesRead;
-//}
+long	Request::readFromSocket(unsigned int socketFd, ServerConfig &config)
+{
+    std::cout << "STATE: " << _state << std::endl;
+    std::ifstream client;
+    long bytesRead = handleFirstLineHeader(socketFd);
+    if (bytesRead <= 0)
+        return bytesRead;
+
+    std::ostringstream lineStream;
+
+    while (_state == HEADER)
+    {
+        long	lineRead = get_next_line(socketFd, lineStream);
+        
+        if (lineRead < 0 && lineStream.str().empty())
+            return lineRead;
+        std::string line = lineStream.str();
+
+        std::cout << "BR -> " << line << std::endl;
+        if (line.empty() || line.find_first_not_of(" \t\r\n") == std::string::npos) {
+            _state = BODY;
+            break;
+        }
+        bytesRead += lineRead;
+        saveHeaderLine(line);
+    }
+
+    if (!checkHeaderLocation(config)) {
+        get_next_line(-1, lineStream);
+        return bytesRead;
+    }
+
+    if (_contentLength == 0)
+        return bytesRead;
+    _body = std::vector<char>(_contentLength);
+    size_t totalRead = 0;
+
+    while (static_cast<long long>(totalRead) < _contentLength)
+    {
+        long lineRead = get_next_line(socketFd, lineStream);
+        if (lineRead < 0)
+            return lineRead;
+        bytesRead += lineRead;
+        std::string chunk = lineStream.str() + "\n";
+        if (chunk.size() == 0)
+            break;
+        std::copy(chunk.begin(), chunk.begin() + chunk.size(), _body.begin() + totalRead);
+        totalRead += chunk.size();
+    }
+    return bytesRead;
+}
 
 void	Request::setMethod(std::string s)
 {

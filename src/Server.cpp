@@ -87,23 +87,18 @@ void	Server::updateEpoll(int epollFD, short action, int targetFD, struct epoll_e
 
 #elif __APPLE__
 void Server::updateKqueue(int kqFD, short action, short envfilt, int targetFD) {
+  struct kevent event;
   if (action == EV_ADD) {
-    struct kevent event;
-    EV_SET(&event, targetFD, envfilt, EV_ADD, 0, 0, nullptr);
+    EV_SET(&event, targetFD, envfilt, EV_ADD | EV_ENABLE, 0, 0, nullptr);
     if (kevent(kqFD, &event, 1, nullptr, 0, nullptr) == -1) {
       log("Failed to add event from kqueue");
-    }
-  } else if (action == (EV_ADD | EV_ENABLE)) {
-    struct kevent evSet;
-    EV_SET(&evSet, targetFD, envfilt, EV_ADD | EV_ENABLE, 0, 0, nullptr);
-    if (kevent(kqFD, &evSet, 1, nullptr, 0, nullptr) == -1) {
-      log("Failed to add event from kqueue");
+        log(strerror(errno));
     }
   } else if (action == EV_DELETE) {
-    struct kevent event;
     EV_SET(&event, targetFD, envfilt, EV_DELETE, 0, 0, nullptr);
     if (kevent(kqFD, &event, 1, nullptr, 0, nullptr) == -1) {
       log("Failed to delete event from kqueue");
+        log(strerror(errno));
     }
   }
 }
@@ -222,7 +217,6 @@ void Server::runServers(void) {
         this->removeClient(fd_triggered);
       else if (ev == EVFILT_READ) {
         if (_clients.count(fd_triggered)) {
-	
           handleClientRequest(fd_triggered);
         } else {
           TCPSocket *server = getSocketByFD(fd_triggered);
@@ -253,11 +247,12 @@ void Server::handleClientRequest(int fd, struct epoll_event *ev) {
 void Server::handleClientRequest(int fd) {
   Client *client = _clients.at(fd);
   int byteReceived = client->readRequest();
+  std::cout << "byteReceived " << byteReceived << std::endl;
   if (byteReceived > 0) {
-    Server::updateKqueue(_event_fd, (EV_ADD | EV_ENABLE), EVFILT_WRITE, fd);
-  } else {
-    this->removeClient(fd);
-  }
+    Server::updateKqueue(_event_fd, EV_DELETE , EVFILT_READ, fd);
+    Server::updateKqueue(_event_fd, EV_ADD, EVFILT_WRITE, fd);
+  } else if (byteReceived == 0)
+	removeClient(fd);
 }
 #endif
 
@@ -279,15 +274,22 @@ void Server::handleResponse(Client *client, struct epoll_event *ev) {
 #elif __APPLE__ 
 void Server::handleResponse(Client *client) {
     client->sendResponse();
-
     std::string conn = client->getRequest().getHeaderField("connection");
-    if (client->getDataSent() == 0 && conn.compare(0, 10, "keep-alive") == 0)
+    // std::cout << "response: " << client->getDataSent() << std::endl;
+    // std::cout << "conn: " << conn << std::endl;
+    if (!client->getDataSent())
+        removeClient(client->getFd());
+    else if (client->getDataSent() < 0 || conn.compare(0, 5, "close") == 0)
+        removeClient(client->getFd());
+    else
     {
-        updateKqueue(_event_fd, EV_ADD | EV_ENABLE, EVFILT_READ, client->getFd());
+        std::cout << "test\n"; 
+        updateKqueue(_event_fd, EV_DELETE, EVFILT_WRITE, client->getFd());
+        std::cout << "test\n"; 
+        updateKqueue(_event_fd, EV_ADD, EVFILT_READ, client->getFd());
         client->clear();
     }
-    else if (client->getDataSent() <= 0)
-        removeClient(client->getFd());
+    // exit(0);
 }
 #endif
 
@@ -311,7 +313,7 @@ void Server::removeClient(int keyFD)
 #if __linux__
 	Server::updateEpoll(_event_fd, EPOLL_CTL_DEL, keyFD, NULL);
 #elif __APPLE__
-	Server::updateKqueue(_event_fd, EV_DELETE, EVFILT_READ, keyFD);
+	Server::updateKqueue(_event_fd, EV_DELETE, EVFILT_WRITE, keyFD);
 #endif
 	std::cout << "[REMOVE CLIENT]: FD -> " << keyFD << " on "
 		<< element->second->getConfig().listen << "::"  << element->second->getConfig().port << std::endl;

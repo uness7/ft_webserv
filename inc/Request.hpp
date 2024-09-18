@@ -1,4 +1,5 @@
 #pragma once
+# include <sys/socket.h>
 # include <fstream>
 # include <iostream>
 # include <map>
@@ -11,8 +12,8 @@
 # include <fstream>
 # include <iterator>
 # include "Config.hpp"
-# include "Utils.hpp"
 
+#define BUFFER_SIZE 4096
 enum REQ_STATE {
 	EMPTY,
 	HEADER,
@@ -21,8 +22,10 @@ enum REQ_STATE {
 
 class Request {
 	private:
+        std::ostringstream _all;
 		std::string _method;
 		std::string _path;
+		std::string _httpv;
 		std::string _query;
 		std::string _mimetype;
 		std::vector<char> _body;
@@ -34,6 +37,7 @@ class Request {
 		void saveHeaderLine(std::string &);
 		bool checkHeaderLocation(ServerConfig &config);
 		void parseHeader(std::string &header);
+        long get_next_line(int fd, std::ostringstream &oss);
 
 	public:
 		Request();
@@ -45,6 +49,7 @@ class Request {
 
 		std::string getMethod() const;
 		std::string getPath() const;
+		std::string getHttpv() const;
 		std::string getMimeType() const;
 		std::string getQuery() const;
 		std::vector<char> getBody() const;
