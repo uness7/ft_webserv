@@ -40,7 +40,6 @@ private:
 
 #if __linux__
       void handleClientRequest(int fd, struct epoll_event *ev);
-      static void updateEpoll(int epollFD, short action, int targetFD, struct epoll_event *ev);
 #elif __APPLE__
       void handleClientRequest(int fd);
       static void updateKqueue(int kqFD, short action,short envfilt, int targetFD);

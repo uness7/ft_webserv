@@ -23,7 +23,6 @@ Client::~Client() { }
 void  Client::clear() {
     _request = Request();
     _dataSent = 0;
-    _fd = 0;
     if (_response != NULL)
         delete _response;
 }
@@ -51,6 +50,7 @@ void Client::sendResponse() {
 
   bytesSent = send(getFd(), response.c_str() + getDataSent(),
                     response.size() - getDataSent(), 0);
+
   if(bytesSent <= 0)
     setDataSent(-1);
   else if (bytesSent + getDataSent() == static_cast<long>(response.size()))

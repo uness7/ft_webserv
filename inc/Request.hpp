@@ -14,15 +14,15 @@
 # include "Config.hpp"
 
 #define BUFFER_SIZE 4096
+
 enum REQ_STATE {
 	EMPTY,
 	HEADER,
-	BODY
+	BODY,
 };
 
 class Request {
 	private:
-        std::ostringstream _all;
 		std::string _method;
 		std::string _path;
 		std::string _httpv;
@@ -37,7 +37,7 @@ class Request {
 		void saveHeaderLine(std::string &);
 		bool checkHeaderLocation(ServerConfig &config);
 		void parseHeader(std::string &header);
-        long get_next_line(int fd, std::ostringstream &oss);
+		long get_next_line(int fd, std::ostringstream &oss);
 
 	public:
 		Request();
