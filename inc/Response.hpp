@@ -12,8 +12,10 @@
 
 #pragma once
 
+#include "Config.hpp"
 # include "Request.hpp"
 # include "Client.hpp"
+# include <unistd.h>
 # include <iostream>
 # include <cstring>
 # include <string>
@@ -55,15 +57,12 @@ class Response
 
 		const std::string	getResponse() const;
 
-		// this->_redirect_path;
 		const std::string	getRedirectPath() const;
 		void		setRedirectPath(std::string& path);
 
-
-
 		void 		setStatusCode(STATUS_CODE);
 		void		setStatusCode(unsigned short code);
-		void		handleCGI(void);
+            void		handleCGI(LocationConfig&);
 		void		handleStaticFiles(void);
 		void		finalizeHTMLResponse(void) ;
 		STATUS_CODE 	getStatusCode() const;

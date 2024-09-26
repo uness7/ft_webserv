@@ -31,17 +31,6 @@ void	createHTMLFile(std::vector<TCPSocket *> &vec, std::string &fileName)
 	htmlFile << "<h1>Available Servers</h1>\n";
 	htmlFile << "<ul>\n";
 
-	/*  struct ServerConfig
-  4 {
-  3         std::string                             listen;
-  2         unsigned int                            port;
-  1         std::string                             server_name;
-41          std::string                             error_page;                                                                                   
-  1         long long                               client_max_body_size;
-  2         std::map<std::string, LocationConfig>   locations;
-  3         short getLocationByPathRequested(std::string path, LocationConfig &target);
-  4 }; */
-
 	for (size_t i = 1; i < vec.size(); ++i)
 	{
 		htmlFile << "<li><a href=\"http://" 
@@ -73,7 +62,6 @@ int	main(int argc, char *argv[])
 		serverConfigs = config.getServerConfigs();
 		Config::printConfigs(serverConfigs);
 		std::vector<TCPSocket*> sockets = createSockets(serverConfigs);
-
 		std::string	name = "home.html";
 		createHTMLFile(sockets, name);
 

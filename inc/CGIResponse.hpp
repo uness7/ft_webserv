@@ -1,47 +1,37 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   CGIResponse.hpp                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/02 14:54:01 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/10 15:04:13 by yzioual          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef CGIRESPONSE_HPP
 #define CGIRESPONSE_HPP
 
-# include <string>
-# include <map>
-# include <../inc/Client.hpp>
-# include <unistd.h>
-# include <sys/wait.h>
-# include <iostream>
-# include <sstream>
-# include <cstring>
-# include <cstdlib>
-# include <cstdio>
-# include <unistd.h>
-# include <iomanip>
-# include <vector>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <vector>
+
+#include "../inc/Client.hpp"
+#include "Config.hpp"
 
 class Client;
 
-class CGIResponse
-{
-	public:
-	        CGIResponse(Client *client);
+class CGIResponse {
+public:
+  CGIResponse(Client *client, std::string &cgi_path);
 
-		void		setCgiEnv();
-		std::string	execute();
+  void setCgiEnv();
+  std::string execute();
 
-	private:
-        	Client 					*_client;
-		std::string 				_cgiPath;
-		std::string 				_scriptPath;
-		std::map<std::string, std::string>	_envMap;
+private:
+  Client *_client;
+  std::string _cgiPath;
+  std::string _scriptPath;
+  std::map<std::string, std::string> _envMap;
+
+  bool canExecFile();
 };
 
 #endif

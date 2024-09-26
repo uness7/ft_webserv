@@ -96,7 +96,7 @@ bool	Request::checkHeaderLocation(ServerConfig &config)
 	LocationConfig	target;
 
 	short found = config.getLocationByPathRequested(_path, target);
-	if (found < 0 || config.client_max_body_size < _contentLength)
+	if (found < 0 || (config.client_max_body_size >= 0 && config.client_max_body_size < _contentLength))
 		return false;
 
 	if (getMethod() == "HEAD")
@@ -239,11 +239,6 @@ void	Request::setMimeType()
 	} else {
 		_mimetype = "text/plain";
 	}
-}
-
-bool	Request::isCGI() const
-{
-	return getMimeType() == "application/python" ? true : false;
 }
 
 /* Getters Methods */

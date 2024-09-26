@@ -55,8 +55,6 @@ class Request {
 		std::string getHeaderField(std::string) const;
 		long long getContentLength() const;
 
-		bool isCGI() const;
-
 		void setHeaders(std::string &);
 		void appendToBody();
 		void setMethod(std::string);

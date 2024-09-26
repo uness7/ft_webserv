@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Config.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/02 14:23:22 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/02 14:24:35 by yzioual          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../inc/Config.hpp"
 
 Config::Config(const std::string &fileName)
@@ -77,27 +65,46 @@ void	Config::parseServer(std::ifstream &configFile, ServerConfig &serverConfig)
 	serverConfig.client_max_body_size = -1;
 	while (std::getline(configFile, line) && line.find("}") == std::string::npos)
 		parseServerLine(configFile, line, serverConfig);
-	if (serverConfig.client_max_body_size == -1)
-		serverConfig.client_max_body_size = convertToBytes("1M");
 }
 
 void	Config::parseServerLine(std::ifstream &configFile, const std::string &line, ServerConfig &serverConfig)
 {
 	if (line.find("listen") != std::string::npos)
 		parseListen(line, serverConfig);
-	else if (line.find("server_name") != std::string::npos)
+	else if (line.find("server_name") != std::string::npos) {
 		serverConfig.server_name = extractValue(line, "server_name");
-	else if (line.find("error_page") != std::string::npos)
+        serverConfig.fields["server_name"] = serverConfig.server_name; 
+    } else if (line.find("error_page") != std::string::npos) {
 		serverConfig.error_page = extractValue(line, "error_page");
-	else if (line.find("client_max_body_size") != std::string::npos)
-		serverConfig.client_max_body_size = convertToBytes(extractValue(line, "client_max_body_size"));
-	else if (line.find("location") != std::string::npos)
-	{
+        serverConfig.fields["error_page"] = serverConfig.error_page; 
+    } else if (line.find("client_max_body_size") != std::string::npos) {
+        std::string clientMaxBody = extractValue(line, "client_max_body_size");
+		serverConfig.client_max_body_size = convertToBytes(clientMaxBody);
+        serverConfig.fields["client_max_body_size"] = clientMaxBody; 
+    } else if (line.find("location") != std::string::npos) {
 		std::string	locationPath = extractLocationPath(line);
 		LocationConfig 	locationConfig;
+        locationConfig.client_max_body_size = -1;
 		parseLocation(configFile, locationConfig);
 		serverConfig.locations[locationPath] = locationConfig;
-	}
+	} else if (line.find(' ') != std::string::npos)  {
+        std::map<std::string, std::string> content = extractUnknownValue(line);
+        std::map<std::string, std::string>::iterator kv = content.begin();
+        serverConfig.fields[kv->first] = kv->second;
+    }
+}
+
+std::map<std::string, std::string> Config::extractUnknownValue(const std::string &line) {
+    std::map<std::string, std::string> kv;
+	size_t pos = line.find(' ');
+    std::string key = line.substr(0, pos);
+	std::string value = line.substr(pos + 1);
+	key.erase(0, key.find_first_not_of(" \t\n\r\f\v"));
+	key.erase(key.find_last_not_of(" \t\n\r\f\v;") + 1);
+	value.erase(0, value.find_first_not_of(" \t\n\r\f\v"));
+	value.erase(value.find_last_not_of(" \t\n\r\f\v;") + 1);
+    kv[key] = value;
+    return kv;
 }
 
 std::string	Config::extractValue(const std::string &line, const std::string &key)
@@ -145,37 +152,47 @@ void	Config::parseLocation(std::ifstream &configFile, LocationConfig &locationCo
 
 void	Config::parseLocationLine(const std::string &line, LocationConfig &locationConfig)
 {
-	if (line.find("root") != std::string::npos)
+	if (line.find("root") != std::string::npos) { 
 		locationConfig.root = extractValue(line, "root");
-	else if (line.find("index") != std::string::npos)
+        locationConfig.content["root"] = locationConfig.root;
+    } else if (line.find("index") != std::string::npos) { 
 		locationConfig.index = extractValue(line, "index");
-	else if (line.find("autoindex") != std::string::npos)
-	{
+        locationConfig.content["index"] = locationConfig.index;
+    } else if (line.find("autoindex") != std::string::npos) {
 		std::string value = extractValue(line, "autoindex");
 		locationConfig.autoindex = (value == "on");
-	}
-	else if (line.find("limit_except") != std::string::npos)
-	{
+        locationConfig.content["autoindex"] = value;
+	} else if (line.find("limit_except") != std::string::npos) {
 		std::string methods = extractValue(line, "limit_except");
 		std::istringstream iss(methods);
 		std::string method;
 		while (iss >> method)
 			locationConfig.limit_except.push_back(method);
-	}
-	else if (line.find("upload_store") != std::string::npos)
+    }
+	else if (line.find("upload_store") != std::string::npos) {
 		locationConfig.upload_store = extractValue(line, "upload_store");
-	else if (line.find("allowed_methods") != std::string::npos)
-	{
+        locationConfig.content["upload_store"] = locationConfig.upload_store;
+    } else if (line.find("allowed_methods") != std::string::npos) {
 		std::string methods = extractValue(line, "allowed_methods");
 		std::istringstream iss(methods);
 		std::string method;
 		while (iss >> method)
 			locationConfig.allowed_methods.push_back(method);
 	}
-	else if (line.find("cgi_script") != std::string::npos)
+	else if (line.find("cgi_script") != std::string::npos) {
 		locationConfig.cgi_script = extractValue(line, "cgi_script");
-	else if (line.find("redirect") != std::string::npos)
+        locationConfig.content["cgi_script"] = locationConfig.cgi_script;
+    } else if (line.find("redirect") != std::string::npos) {
 		locationConfig.redirect = extractValue(line, "redirect");
+        locationConfig.content["redirect"] = locationConfig.redirect;
+    } else if (line.find("client_max_body_size") != std::string::npos)  {
+        locationConfig.content["client_max_body_size"] = extractValue(line, "client_max_body_size");
+		locationConfig.client_max_body_size = convertToBytes(locationConfig.content["client_max_body_size"]);
+    } else if (line.find(' ') != std::string::npos)  {
+        std::map<std::string, std::string> content = extractUnknownValue(line);
+        std::map<std::string, std::string>::iterator kv = content.begin();
+        locationConfig.content[kv->first] = kv->second;
+    }
 }
 
 
@@ -198,7 +215,11 @@ void	Config::printServerConfig(const ServerConfig& serverConfig)
 	if (!serverConfig.error_page.empty())
 		std::cout << "Error page: " << serverConfig.error_page << std::endl;
 	if (serverConfig.client_max_body_size > 0)
-		std::cout << "Client max body size: " << serverConfig.client_max_body_size << std::endl;
+		std::cout << "Client max body size: " << serverConfig.client_max_body_size << std::endl << std::endl;
+    std::map<std::string, std::string>::const_iterator f;
+    for (f = serverConfig.fields.begin(); f != serverConfig.fields.end(); f++)
+        std::cout << f->first << " " << f->second << std::endl;
+    std::cout << std::endl;
 	for (std::map<std::string, LocationConfig>::const_iterator loc_it = serverConfig.locations.begin(); loc_it != serverConfig.locations.end(); ++loc_it)
 		printLocationConfig(loc_it->first, loc_it->second);
 }
@@ -223,6 +244,12 @@ void	Config::printLocationConfig(const std::string& locationPath, const Location
 		std::cout << " CGI Script : " << locationConfig.cgi_script << std::endl;
 	if (!locationConfig.redirect.empty())
 		std::cout << " redirect path : " << locationConfig.redirect << std::endl;
+
+    std::map<std::string, std::string>::const_iterator f;
+    for (f = locationConfig.content.begin(); f != locationConfig.content.end(); f++)
+        std::cout << f->first << " " << f->second << std::endl;
+
+    std::cout << std::endl;
 }
 
 

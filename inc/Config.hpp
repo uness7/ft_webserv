@@ -32,10 +32,13 @@ struct LocationConfig
 	std::vector<std::string>	allowed_methods;
 	std::string			cgi_script;
 	std::string			redirect;
+	long long 			client_max_body_size;
+    std::map<std::string, std::string> content;
 };
 
 struct ServerConfig
 {
+    std::map<std::string, std::string> fields;
 	std::string				listen;
 	unsigned int 				port;
 	std::string 				server_name;
@@ -61,6 +64,7 @@ class Config
 		void 		parseServer(std::ifstream &configFile, ServerConfig &serverConfig);
 		void 		parseServerLine(std::ifstream &configFile, const std::string &line, ServerConfig &serverConfig);
 		std::string 	extractValue(const std::string &line, const std::string &key);
+        std::map<std::string, std::string> extractUnknownValue(const std::string &line);
 		std::string 	extractLocationPath(const std::string &line);
 		void 		parseListen(const std::string &line, ServerConfig &serverConfig);
 		void 		parseLocation(std::ifstream &configFile, LocationConfig &locationConfig);

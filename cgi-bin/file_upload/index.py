@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+
+print(
+    f"""\
+Content-Type: text/html\n
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,4 +18,5 @@
     </form>
 </body>
 </html>
-
+"""
+)
