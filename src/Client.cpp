@@ -47,7 +47,9 @@ const Response *Client::getResponse() const { return _response; }
 
 void Client::sendResponse() {
   long long bytesSent;
+#ifndef __linux__
   if (_response == NULL)
+#endif
     _response = new Response(this);
   std::string response = getResponseToString();
 
