@@ -283,9 +283,7 @@ void Server::clearServer() {
     delete it->second;
   }
 
-    std::cout << "this function will delete " << _sockets.size() << std::endl;
   for (size_t i = 0; i < _sockets.size(); i++) {
-    std::cout << i << " = server: " << _sockets[i]->getSocketFD() << " -> " <<_sockets[i]->getPort() << std::endl; 
     delete _sockets[i];
   }
 }

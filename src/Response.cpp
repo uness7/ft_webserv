@@ -21,6 +21,7 @@ Response &Response::operator=(const Response &rhs) {
     this->_buffer = rhs._buffer;
     this->_client = rhs._client;
     this->_redirect_path = rhs._redirect_path;
+    this->_target = rhs._target;
   }
   return *this;
 }
@@ -75,21 +76,21 @@ void Response::buildPath(LocationConfig &target, short index_max) {
       target.root.compare(1, target.root.size() - 1, end_s, 0,
                           target.root.size() - 1) == 0)
     return;
+
   if (end_s.empty() && !target.index.empty())
-    request.setPath(target.root + "/" + target.index);
+    request.setPath(target.root + target.index);
   else
-    request.setPath(target.root + "/" + end_s);
+    request.setPath(target.root + end_s);
 }
 
 void Response::build(void) {
   Request &request = _client->getRequest();
   ServerConfig config = _client->getConfig();
-  LocationConfig target;
   std::string path = request.getPath();
   short index_max =
-      config.getLocationByPathRequested(request.getPath(), target);
+      config.getLocationByPathRequested(request.getPath(), _target);
 
-  _redirect_path = target.redirect;
+  _redirect_path = _target.redirect;
   if (!_redirect_path.empty()) {
     setRedirectPath(_redirect_path);
     setStatusCode(302);
@@ -101,23 +102,23 @@ void Response::build(void) {
     return finalizeHTMLResponse();
   }
 
-  std::vector<std::string> &allowed_methods = target.allowed_methods;
+  std::vector<std::string> &allowed_methods = _target.allowed_methods;
   if (request.getMethod() != "HEAD" && allowed_methods.size() &&
       std::find(allowed_methods.begin(), allowed_methods.end(),
                 request.getMethod()) == allowed_methods.end())
     updateResponse(405, "text/plain", "Method Not Allowed");
-  else if ((target.client_max_body_size > 0 &&
-            target.client_max_body_size < request.getContentLength()) ||
+  else if ((_target.client_max_body_size > 0 &&
+            _target.client_max_body_size < request.getContentLength()) ||
            (config.client_max_body_size > 0 &&
             config.client_max_body_size < request.getContentLength()))
     updateResponse(413, "text/plain", "Payload Too Large");
   else {
-    buildPath(target, index_max);
-    if (target.content["cgi_path"] != "") {
-      std::string ext = target.content["cgi_ext"];
+    buildPath(_target, index_max);
+    if (_target.content["cgi_path"] != "") {
+      std::string ext = _target.content["cgi_ext"];
       if (ext.find(".py") != std::string::npos &&
           request.getMimeType() == "application/python")
-        handleCGI(target);
+        handleCGI(_target);
       else
         handleStaticFiles();
     } else
@@ -165,7 +166,91 @@ void Response::handleStaticFiles(void) {
   } else
     buildError();
 }
+std::string formatSize(off_t size) {
+    const char *units[] = {"o", "Ko", "Mo", "Go"};
+    int unitIndex = 0;
+    double formattedSize = size;
 
+    while (formattedSize >= 1024 && unitIndex < 3) {
+        formattedSize /= 1024;
+        unitIndex++;
+    }
+
+    std::ostringstream ss;
+    ss.precision(2);
+    ss << std::fixed << formattedSize << " " << units[unitIndex];
+    return ss.str();
+}
+std::string formatTime(time_t time) {
+    char buffer[80];
+    struct tm *tm_info = localtime(&time);
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+    return std::string(buffer);
+}
+
+void Response::generateAutoIndex() {
+  Request &request = _client->getRequest();
+  std::string path = request.getPath();
+  std::ostringstream ss;
+  std::ostringstream html;
+  html << "<!DOCTYPE html>\n<html>\n<head>\n<title>Index of " << path
+       << "</title>\n</head>\n<body>\n";
+  html << "<h1>Index of " << path << "</h1>\n";
+  html << "<table border=\"1\">\n<tr><th>Name</th><th>Size</th><th>Last "
+          "Modified</th></tr>\n";
+
+  DIR *dir;
+  struct dirent *entry;
+  std::string directoryPath = "." + path;
+
+  if ((dir = opendir(directoryPath.c_str())) != NULL) {
+    while ((entry = readdir(dir)) != NULL) {
+      std::string name = entry->d_name;
+
+      if (name == "." || name == "..")
+        continue;
+
+      struct stat fileStat;
+      std::string fullPath = directoryPath + "/" + name;
+
+      if (stat(fullPath.c_str(), &fileStat) < 0) {
+        std::cerr << "Erreur lors de l'appel à stat pour " << fullPath << ": "
+                  << strerror(errno) << std::endl;
+        continue;
+      }
+      if (S_ISDIR(fileStat.st_mode))
+        html << "<tr><td><a href=\"/" << name << "/";
+      else
+        html << "<tr><td><a href=\"" << name;
+      html << "\">" << name << "</a></td>" << "<td>" << formatSize(fileStat.st_size)
+           << "</td>" << "<td>" << formatTime(fileStat.st_mtime) << "</td></tr>\n";
+    }
+    closedir(dir);
+  } else {
+    html << "<tr><td colspan=\"3\">Unable to open directory</td></tr>\n";
+  }
+
+  html << "</table>\n</body>\n</html>\n";
+  updateResponse(200, "text/html", html.str());
+  ss << "HTTP/1.1 " << this->getStatusToString() << "\r\n"
+     << "Content-Type: " << _contentType << "\r\n"
+     << "Content-Length: " << _buffer.size() << "\r\n";
+  for (std::vector<std::string>::iterator it = _cookies.begin();
+       it != _cookies.end(); ++it)
+    ss << *it << "\r\n";
+  ss << "\r\n";
+  if (_client->getRequest().getMethod() != "HEAD")
+    ss << _buffer;
+  _value = ss.str();
+}
+void Response::handleEmptyBuffer() {
+  Request &request = _client->getRequest();
+  std::string path = request.getPath();
+
+  if (_target.content["autoindex"] == "on" && path == _target.root) {
+    generateAutoIndex();
+  }
+}
 void Response::finalizeHTMLResponse(void) {
   std::ostringstream ss;
 
@@ -174,23 +259,9 @@ void Response::finalizeHTMLResponse(void) {
        << "Location: " << getRedirectPath() << "\r\n"
        << "Content-Length: 0\r\n"
        << "\r\n";
+    this->_value = ss.str();
   } else if (_buffer.empty()) {
-    std::string errorDefault =
-        "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'>"
-        "<title>404 - Page Not Found</title><style>body {font-family: Arial, "
-        "sans-serif; "
-        "background-color: #f8f9fa; color: #333; text-align: center; padding: "
-        "50px;} "
-        "h1 {font-size: 50px;} p {font-size: 20px;}</style></head><body>"
-        "<h1>404 - Page Not Found</h1>"
-        "<p>Sorry, the page you are looking for does not "
-        "exist.</p></body></html>";
-    updateResponse(404, "text/html", errorDefault);
-    ss << "HTTP/1.1 404 Not Found\r\n"
-       << "Content-Type: text/html\r\n"
-       << "Content-Length: " << errorDefault.size() << "\r\n"
-       << "\r\n"
-       << errorDefault;
+    handleEmptyBuffer();
   } else {
     ss << "HTTP/1.1 " << this->getStatusToString() << "\r\n"
        << "Content-Type: " << _contentType << "\r\n"
@@ -201,9 +272,8 @@ void Response::finalizeHTMLResponse(void) {
     ss << "\r\n";
     if (_client->getRequest().getMethod() != "HEAD")
       ss << _buffer;
+    this->_value = ss.str();
   }
-  this->_value = ss.str();
-  // std::cout << "Headers: \n" << ss.str() << "\nHeaders\n";
 }
 
 const std::map<unsigned short, std::string> &Response::getStatusCodes() {
