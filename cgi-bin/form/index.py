@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 
-print(
-f"""
+def print_header(status="200 OK", content_type="text/html"):
+    print(f"HTTP/1.1 {status}");
+    print(f"Content-Type: {content_type}");
+
+def print_length(content):
+    print(f"Content-Length: {len(content)}")
+
+content = f"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,5 +48,10 @@ f"""
     </form>
 </body>
 </html>
-"""
-)
+""";
+
+# Printing Content
+print_header("200 OK", "text/html");
+print_length(content);
+print("\r\n\r\n");
+print(content);

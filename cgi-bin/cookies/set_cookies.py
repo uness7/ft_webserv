@@ -24,14 +24,25 @@ C['password']['expires'] = 3600;
 C['email']['expires'] = 3600;
 '''
 
-print("Content-type: text/html\r\n");
-print(C);
 
-print("<html><body>");
-print(
-    '<a href="http://localhost:8070/cookies/index.html">'
-    'Go back to homepage'
-    '</a>'
-);
-print("</body></html>");
+def print_header(status="200 OK", content_type="text/html"):
+    print(f"HTTP/1.1 {status}");
+    print(f"Content-Type: {content_type}");
+
+def print_length(content):
+    print(f"Content-Length: {len(content)}")
+
+content = f"""
+<html>
+    <body>
+        <a href="http://localhost:8070/cookies/index.html">Go back to homepage</a>
+    <body>
+</html>""";
+
+print_header("200 OK", "text/html");
+print_length(content);
+print(C);
+print();
+print(content);
+
 

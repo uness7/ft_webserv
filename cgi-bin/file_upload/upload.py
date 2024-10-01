@@ -17,15 +17,28 @@ if fileitem.filename:
         with open(file_path, 'wb') as f:
             f.write(fileitem.file.read())
         message = f'The file "{fn}" was uploaded successfully'
+        is_ok = True;
     except Exception as e:
         message = f'An error occurred while uploading the file: {str(e)}'
+        is_ok = False;
 else:
     message = 'No file was uploaded'
+    is_ok = False;
 
-print(f"""\
-Content-Type: text/html\n
-<html><body>
-<p>{message}</p>
-<li><a href="http://localhost:8070">Go back to homepage</a></li>
-</body></html>
-""")
+#################################################################################
+def print_header(status="200 OK", content_type="text/html"):
+    print(f"HTTP/1.1 {status}");
+    print(f"Content-Type: {content_type}");
+
+def print_length(content):
+    print(f"Content-Length: {len(content)}")
+#################################################################################
+
+content = f"""<html><body><p>{message}</p><li><a href="http://localhost:8070">Go back to homepage</a></li></body></html>""";
+if is_ok:
+    print_header("200 OK", "text/html");
+else:
+    print_header("400 Bad Request", "text/html");
+print_length(content);
+print("\r\n\r\n");
+print(content);

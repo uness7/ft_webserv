@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 import cgi
 
-form = cgi.FieldStorage();
 
+form = cgi.FieldStorage();
 name = form.getvalue('name')
 status = form.getvalue('status')
 age = form.getvalue('age')
 email = form.getvalue('email')
 feedback = form.getvalue('feedback')
-
 colors = form.getlist('colors')
 country = form.getvalue('country')
 
-print(
-f"""
+###############################################################################
+def print_header(status="200 OK", content_type="text/html"):
+    print(f"HTTP/1.1 {status}");
+    print(f"Content-Type: {content_type}");
+
+def print_length(content):
+    print(f"Content-Length: {len(content)}")
+###############################################################################
+
+content = f"""
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -33,6 +40,11 @@ f"""
     </div>
 </body>
 </html>
-"""
-)
+""";
+
+# Nothing could go here, so it's safe to pass in 200 status code Mr. Tourabi :)
+print_header("200 OK", "text/html");
+print_length(content);
+print("\r\n\r\n");
+print(content);
 

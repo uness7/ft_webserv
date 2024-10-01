@@ -6,11 +6,19 @@ from os import environ
 
 cgitb.enable()
 
-print("Content-Type: text/html")
-print()
+############################################################
 
-# HTML Header
-print("""
+def print_header(status="200 OK", content_type="text/html"):
+    print(f"HTTP/1.1 {status}");
+    print(f"Content-Type: {content_type}");
+
+def print_length(content):
+    print(f"Content-Length: {len(content)}")
+
+############################################################
+
+# Prepare content
+content = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,10 +50,6 @@ print("""
             color: #333;
         }
     </style>
-""")
-
-# HTML Body
-print("""
 </head>
 <body>
     <h1>Cookies</h1>
@@ -57,35 +61,39 @@ print("""
             </tr>
         </thead>
         <tbody>
-""")
+""";
 
 if 'HTTP_COOKIE' in environ:
-    cookies = environ['HTTP_COOKIE']
+    cookies = environ['HTTP_COOKIE'];
     
     for cookie in cookies.split(';'):
-        cookie = cookie.strip()  
+        cookie = cookie.strip();
         if '=' in cookie:
             key, value = cookie.split('=', 1)
-            print(f"""
+            content += f"""
             <tr>
                 <td>{key}</td>
                 <td>{value}</td>
             </tr>
-            """)
-
+            """;
 else:
-    print("""
+    content += """
         <tr>
             <td colspan="2">No cookies found.</td>
         </tr>
-    """)
-
-# HTML Footer
-print("""
+    """
+content += """
         </tbody>
     </table>
     <a href="./index.html">Back to Homepage</a>
 </body>
 </html>
-""")
+""";
+
+# Print the headers and body
+print_header("200 OK", "text/html");
+print_length(content);
+print("\r\n\r\n");
+print(content);
+
 
