@@ -41,8 +41,7 @@ std::vector<std::string> splitString(const std::string &str) {
   return result;
 }
 
-void Response::updateResponse(unsigned short statusCode,
-                              std::string contentType, std::string buffer) {
+void Response::updateResponse(unsigned short statusCode, std::string contentType, std::string buffer) {
   setStatusCode(statusCode);
   _contentType = contentType;
   _buffer = buffer;
@@ -118,7 +117,7 @@ void Response::build(void) {
       std::string ext = _target.content["cgi_ext"];
       if (ext.find(".py") != std::string::npos &&
           request.getMimeType() == "application/python")
-        handleCGI(_target);
+      	return handleCGI(_target);
       else
         handleStaticFiles();
     } else
@@ -147,9 +146,11 @@ void Response::handleCGI(LocationConfig &conf) {
       if (line.find("Set-Cookie:") == 0)
         _cookies.push_back(line);
     }
-    updateResponse(200, "text/html", resp);
-  } else
+   this->_value = resp; 
+  } else {
     buildError();
+    finalizeHTMLResponse();
+  }
 }
 
 void Response::handleStaticFiles(void) {
@@ -166,6 +167,7 @@ void Response::handleStaticFiles(void) {
   } else
     buildError();
 }
+
 std::string formatSize(off_t size) {
     const char *units[] = {"o", "Ko", "Mo", "Go"};
     int unitIndex = 0;
@@ -181,6 +183,7 @@ std::string formatSize(off_t size) {
     ss << std::fixed << formattedSize << " " << units[unitIndex];
     return ss.str();
 }
+
 std::string formatTime(time_t time) {
     char buffer[80];
     struct tm *tm_info = localtime(&time);

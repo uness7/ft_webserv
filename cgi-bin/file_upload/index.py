@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-print(
-    f"""\
-Content-Type: text/html\n
-<!DOCTYPE html>
+content = """<!DOCTYPE html>
 <html>
 <head>
 	<title>Form</title>
@@ -17,6 +14,10 @@ Content-Type: text/html\n
         <input type="submit" name="submit" value="Upload">
     </form>
 </body>
-</html>
-"""
-)
+</html>"""
+
+print("HTTP/1.1 200")
+print("Content-Type: text/html")
+print("Content-Length: " + str(len(content)))
+print("\r\n")
+print(content)
