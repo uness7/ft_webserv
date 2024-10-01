@@ -22,8 +22,8 @@ path = os.getcwd() + "/cgi-bin/auth/response.html";
 if username and password: 
     if auth(username, password):
         template = read_template(path)
-        template = template.format(name=username, status='Logged In', age='', email='', 
-                feedback='', colors='', country='')
+        template = template.format(name=username, status='', age='', email='', 
+                                   feedback='', colors='', country='')
         print()
         print(template)
     else:

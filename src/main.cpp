@@ -14,41 +14,7 @@
 #include "../inc/TCPSocket.hpp"
 #include "../inc/Config.hpp"
 
-void	createHTMLFile(std::vector<TCPSocket *> &vec, std::string &fileName)
-{
-	std::ofstream htmlFile(fileName.c_str());
-	if (!htmlFile.is_open())
-	{
-		std::cerr << "Error: Could not open file " << fileName << " for writing." << std::endl;
-		return;
-	}
-
-	htmlFile << "<html>\n";
-	htmlFile << "<head>\n";
-	htmlFile << "<title>Available Servers</title>\n";
-	htmlFile << "</head>\n";
-	htmlFile << "<body>\n";
-	htmlFile << "<h1>Available Servers</h1>\n";
-	htmlFile << "<ul>\n";
-
-	for (size_t i = 1; i < vec.size(); ++i)
-	{
-		htmlFile << "<li><a href=\"http://" 
-			<< "localhost"
-			<< ":" 
-			<< vec[i]->getServerConfig().port
-			<< "\">"
-			<< vec[i]->getServerConfig().server_name
-			<< "</a></li>\n";
-	}
-
-	htmlFile << "</ul>\n";
-	htmlFile << "</body>\n";
-	htmlFile << "</html>\n";
-	htmlFile.close();
-}
-
-int	main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	if (argc < 2)
 	{
@@ -62,9 +28,6 @@ int	main(int argc, char *argv[])
 		serverConfigs = config.getServerConfigs();
 		Config::printConfigs(serverConfigs);
 		std::vector<TCPSocket*> sockets = createSockets(serverConfigs);
-		std::string	name = "home.html";
-		createHTMLFile(sockets, name);
-
 		Server server(sockets);
 		server.runServers();
 	}

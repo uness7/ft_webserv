@@ -19,7 +19,7 @@ bool CGIResponse::canExecFile() {
 void CGIResponse::setCgiEnv() {
   _envMap["GATEWAY_INTERFACE"] = "CGI/1.1";
   _envMap["SERVER_PROTOCOL"] = "HTTP/1.1";
-  _envMap["REDIRECT_STATUS"] = "200";
+  _envMap["REDIRECT_STATUS"] = "200"; // this must be the value sent by python scripts
   _envMap["REQUEST_METHOD"] = _client->getRequest().getMethod();
   _envMap["CONTENT_TYPE"] =
       _client->getRequest().getHeaderField("content-type");
