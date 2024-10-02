@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Response.hpp                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/02 14:54:21 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/10 15:05:49 by yzioual          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #pragma once
 
 #include "Client.hpp"
@@ -48,10 +36,11 @@ private:
   void buildError();
   void buildPath(LocationConfig &target, short index_max);
   void handleEmptyBuffer();
-  void handleCGI(LocationConfig &);
+  void handleCGI();
   void handleStaticFiles(void);
   void finalizeHTMLResponse(void);
   void generateAutoIndex();
+  bool isValidClientMaxBody() const;
   void updateResponse(unsigned short statusCode, std::string contentType,
                       std::string buffer);
 

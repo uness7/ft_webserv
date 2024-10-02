@@ -1,6 +1,7 @@
-
 #include "../inc/Response.hpp"
 #include "../inc/CGIResponse.hpp"
+#include <cstdio>
+#include <string>
 
 Response::Response()
     : _value(""), _statusCode(), _contentType(""), _buffer(""), _client(NULL) {}
@@ -41,7 +42,8 @@ std::vector<std::string> splitString(const std::string &str) {
   return result;
 }
 
-void Response::updateResponse(unsigned short statusCode, std::string contentType, std::string buffer) {
+void Response::updateResponse(unsigned short statusCode,
+                              std::string contentType, std::string buffer) {
   setStatusCode(statusCode);
   _contentType = contentType;
   _buffer = buffer;
@@ -106,28 +108,37 @@ void Response::build(void) {
       std::find(allowed_methods.begin(), allowed_methods.end(),
                 request.getMethod()) == allowed_methods.end())
     updateResponse(405, "text/plain", "Method Not Allowed");
-  else if ((_target.client_max_body_size > 0 &&
-            _target.client_max_body_size < request.getContentLength()) ||
-           (config.client_max_body_size > 0 &&
-            config.client_max_body_size < request.getContentLength()))
+  else if (isValidClientMaxBody() == false) {
+    char nb[1024];
+    snprintf(nb, 1024, "Payload was too large -> %lld | %lld || %lld\n",
+             _target.client_max_body_size, config.client_max_body_size,
+             request.getContentLength());
     updateResponse(413, "text/plain", "Payload Too Large");
-  else {
+  } else {
     buildPath(_target, index_max);
     if (_target.content["cgi_path"] != "") {
       std::string ext = _target.content["cgi_ext"];
       if (ext.find(".py") != std::string::npos &&
           request.getMimeType() == "application/python")
-      	return handleCGI(_target);
-      else
-        handleStaticFiles();
-    } else
-      handleStaticFiles();
+        return handleCGI();
+    }
+    handleStaticFiles();
   }
   finalizeHTMLResponse();
 }
 
-void Response::handleCGI(LocationConfig &conf) {
-  CGIResponse cgi = CGIResponse(this->_client, conf.content["cgi_path"]);
+bool Response::isValidClientMaxBody() const {
+  Request &request = _client->getRequest();
+  ServerConfig config = _client->getConfig();
+  if (_target.client_max_body_size > 0)
+    return _target.client_max_body_size > request.getContentLength();
+  else if (config.client_max_body_size > 0)
+    return config.client_max_body_size > request.getContentLength();
+  return true;
+}
+
+void Response::handleCGI() {
+  CGIResponse cgi = CGIResponse(this->_client, _target.content["cgi_path"]);
   std::string resp = cgi.execute();
 
   if (!resp.empty()) {
@@ -146,7 +157,7 @@ void Response::handleCGI(LocationConfig &conf) {
       if (line.find("Set-Cookie:") == 0)
         _cookies.push_back(line);
     }
-   this->_value = resp; 
+    this->_value = resp;
   } else {
     buildError();
     finalizeHTMLResponse();
@@ -169,26 +180,26 @@ void Response::handleStaticFiles(void) {
 }
 
 std::string formatSize(off_t size) {
-    const char *units[] = {"o", "Ko", "Mo", "Go"};
-    int unitIndex = 0;
-    double formattedSize = size;
+  const char *units[] = {"o", "Ko", "Mo", "Go"};
+  int unitIndex = 0;
+  double formattedSize = size;
 
-    while (formattedSize >= 1024 && unitIndex < 3) {
-        formattedSize /= 1024;
-        unitIndex++;
-    }
+  while (formattedSize >= 1024 && unitIndex < 3) {
+    formattedSize /= 1024;
+    unitIndex++;
+  }
 
-    std::ostringstream ss;
-    ss.precision(2);
-    ss << std::fixed << formattedSize << " " << units[unitIndex];
-    return ss.str();
+  std::ostringstream ss;
+  ss.precision(2);
+  ss << std::fixed << formattedSize << " " << units[unitIndex];
+  return ss.str();
 }
 
 std::string formatTime(time_t time) {
-    char buffer[80];
-    struct tm *tm_info = localtime(&time);
-    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
-    return std::string(buffer);
+  char buffer[80];
+  struct tm *tm_info = localtime(&time);
+  strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+  return std::string(buffer);
 }
 
 void Response::generateAutoIndex() {
@@ -225,8 +236,9 @@ void Response::generateAutoIndex() {
         html << "<tr><td><a href=\"/" << name << "/";
       else
         html << "<tr><td><a href=\"" << name;
-      html << "\">" << name << "</a></td>" << "<td>" << formatSize(fileStat.st_size)
-           << "</td>" << "<td>" << formatTime(fileStat.st_mtime) << "</td></tr>\n";
+      html << "\">" << name << "</a></td>" << "<td>"
+           << formatSize(fileStat.st_size) << "</td>" << "<td>"
+           << formatTime(fileStat.st_mtime) << "</td></tr>\n";
     }
     closedir(dir);
   } else {
