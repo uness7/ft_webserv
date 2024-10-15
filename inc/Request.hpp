@@ -13,47 +13,51 @@
 #include <vector>
 
 #define BUFFER_SIZE 4096
-
-enum REQ_STATE {
-  EMPTY,
-  HEADER,
-  BODY,
-};
+typedef unsigned char Byte;
+typedef std::vector<Byte> Bytes;
 
 class Request {
 private:
+  Bytes _data;
+  Bytes _body;
   std::string _method;
   std::string _path;
   std::string _httpv;
   std::string _query;
   std::string _mimetype;
-  std::vector<char> _body;
   std::map<std::string, std::string> _headers;
   long long _contentLength;
-  REQ_STATE _state;
 
-  long handleFirstLineHeader(unsigned int);
+  ServerConfig _config;
+  LocationConfig _target;
+  short _statusCode;
+
+  bool isValidClientMaxBody() const;
   void saveHeaderLine(std::string &);
-  bool checkHeaderLocation(ServerConfig &config);
-  long get_next_line(int fd, std::ostringstream &oss);
-  bool isValidClientMaxBody(ServerConfig &config, LocationConfig target) const;
+  bool canResolvePath();
+  bool areHeadersValid();
+  void readBody(unsigned int, Bytes &, size_t);
+  Bytes seekCRLF(Bytes const &request, Bytes::size_type &index);
+  Bytes getNextChunk(unsigned int fd) const;
 
 public:
-  Request();
+  Request(ServerConfig);
   Request(const Request &);
   Request &operator=(const Request &);
   ~Request();
 
-  long readFromSocket(unsigned int, ServerConfig &config);
+  long read(unsigned int);
 
   std::string getMethod() const;
   std::string getPath() const;
   std::string getHttpv() const;
   std::string getMimeType() const;
   std::string getQuery() const;
-  std::vector<char> getBody() const;
+  short getStatusCode() const;
+  Bytes getBody() const;
   std::string getHeaderField(std::string) const;
   long long getContentLength() const;
+  LocationConfig getPathLocation() const;
 
   void setHeaders(std::string &);
   void appendToBody();

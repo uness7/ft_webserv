@@ -3,14 +3,9 @@
 #include <cstdio>
 #include <string>
 
-Response::Response()
-    : _value(""), _statusCode(), _contentType(""), _buffer(""), _client(NULL) {}
+Response::Response() : _client(NULL) {}
 
-Response::Response(Client *client)
-    : _value(""), _statusCode(), _contentType(""), _buffer(""), _client(client),
-      _redirect_path("") {
-  this->build();
-}
+Response::Response(Client *client) : _client(client) { this->build(); }
 
 Response::Response(const Response &cp) { *this = cp; }
 
@@ -21,13 +16,55 @@ Response &Response::operator=(const Response &rhs) {
     this->_contentType = rhs._contentType;
     this->_buffer = rhs._buffer;
     this->_client = rhs._client;
-    this->_redirect_path = rhs._redirect_path;
+    this->_cookies = rhs._cookies;
     this->_target = rhs._target;
   }
   return *this;
 }
 
 Response::~Response() {}
+
+void Response::updateResponse(unsigned short statusCode,
+                              std::string contentType, std::string buffer) {
+  setStatusCode(statusCode);
+  _contentType = contentType;
+  _buffer = buffer;
+}
+
+void Response::build(void) {
+  Request &request = _client->getRequest();
+  _target = request.getPathLocation();
+
+  if (request.getStatusCode() != 0) {
+    setStatusCode(request.getStatusCode());
+    updateResponse(_statusCode.code, "text/plain", _statusCode.status);
+    return finalizeHTMLResponse();
+  }
+
+  if (!_target.redirect.empty()) {
+    setStatusCode(302);
+    return finalizeHTMLResponse();
+  }
+
+  if (_target.content["autoindex"] == "on" &&
+      request.getPath() == _target.root) {
+    generateAutoIndex();
+    updateResponse(200, "text/html", _buffer);
+    return finalizeHTMLResponse();
+  }
+
+  if (_target.content["cgi_path"] != "") {
+    std::string ext = _target.content["cgi_ext"];
+    size_t dotPos = request.getPath().find_last_of('.');
+    if (dotPos != std::string::npos) {
+      std::string path_ext = request.getPath().substr(dotPos);
+      if (ext.find(path_ext) != std::string::npos)
+        return handleCGI();
+    }
+  }
+  handleStaticFiles();
+  finalizeHTMLResponse();
+}
 
 std::vector<std::string> splitString(const std::string &str) {
   std::vector<std::string> result;
@@ -42,20 +79,16 @@ std::vector<std::string> splitString(const std::string &str) {
   return result;
 }
 
-void Response::updateResponse(unsigned short statusCode,
-                              std::string contentType, std::string buffer) {
-  setStatusCode(statusCode);
-  _contentType = contentType;
-  _buffer = buffer;
-}
-
 void Response::buildError() {
   Request &request = _client->getRequest();
 
-  if (_client->getConfig().error_page.empty())
+  std::string error = _client->getConfig().error_page;
+  if (_target.content.count("error_page"))
+    error = _target.content["error_page"];
+
+  if (error.empty())
     return;
-  std::vector<std::string> error_page =
-      splitString(_client->getConfig().error_page);
+  std::vector<std::string> error_page = splitString(error);
   if (error_page.size() != 2)
     return;
   std::string newPath = error_page[1];
@@ -67,74 +100,6 @@ void Response::buildError() {
   updateResponse(atoi(error_page[0].c_str()), request.getMimeType(),
                  buffer.str());
   return;
-}
-
-void Response::buildPath(LocationConfig &target, short index_max) {
-  Request &request = _client->getRequest();
-  std::string path = request.getPath();
-  std::string end_s = path.substr(index_max);
-  if (!target.root.empty() &&
-      target.root.compare(1, target.root.size() - 1, end_s, 0,
-                          target.root.size() - 1) == 0)
-    return;
-
-  if (end_s.empty() && !target.index.empty())
-    request.setPath(target.root + target.index);
-  else
-    request.setPath(target.root + end_s);
-}
-
-void Response::build(void) {
-  Request &request = _client->getRequest();
-  ServerConfig config = _client->getConfig();
-  std::string path = request.getPath();
-  short index_max =
-      config.getLocationByPathRequested(request.getPath(), _target);
-
-  _redirect_path = _target.redirect;
-  if (!_redirect_path.empty()) {
-    setRedirectPath(_redirect_path);
-    setStatusCode(302);
-    return finalizeHTMLResponse();
-  }
-
-  if (index_max == -1) {
-    buildError();
-    return finalizeHTMLResponse();
-  }
-
-  std::vector<std::string> &allowed_methods = _target.allowed_methods;
-  if (request.getMethod() != "HEAD" && allowed_methods.size() &&
-      std::find(allowed_methods.begin(), allowed_methods.end(),
-                request.getMethod()) == allowed_methods.end())
-    updateResponse(405, "text/plain", "Method Not Allowed");
-  else if (isValidClientMaxBody() == false) {
-    char nb[1024];
-    snprintf(nb, 1024, "Payload was too large -> %lld | %lld || %lld\n",
-             _target.client_max_body_size, config.client_max_body_size,
-             request.getContentLength());
-    updateResponse(413, "text/plain", "Payload Too Large");
-  } else {
-    buildPath(_target, index_max);
-    if (_target.content["cgi_path"] != "") {
-      std::string ext = _target.content["cgi_ext"];
-      if (ext.find(".py") != std::string::npos &&
-          request.getMimeType() == "application/python")
-        return handleCGI();
-    }
-    handleStaticFiles();
-  }
-  finalizeHTMLResponse();
-}
-
-bool Response::isValidClientMaxBody() const {
-  Request &request = _client->getRequest();
-  ServerConfig config = _client->getConfig();
-  if (_target.client_max_body_size > 0)
-    return _target.client_max_body_size > request.getContentLength();
-  else if (config.client_max_body_size > 0)
-    return config.client_max_body_size > request.getContentLength();
-  return true;
 }
 
 void Response::handleCGI() {
@@ -175,8 +140,13 @@ void Response::handleStaticFiles(void) {
     buffer << inFile.rdbuf();
     inFile.close();
     updateResponse(200, request.getMimeType(), buffer.str());
-  } else
+  } else {
     buildError();
+    if (_statusCode.code == 0) {
+      setStatusCode(404);
+      updateResponse(_statusCode.code, _statusCode.status, _statusCode.status);
+    }
+  }
 }
 
 std::string formatSize(off_t size) {
@@ -202,10 +172,30 @@ std::string formatTime(time_t time) {
   return std::string(buffer);
 }
 
+void Response::finalizeHTMLResponse(void) {
+  std::ostringstream ss;
+  const Request &req = _client->getRequest();
+
+  ss << req.getHttpv() << " " << this->getStatusToString() << "\r\n";
+  if (_statusCode.code == 302) {
+    ss << "Location: " << _target.redirect << "\r\n";
+  }
+  ss << "Content-Type: " << _contentType << "\r\n"
+     << "Content-Length: " << _buffer.size() << "\r\n";
+
+  for (std::vector<std::string>::iterator it = _cookies.begin();
+       it != _cookies.end(); ++it)
+    ss << *it << "\r\n";
+
+  ss << "\r\n";
+  if (req.getMethod() != "HEAD")
+    ss << _buffer;
+  this->_value = ss.str();
+}
+
 void Response::generateAutoIndex() {
   Request &request = _client->getRequest();
   std::string path = request.getPath();
-  std::ostringstream ss;
   std::ostringstream html;
   html << "<!DOCTYPE html>\n<html>\n<head>\n<title>Index of " << path
        << "</title>\n</head>\n<body>\n";
@@ -227,11 +217,8 @@ void Response::generateAutoIndex() {
       struct stat fileStat;
       std::string fullPath = directoryPath + "/" + name;
 
-      if (stat(fullPath.c_str(), &fileStat) < 0) {
-        std::cerr << "Erreur lors de l'appel à stat pour " << fullPath << ": "
-                  << strerror(errno) << std::endl;
+      if (stat(fullPath.c_str(), &fileStat) < 0)
         continue;
-      }
       if (S_ISDIR(fileStat.st_mode))
         html << "<tr><td><a href=\"/" << name << "/";
       else
@@ -242,53 +229,11 @@ void Response::generateAutoIndex() {
     }
     closedir(dir);
   } else {
-    html << "<tr><td colspan=\"3\">Unable to open directory</td></tr>\n";
+    html << "<tr><td colspan=\"3\">Empty directory</td></tr>\n";
   }
 
   html << "</table>\n</body>\n</html>\n";
-  updateResponse(200, "text/html", html.str());
-  ss << "HTTP/1.1 " << this->getStatusToString() << "\r\n"
-     << "Content-Type: " << _contentType << "\r\n"
-     << "Content-Length: " << _buffer.size() << "\r\n";
-  for (std::vector<std::string>::iterator it = _cookies.begin();
-       it != _cookies.end(); ++it)
-    ss << *it << "\r\n";
-  ss << "\r\n";
-  if (_client->getRequest().getMethod() != "HEAD")
-    ss << _buffer;
-  _value = ss.str();
-}
-void Response::handleEmptyBuffer() {
-  Request &request = _client->getRequest();
-  std::string path = request.getPath();
-
-  if (_target.content["autoindex"] == "on" && path == _target.root) {
-    generateAutoIndex();
-  }
-}
-void Response::finalizeHTMLResponse(void) {
-  std::ostringstream ss;
-
-  if (!_redirect_path.empty()) {
-    ss << "HTTP/1.1 302 Found\r\n"
-       << "Location: " << getRedirectPath() << "\r\n"
-       << "Content-Length: 0\r\n"
-       << "\r\n";
-    this->_value = ss.str();
-  } else if (_buffer.empty()) {
-    handleEmptyBuffer();
-  } else {
-    ss << "HTTP/1.1 " << this->getStatusToString() << "\r\n"
-       << "Content-Type: " << _contentType << "\r\n"
-       << "Content-Length: " << _buffer.size() << "\r\n";
-    for (std::vector<std::string>::iterator it = _cookies.begin();
-         it != _cookies.end(); ++it)
-      ss << *it << "\r\n";
-    ss << "\r\n";
-    if (_client->getRequest().getMethod() != "HEAD")
-      ss << _buffer;
-    this->_value = ss.str();
-  }
+  _buffer = html.str();
 }
 
 const std::map<unsigned short, std::string> &Response::getStatusCodes() {
@@ -307,6 +252,7 @@ const std::map<unsigned short, std::string> &Response::getStatusCodes() {
     statusCodes[403] = "Forbidden";
     statusCodes[404] = "Not Found";
     statusCodes[405] = "Method Not Allowed";
+    statusCodes[408] = "Request Timeout";
     statusCodes[413] = "Payload Too Large";
     statusCodes[500] = "Internal Server Error";
     statusCodes[501] = "Not Implemented";
@@ -338,12 +284,4 @@ std::string Response::getStatusToString() const {
   std::stringstream ss;
   ss << _statusCode.code << " " << _statusCode.status;
   return ss.str();
-}
-
-const std::string Response::getRedirectPath() const {
-  return this->_redirect_path;
-}
-
-void Response::setRedirectPath(std::string &path) {
-  this->_redirect_path = path;
 }

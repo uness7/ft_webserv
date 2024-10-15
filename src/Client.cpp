@@ -3,11 +3,11 @@
 #include <cstring>
 
 Client::Client(unsigned short fd, ServerConfig config)
-    : _fd(fd), _dataSent(0), _request(), _config(config) {
+    : _fd(fd), _dataSent(0), _request(config), _config(config) {
   this->_response = NULL;
 }
 
-Client::Client(const Client &cp) : _fd(0), _dataSent(0), _request() {
+Client::Client(const Client &cp) : _fd(0), _dataSent(0), _request(cp._config) {
   *this = cp;
 }
 
@@ -25,7 +25,7 @@ Client &Client::operator=(const Client &rhs) {
 Client::~Client() {}
 
 void Client::clear() {
-  _request = Request();
+  _request = Request(_config);
   _dataSent = 0;
   if (_response != NULL)
     delete _response;
@@ -37,7 +37,7 @@ void Client::setFd(unsigned short fd) { this->_fd = fd; }
 
 Request &Client::getRequest() { return this->_request; }
 
-long Client::readRequest() { return _request.readFromSocket(getFd(), _config); }
+long Client::readRequest() { return _request.read(getFd()); }
 
 const std::string Client::getResponseToString() const {
   return _response->getResponse();

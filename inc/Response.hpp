@@ -3,14 +3,14 @@
 #include "Client.hpp"
 #include "Config.hpp"
 #include "Request.hpp"
-#include <dirent.h>
-#include <sys/stat.h>
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#include <dirent.h>
 #include <iostream>
 #include <map>
 #include <string>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
 
@@ -29,18 +29,14 @@ private:
   std::string _buffer;
   Client *_client;
   std::vector<std::string> _cookies;
-  std::string _redirect_path;
   LocationConfig _target;
 
   void build();
   void buildError();
-  void buildPath(LocationConfig &target, short index_max);
-  void handleEmptyBuffer();
   void handleCGI();
   void handleStaticFiles(void);
   void finalizeHTMLResponse(void);
   void generateAutoIndex();
-  bool isValidClientMaxBody() const;
   void updateResponse(unsigned short statusCode, std::string contentType,
                       std::string buffer);
 
@@ -52,9 +48,6 @@ public:
   ~Response();
 
   const std::string getResponse() const;
-
-  const std::string getRedirectPath() const;
-  void setRedirectPath(std::string &path);
 
   void setStatusCode(STATUS_CODE);
   void setStatusCode(unsigned short code);

@@ -35,7 +35,7 @@ $(BUILD):
 
 clean:
 	rm -f $(OBJS)
-	rm -rf uploads
+	rm -rf uploads/*
 	printf "$(YELLOW)Object files removed$(WHITE)\n"
 
 fclean: clean
