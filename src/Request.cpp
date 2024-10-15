@@ -12,10 +12,11 @@
 
 #include "../inc/Request.hpp"
 #include <cstddef>
+#include <cstring>
 #include <sstream>
 #include <sys/socket.h>
 
-Request::Request(ServerConfig config) : _config(config) {}
+Request::Request(ServerConfig config) : _contentLength(0), _config(config), _statusCode(0) {}
 
 Request::~Request() {}
 
@@ -145,10 +146,6 @@ long Request::read(unsigned int fd) {
     return request.size();
   }
 
-  /*std::map<std::string, std::string>::const_iterator it;*/
-  /*for (it = _target.content.begin(); it != _target.content.end(); it++)*/
-  /*  std::cout << it->first << ": " << it->second << std::endl;*/
-
   while (req_index < request.size()) {
     Bytes binaryLine = seekCRLF(request, req_index);
     std::string headerLine(binaryLine.begin(), binaryLine.end());
@@ -190,17 +187,17 @@ void Request::readBody(unsigned int fd, Bytes &request, size_t index) {
     send(fd, toContinue.c_str(), toContinue.size(), 0);
   }
   if (this->getContentLength() > 0) {
-
     while (static_cast<size_t>(getContentLength()) > request.size() - index) {
-
       if (recv_time > 1000) {
         _statusCode = 408;
         return;
       }
       chunk = getNextChunk(fd);
-      request.insert(request.end(), chunk.begin(), chunk.end());
-      if (chunk.empty())
+      if (chunk.empty()) {
         recv_time++;
+        continue;
+      }
+      request.insert(request.end(), chunk.begin(), chunk.end());
     }
     return;
   }
