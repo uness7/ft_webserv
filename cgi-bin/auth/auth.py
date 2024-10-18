@@ -42,4 +42,5 @@ else:
     print_header("400 Bad Request", "text/html");
     content = "<html><body><h1>Missing Credentials</h1></body></html>";
     print_length(content);
-    print("\r\n\r\n");
+    print("\r\n");
+    print(content);

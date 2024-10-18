@@ -16,7 +16,8 @@
 #include <sstream>
 #include <sys/socket.h>
 
-Request::Request(ServerConfig config) : _contentLength(0), _config(config), _statusCode(0) {}
+Request::Request(ServerConfig config)
+    : _contentLength(0), _config(config), _statusCode(0) {}
 
 Request::~Request() {}
 
@@ -277,7 +278,7 @@ short Request::getStatusCode() const { return this->_statusCode; }
 
 LocationConfig Request::getPathLocation() const { return this->_target; }
 
-Bytes Request::getBody() const { return this->_body; }
+Bytes &Request::getBody() { return this->_body; }
 
 std::string Request::getHeaderField(std::string field) const {
   if (_headers.count(field)) {

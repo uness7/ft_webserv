@@ -104,7 +104,12 @@ void Response::buildError() {
 
 void Response::handleCGI() {
   CGIResponse cgi = CGIResponse(this->_client, _target.content["cgi_path"]);
-  std::string resp = cgi.execute();
+  std::string resp = cgi.exec(_statusCode.code);
+  if (_statusCode.code) {
+    setStatusCode(_statusCode.code);
+    updateResponse(_statusCode.code, "text/plain", _statusCode.status);
+    return finalizeHTMLResponse();
+  }
 
   if (!resp.empty()) {
     std::string headers;

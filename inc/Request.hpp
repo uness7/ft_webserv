@@ -54,7 +54,7 @@ public:
   std::string getMimeType() const;
   std::string getQuery() const;
   short getStatusCode() const;
-  Bytes getBody() const;
+  Bytes &getBody();
   std::string getHeaderField(std::string) const;
   long long getContentLength() const;
   LocationConfig getPathLocation() const;
