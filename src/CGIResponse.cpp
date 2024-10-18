@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <iterator>
-#include <sys/_select.h>
 
 CGIResponse::CGIResponse(Client *client, std::string &cgi_path)
     : _client(client), _cgiPath(cgi_path), _envp(NULL), _pid(-1),

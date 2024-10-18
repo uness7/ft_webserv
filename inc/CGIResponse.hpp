@@ -9,7 +9,6 @@
 #include <map>
 #include <sstream>
 #include <string>
-#include <sys/_types/_pid_t.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
