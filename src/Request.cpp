@@ -15,6 +15,7 @@
 #include <cstring>
 #include <sstream>
 #include <sys/socket.h>
+#include <vector>
 
 Request::Request(ServerConfig config)
     : _contentLength(0), _config(config), _statusCode(0) {}
@@ -86,7 +87,13 @@ Bytes Request::seekCRLF(Bytes const &request, Bytes::size_type &index) {
 }
 
 bool Request::areHeadersValid() {
-  if (getMethod() != "HEAD" && _target.allowed_methods.size() &&
+  std::string method = getMethod();
+  std::transform(method.begin(), method.end(), method.begin(), ::toupper);
+  if (method != "GET" || method != "POST" || method != "DELETE") {
+    _statusCode = 501;
+    return false;
+  }
+  if (_target.allowed_methods.size() &&
       std::find(_target.allowed_methods.begin(), _target.allowed_methods.end(),
                 getMethod()) == _target.allowed_methods.end()) {
     _statusCode = 405;

@@ -104,6 +104,7 @@ void Response::buildError() {
 
 void Response::handleCGI() {
   CGIResponse cgi = CGIResponse(this->_client, _target.content["cgi_path"]);
+  const Request req = _client->getRequest();
   std::string resp = cgi.exec(_statusCode.code);
   if (_statusCode.code) {
     setStatusCode(_statusCode.code);
@@ -193,8 +194,7 @@ void Response::finalizeHTMLResponse(void) {
     ss << *it << "\r\n";
 
   ss << "\r\n";
-  if (req.getMethod() != "HEAD")
-    ss << _buffer;
+  ss << _buffer;
   this->_value = ss.str();
 }
 

@@ -1,26 +1,20 @@
-#!/usr/bin/env python3
+#!/usr/bin/env php
 
-def print_header(status="200 OK", content_type="text/html"):
-    print(f"HTTP/1.1 {status}");
-    print(f"Content-Type: {content_type}");
-
-def print_length(content):
-    print(f"Content-Length: {len(content)}")
-
-content = f"""
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "GET") {
+    $content = <<<HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="index.css" >
+    <link rel="stylesheet" href="index.css">
     <title>Form Submission</title>
 </head>
-
 <body style='text-align:center;'>
     <h1 style='color: green;'>CGI Form Example: </h1>
 
-    <form action="./script.py" method="POST" enctype="application/x-www-form-urlencoded">
+    <form action="./result.php" method="POST" enctype="application/x-www-form-urlencoded">
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" required><br>
         <label for="age">Age:</label>
@@ -29,13 +23,6 @@ content = f"""
         <input type="email" id="email" name="email" required><br>
         <label for="feedback">Feedback:</label><br>
         <textarea id="feedback" name="feedback" rows="4" cols="50" placeholder="Your feedback here..."></textarea><br>
-        <label>Favorite Colors:</label><br>
-        <input type="checkbox" id="red" name="colors" value="red">
-        <label for="red">Red</label>
-        <input type="checkbox" id="green" name="colors" value="green">
-        <label for="green">Green</label>
-        <input type="checkbox" id="blue" name="colors" value="blue">
-        <label for="blue">Blue</label><br>
         <label for="country">Country:</label>
         <select id="country" name="country">
             <option value="france">France</option>
@@ -48,10 +35,23 @@ content = f"""
     </form>
 </body>
 </html>
-""";
+HTML;
 
-# Printing Content
-print_header("200 OK", "text/html");
-print_length(content);
-print("\r\n\r\n");
-print(content);
+    print "HTTP/1.1 200 OK" . PHP_EOL;
+    print "Content-Type: text/html" . PHP_EOL;
+    print "Content-Length: " . strlen($content) . PHP_EOL;
+    print "\r\n\r\n";
+
+    print $content;
+} else {
+    $content = "Not Found";
+    print $_SERVER["SERVER_PROTOCOL"] . " 404 Not Found" . PHP_EOL;
+    print "Content-Type: text/plain" . PHP_EOL;
+    print "Content-Length: " . strlen($content) . PHP_EOL;
+    print "\r\n\r\n";
+
+    print $content;
+}
+
+
+?>

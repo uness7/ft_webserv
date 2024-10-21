@@ -57,8 +57,3 @@ input[type="submit"]:hover {
     background-color: #45a049;
 }
 
-.container {
-    max-width: 600px;
-    margin: auto;
-}
-

@@ -32,11 +32,12 @@ private:
   unsigned short _statusCode;
 
   bool canExecScript();
-  void setCgiEnv();
+  void initCgiEnv();
   void setArgv();
   void clear();
 
   void runProcess();
+  std::string getScriptResult();
 
 public:
   CGIResponse(Client *client, std::string &cgi_path);

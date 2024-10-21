@@ -8,7 +8,7 @@ CGIResponse::CGIResponse(Client *client, std::string &cgi_path)
     : _client(client), _cgiPath(cgi_path), _envp(NULL), _pid(-1),
       _statusCode(0) {
   this->_scriptPath = "." + this->_client->getRequest().getPath();
-  setCgiEnv();
+  initCgiEnv();
   setArgv();
 }
 
@@ -21,13 +21,14 @@ void CGIResponse::setArgv() {
 bool CGIResponse::canExecScript() {
   if (_scriptPath == "")
     return false;
-  if (access(_scriptPath.c_str(), F_OK) == -1) {
+  if (access(_cgiPath.c_str(), F_OK) == -1 ||
+      access(_scriptPath.c_str(), F_OK) == -1) {
     return false;
   }
   return true;
 }
 
-void CGIResponse::setCgiEnv() {
+void CGIResponse::initCgiEnv() {
   Request &req = _client->getRequest();
   _envMap["GATEWAY_INTERFACE"] = "CGI/1.1";
   _envMap["SCRIPT_FILENAME"] = _cgiPath;
@@ -103,29 +104,20 @@ void CGIResponse::runProcess() {
     close(_pipe_out[1]);
     close(_pipe_in[0]);
 
-    if (!body.empty()) {
-      ssize_t written = write(_pipe_in[1], body.data(), body.size());
-      if (written == -1) {
-        std::cerr << "Erreur lors de l'écriture dans le pipe\n";
-        std::cerr << "error: " << strerror(errno) << std::endl;
-        clear();
-        _statusCode = 500;
-        return;
-      }
+    if (!body.empty() && write(_pipe_in[1], body.data(), body.size()) == -1) {
+      std::cerr << "[ERROR]: FD -> " << _client->getFd()
+                << " - Impossible to use write function -> " << strerror(errno)
+                << std::endl;
+      clear();
+      _statusCode = 500;
+      return;
     }
 
     close(_pipe_in[1]);
   }
 }
 
-std::string CGIResponse::exec(unsigned short &code) {
-  if (!canExecScript())
-    return (code = 404, "");
-
-  runProcess();
-  if (_statusCode)
-    return (code = _statusCode, "");
-
+std::string CGIResponse::getScriptResult() {
   std::string cgiResponse;
   fd_set readfds;
   struct timeval timeout = {
@@ -139,24 +131,23 @@ std::string CGIResponse::exec(unsigned short &code) {
   int retval = select(_pipe_out[0] + 1, &readfds, NULL, NULL, &timeout);
   if (retval == -1) {
     clear();
-    code = 500;
+    _statusCode = 500;
     return ("");
   } else if (retval == 0) {
     if (kill(_pid, SIGKILL) == -1) {
-      std::cerr << "Erreur lors de la tentative de tuer le processus enfant.\n";
+      std::cerr << "[ERROR]: FD -> " << _client->getFd()
+                << " - Impossible to kill child process\n";
       clear();
-      code = 500;
+      _statusCode = 500;
       return "";
     }
 
-    // Attendre que le processus enfant soit effectivement tué
     int status;
     waitpid(_pid, &status, 0);
-    std::cerr << "Le processus enfant a été tué en raison du timeout.\n";
-
-    // Code HTTP 504 : Gateway Timeout
+    std::cerr << "[ERROR]: FD -> " << _client->getFd()
+              << " - child process is killed after timeout\n";
     clear();
-    code = 504;
+    _statusCode = 504;
     return "";
   } else {
     char buffer[BUFFER_SIZE];
@@ -166,44 +157,47 @@ std::string CGIResponse::exec(unsigned short &code) {
     }
   }
 
-  // Fermer manuellement le pipe après la lecture pour éviter un blocage
   close(_pipe_out[0]);
 
-  // Attendre que le processus enfant se termine (bloquant cette fois)
   int status;
-  pid_t result =
-      waitpid(_pid, &status, 0); // Bloquant jusqu'à la fin de l'enfant
-  if (result == -1) {
-    std::cerr << "Erreur lors de l'attente du processus enfant\n";
+  if (waitpid(_pid, &status, 0) == -1) {
+    std::cerr << "[ERROR]: FD -> " << _client->getFd()
+              << " - error occured on waitpid syscall -> " << strerror(errno)
+              << std::endl;
     clear();
-    code = 500;
+    _statusCode = 500;
     return "";
   }
 
-  // Vérification du statut de l'enfant
   if (WIFEXITED(status)) {
-    int exit_status = WEXITSTATUS(status);
-    std::cout << "Le processus enfant s'est terminé avec le code: "
-              << exit_status << std::endl;
-    if (exit_status != 0) {
-      code = 500; // L'enfant s'est terminé avec une erreur
+    if (WEXITSTATUS(status) != 0) {
+      _statusCode = 500;
     } else {
-      code = 0; // Succès
-      std::cout << "END" << std::endl;
-
-      // Fermer les autres ressources ici
+      _statusCode = 0;
       clear();
-
-      // Ajoute un log après la libération des ressources
-      std::cout << "Ressources libérées avec succès" << std::endl;
-
       return cgiResponse;
     }
   } else if (WIFSIGNALED(status)) {
-    std::cerr << "Le processus enfant a été tué par un signal: "
-              << WTERMSIG(status) << std::endl;
-    code = 500; // L'enfant a été tué par un signal
+    std::cerr << "[ERROR]: FD -> " << _client->getFd()
+              << " - child process was killed with signal " << WTERMSIG(status)
+              << std::endl;
+    _statusCode = 500;
   }
   clear();
   return cgiResponse;
+}
+
+std::string CGIResponse::exec(unsigned short &code) {
+  if (!canExecScript())
+    return (code = 404, "");
+
+  runProcess();
+  if (_statusCode)
+    return (code = _statusCode, "");
+
+  std::string response = getScriptResult();
+  if (_statusCode)
+    code = _statusCode;
+
+  return response;
 }

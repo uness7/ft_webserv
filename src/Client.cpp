@@ -56,10 +56,6 @@ void Client::sendResponse() {
   bytesSent = send(getFd(), response.c_str() + getDataSent(),
                    response.size() - getDataSent(), 0);
 
-  std::cout << "Bytes sent -> " << bytesSent << std::endl;
-  std::cout << "resposne size -> " << response.size() << std::endl;
-  std::cout << "response -> " << response << std::endl;
-
   if (bytesSent <= 0)
     setDataSent(-1);
   else if (bytesSent + getDataSent() == static_cast<long>(response.size()))
