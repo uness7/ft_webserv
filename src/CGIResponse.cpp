@@ -121,7 +121,7 @@ std::string CGIResponse::getScriptResult() {
   std::string cgiResponse;
   fd_set readfds;
   struct timeval timeout = {
-      .tv_sec = 1,
+      .tv_sec = 3,
       .tv_usec = 0,
   };
 
@@ -192,7 +192,7 @@ std::string CGIResponse::exec(unsigned short &code) {
     return (code = 404, "");
 
   runProcess();
-  if (_statusCode)
+  if (_statusCode && _statusCode != 200)
     return (code = _statusCode, "");
 
   std::string response = getScriptResult();

@@ -235,10 +235,7 @@ void Server::handleClientRequest(int fd) {
 void Server::handleResponse(Client *client, struct epoll_event *ev) {
   client->sendResponse();
   std::string connection = client->getRequest().getHeaderField("connection");
-  if (client->getDataSent() < 0 || connection.compare(0, 5, "close") == 0) {
-    // std::cout << client->getFd() << " dataSent: " << client->getDataSent() <<
-    // std::endl; std::cout << client->getFd() << " connection: " << connection
-    // << std::endl;
+  if (client->getDataSent() < 0 || connection != "keep-alive") {
     removeClient(client->getFd());
   } else if (client->getDataSent() == 0) {
     ev->events = EPOLLIN;

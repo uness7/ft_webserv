@@ -104,9 +104,8 @@ void Response::buildError() {
 
 void Response::handleCGI() {
   CGIResponse cgi = CGIResponse(this->_client, _target.content["cgi_path"]);
-  const Request req = _client->getRequest();
   std::string resp = cgi.exec(_statusCode.code);
-  if (_statusCode.code) {
+  if (_statusCode.code && _statusCode.code != 200) {
     setStatusCode(_statusCode.code);
     updateResponse(_statusCode.code, "text/plain", _statusCode.status);
     return finalizeHTMLResponse();
