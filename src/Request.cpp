@@ -83,7 +83,7 @@ bool Request::areHeadersValid() {
   }
   if (_target.allowed_methods.size() &&
       std::find(_target.allowed_methods.begin(), _target.allowed_methods.end(),
-                getMethod()) == _target.allowed_methods.end()) {
+                method) == _target.allowed_methods.end()) {
     _statusCode = 405;
     return false;
   }
