@@ -6,7 +6,7 @@
 
 CGIResponse::CGIResponse(Client *client, std::string &cgi_path)
     : _client(client), _cgiPath(cgi_path), _envp(NULL), _pid(-1),
-      _statusCode(0) {
+      _statusCode(200) {
   this->_scriptPath = "." + this->_client->getRequest().getPath();
   initCgiEnv();
   setArgv();
@@ -16,16 +16,6 @@ void CGIResponse::setArgv() {
   _argv[0] = (char *)_cgiPath.c_str();
   _argv[1] = (char *)_scriptPath.c_str();
   _argv[2] = NULL;
-}
-
-bool CGIResponse::canExecScript() {
-  if (_scriptPath == "")
-    return false;
-  if (access(_cgiPath.c_str(), F_OK) == -1 ||
-      access(_scriptPath.c_str(), F_OK) == -1) {
-    return false;
-  }
-  return true;
 }
 
 void CGIResponse::initCgiEnv() {
@@ -173,7 +163,7 @@ std::string CGIResponse::getScriptResult() {
     if (WEXITSTATUS(status) != 0) {
       _statusCode = 500;
     } else {
-      _statusCode = 0;
+      _statusCode = 200;
       clear();
       return cgiResponse;
     }
@@ -188,16 +178,19 @@ std::string CGIResponse::getScriptResult() {
 }
 
 std::string CGIResponse::exec(unsigned short &code) {
-  if (!canExecScript())
+  if (_cgiPath.empty() || access(_cgiPath.c_str(), F_OK) == -1) {
+    return (code = 500, "");
+  }
+  if (_scriptPath.empty() || access(_cgiPath.c_str(), F_OK) == -1) {
     return (code = 404, "");
+  }
 
   runProcess();
-  if (_statusCode && _statusCode != 200)
+  if (_statusCode != 200)
     return (code = _statusCode, "");
 
   std::string response = getScriptResult();
-  if (_statusCode)
-    code = _statusCode;
+  code = _statusCode;
 
   return response;
 }

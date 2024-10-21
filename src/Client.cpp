@@ -27,8 +27,9 @@ Client::~Client() {}
 void Client::clear() {
   _request = Request(_config);
   _dataSent = 0;
-  if (_response != NULL)
+  if (_response != NULL) {
     delete _response;
+  }
 }
 
 unsigned short Client::getFd() const { return this->_fd; }

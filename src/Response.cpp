@@ -3,7 +3,8 @@
 #include <cstdio>
 #include <string>
 
-Response::Response() : _client(NULL) {}
+Response::Response() : _client(NULL) {
+}
 
 Response::Response(Client *client) : _client(client) { this->build(); }
 
@@ -40,6 +41,7 @@ void Response::build(void) {
     updateResponse(_statusCode.code, "text/plain", _statusCode.status);
     return finalizeHTMLResponse();
   }
+  setStatusCode(0);
 
   if (!_target.redirect.empty()) {
     setStatusCode(302);

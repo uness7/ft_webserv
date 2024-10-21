@@ -49,6 +49,7 @@ public:
 
   const std::string getResponse() const;
 
+  void clear();
   void setStatusCode(STATUS_CODE);
   void setStatusCode(unsigned short code);
   STATUS_CODE getStatusCode() const;

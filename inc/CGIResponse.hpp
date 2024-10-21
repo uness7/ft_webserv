@@ -31,7 +31,6 @@ private:
   int _pipe_out[2];
   unsigned short _statusCode;
 
-  bool canExecScript();
   void initCgiEnv();
   void setArgv();
   void clear();
