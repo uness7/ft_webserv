@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Request.cpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/02 14:14:41 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/17 13:30:42 by otourabi         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../inc/Request.hpp"
 #include <cstddef>
 #include <cstring>
@@ -89,7 +77,7 @@ Bytes Request::seekCRLF(Bytes const &request, Bytes::size_type &index) {
 bool Request::areHeadersValid() {
   std::string method = getMethod();
   std::transform(method.begin(), method.end(), method.begin(), ::toupper);
-  if (method != "GET" || method != "POST" || method != "DELETE") {
+  if (method != "GET" && method != "POST" && method != "DELETE") {
     _statusCode = 501;
     return false;
   }
