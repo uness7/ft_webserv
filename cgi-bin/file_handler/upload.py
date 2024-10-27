@@ -16,7 +16,7 @@ if fileitem.filename:
     try:
         with open(file_path, 'wb') as f:
             f.write(fileitem.file.read())
-        message = f'The file "{fn}" was uploaded successfully'
+        message = f'The file "{fn}" was uploaded successfully with METHOD {os.getenv("REQUEST_METHOD")}'
         is_ok = True;
     except Exception as e:
         message = f'An error occurred while uploading the file: {str(e)}'

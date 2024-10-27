@@ -3,8 +3,7 @@
 #include <cstdio>
 #include <string>
 
-Response::Response() : _client(NULL) {
-}
+Response::Response() : _client(NULL) {}
 
 Response::Response(Client *client) : _client(client) { this->build(); }
 
@@ -35,20 +34,20 @@ void Response::updateResponse(unsigned short statusCode,
 void Response::build(void) {
   Request &request = _client->getRequest();
   _target = request.getPathLocation();
+  std::string method = request.getMethod();
 
   if (request.getStatusCode() != 0) {
     setStatusCode(request.getStatusCode());
     updateResponse(_statusCode.code, "text/plain", _statusCode.status);
     return finalizeHTMLResponse();
   }
-  setStatusCode(0);
 
   if (!_target.redirect.empty()) {
     setStatusCode(302);
     return finalizeHTMLResponse();
   }
 
-  if (_target.content["autoindex"] == "on" &&
+  if (method == "GET" && _target.content["autoindex"] == "on" &&
       request.getPath() == _target.root) {
     generateAutoIndex();
     updateResponse(200, "text/html", _buffer);
@@ -64,7 +63,12 @@ void Response::build(void) {
         return handleCGI();
     }
   }
-  handleStaticFiles();
+  if (method == "GET") {
+    handleStaticFiles();
+    return finalizeHTMLResponse();
+  }
+
+  buildError();
   finalizeHTMLResponse();
 }
 
@@ -88,11 +92,17 @@ void Response::buildError() {
   if (_target.content.count("error_page"))
     error = _target.content["error_page"];
 
-  if (error.empty())
+  if (error.empty()) {
+    setStatusCode(404);
+    updateResponse(_statusCode.code, _statusCode.status, _statusCode.status);
     return;
+  }
   std::vector<std::string> error_page = splitString(error);
-  if (error_page.size() != 2)
+  if (error_page.size() != 2) {
+    setStatusCode(404);
+    updateResponse(_statusCode.code, _statusCode.status, _statusCode.status);
     return;
+  }
   std::string newPath = error_page[1];
   _client->getRequest().setPath(newPath);
   std::stringstream buffer;
@@ -149,10 +159,6 @@ void Response::handleStaticFiles(void) {
     updateResponse(200, request.getMimeType(), buffer.str());
   } else {
     buildError();
-    if (_statusCode.code == 0) {
-      setStatusCode(404);
-      updateResponse(_statusCode.code, _statusCode.status, _statusCode.status);
-    }
   }
 }
 

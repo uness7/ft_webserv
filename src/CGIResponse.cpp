@@ -28,6 +28,7 @@ void CGIResponse::initCgiEnv() {
   _envMap["CONTENT_TYPE"] = req.getHeaderField("content-type");
   _envMap["CONTENT_LENGTH"] = req.getHeaderField("content-length");
   _envMap["HTTP_COOKIE"] = req.getHeaderField("cookie");
+  _envMap["QUERY_STRING"] = req.getQuery();
 }
 
 char **mapToEnvArray(const std::map<std::string, std::string> &envMap) {

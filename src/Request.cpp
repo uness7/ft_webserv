@@ -76,7 +76,6 @@ Bytes Request::seekCRLF(Bytes const &request, Bytes::size_type &index) {
 
 bool Request::areHeadersValid() {
   std::string method = getMethod();
-  std::transform(method.begin(), method.end(), method.begin(), ::toupper);
   if (method != "GET" && method != "POST" && method != "DELETE") {
     _statusCode = 501;
     return false;
@@ -129,9 +128,10 @@ long Request::read(unsigned int fd) {
   line << std::string(binaryLine.begin(), binaryLine.end());
   std::string token;
   for (int i = 0; i < 3 && std::getline(line, token, ' '); i++) {
-    if (i == 0)
+    if (i == 0) {
+      std::transform(token.begin(), token.end(), token.begin(), ::toupper);
       this->_method = token;
-    else if (i == 1)
+    } else if (i == 1)
       this->_path = token;
     else if (i == 2)
       this->_httpv = token;
