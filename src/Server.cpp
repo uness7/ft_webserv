@@ -109,7 +109,7 @@ void Server::runServers(void) {
   const int MAX_EVENT = 1000;
   struct epoll_event events[MAX_EVENT];
 
-  _event_fd = epoll_create1(0);
+  _event_fd = epoll_create(MAX_EVENT);
   if (_event_fd == -1)
     throw std::runtime_error("Error with epoll_wait");
 
