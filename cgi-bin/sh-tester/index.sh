@@ -6,8 +6,12 @@ html_content="<html>
     <title>CGI Response</title>
 </head>
 <body>
-    <h1>Success</h1>
-    <p>Hello from my <strong>shell script</strong></p>
+	<h1>
+		Hello world!
+	</h1>
+	<p>
+		Our web server works with bash script as well! Isn't that coool :)
+	</p>
 </body>
 </html>"
 
