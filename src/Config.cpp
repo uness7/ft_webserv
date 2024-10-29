@@ -12,13 +12,26 @@ void Config::parseConfigFile(const std::string &fileName) {
 
   if (!configFile.is_open())
     throw std::runtime_error("Unable to open configuration file: " + fileName);
+
+  if (configFile.peek() == std::ifstream::traits_type::eof())
+    throw std::runtime_error("Configuration file is empty: " + fileName);
+
+  bool hasServerConfig = false;
+
   while (std::getline(configFile, line)) {
+    if (line.empty() || line[0] == '#')
+      continue;
+
     if (line.find("server {") != std::string::npos) {
       ServerConfig serverConfig;
       parseServer(configFile, serverConfig);
       _serverConfigs.push_back(serverConfig);
+      hasServerConfig = true;
     }
   }
+
+  if (!hasServerConfig)
+    throw std::runtime_error("Configuration file is invalid or contains only comments.");
 }
 
 long long convertToBytes(const std::string &sizeStr) {
@@ -59,6 +72,9 @@ void Config::parseServer(std::ifstream &configFile,
 
 void Config::parseServerLine(std::ifstream &configFile, const std::string &line,
                              ServerConfig &serverConfig) {
+  if (line.empty() || line[0] == '#')
+    return;
+
   if (line.find("listen") != std::string::npos)
     parseListen(line, serverConfig);
   else if (line.find("server_name") != std::string::npos) {
@@ -75,6 +91,7 @@ void Config::parseServerLine(std::ifstream &configFile, const std::string &line,
     std::string locationPath = extractLocationPath(line);
     LocationConfig locationConfig;
     locationConfig.client_max_body_size = -1;
+    locationConfig.autoindex = false;
     parseLocation(configFile, locationConfig);
     serverConfig.locations[locationPath] = locationConfig;
   } else if (line.find(' ') != std::string::npos) {
@@ -145,6 +162,9 @@ void Config::parseLocation(std::ifstream &configFile,
 
 void Config::parseLocationLine(const std::string &line,
                                LocationConfig &locationConfig) {
+  if (line.empty() || line[0] == '#')
+    return;
+
   if (line.find("root") != std::string::npos) {
     locationConfig.root = extractValue(line, "root");
     locationConfig.content["root"] = locationConfig.root;
@@ -226,7 +246,7 @@ void Config::printLocationConfig(const std::string &locationPath,
   if (!locationConfig.index.empty())
     std::cout << "  Index: " << locationConfig.index << std::endl;
   std::cout << "  Autoindex: " << (locationConfig.autoindex ? "on" : "off")
-            << std::endl;
+              << std::endl;
   if (!locationConfig.limit_except.empty()) {
     std::cout << "  Limit except: ";
     for (std::vector<std::string>::const_iterator method_it =

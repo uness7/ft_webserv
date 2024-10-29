@@ -4,7 +4,9 @@ SRCS = $(wildcard $(S)/*.cpp)
 INCDIR = inc
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR) -g
+
 TARGET = webserv
+
 OBJS = $(SRCS:$(S)/%.cpp=$(BUILD)/%.o)
 
 BLUE		=	\033[34m
