@@ -1,20 +1,12 @@
 S = src
-
 BUILD = build
-
 SRCS = $(wildcard $(S)/*.cpp)  
-
 INCDIR = inc
-
 CXX = c++
-
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR) -g
-
-TARGET = WebServ
-
+TARGET = webserv
 OBJS = $(SRCS:$(S)/%.cpp=$(BUILD)/%.o)
 
-# Colors
 BLUE		=	\033[34m
 YELLOW		=	\033[33m
 GREEN		=	\033[32m
