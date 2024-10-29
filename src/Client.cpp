@@ -46,10 +46,12 @@ const Response *Client::getResponse() const { return _response; }
 
 void Client::sendResponse() {
 	long long bytesSent;
-#ifndef __linux__
-	if (_response == NULL)
-#endif
-		_response = new Response(this);
+    if (getDataSent() == 0) {
+	    _response = new Response(this);
+    } else {
+        std::cout << "Datasent: " << getDataSent() << " all -> " << getResponseToString().size() << std::endl;
+    }
+
 	std::string response = getResponseToString();
 
 	bytesSent = send(getFd(), response.c_str() + getDataSent(),

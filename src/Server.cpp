@@ -168,7 +168,9 @@ void Server::runServers(void) {
 			short ev = events[i].filter;
 			if (_clients.count(fd_triggered) &&
 			    events[i].flags & EV_ERROR)
+            {
 				this->removeClient(fd_triggered);
+            }
 			else if (ev == EVFILT_READ) {
 				if (_clients.count(fd_triggered)) {
 					handleClientRequest(fd_triggered);
@@ -273,6 +275,8 @@ void Server::clearServer() {
 		delete it->second;
 	}
 
+    _clients.clear();
+
 	for (size_t i = 0; i < _sockets.size(); i++) {
 		delete _sockets[i];
 	}
@@ -299,6 +303,6 @@ void Server::removeClient(int keyFD) {
 		  << element->second->getConfig().listen
 		  << "::" << element->second->getConfig().port << std::endl;
 	close(keyFD);
-	if (element->second != NULL) delete element->second;
+    delete element->second;
 	_clients.erase(element);
 }
