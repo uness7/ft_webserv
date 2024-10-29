@@ -1,18 +1,4 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   TCPSocket.cpp                                      :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/02 14:52:03 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/02 14:52:30 by yzioual          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-#include "../inc/TCPSocket.hpp"
-
-#include <sstream>
+#include "TCPSocket.hpp"
 
 TCPSocket::TCPSocket(const ServerConfig &serverConfig)
     : _serverConfig(serverConfig),

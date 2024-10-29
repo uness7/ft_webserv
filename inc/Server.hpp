@@ -5,7 +5,14 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include <fcntl.h>
+#include <sys/types.h>
+#include <algorithm>
+#include <csignal>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <utility>
 #include <exception>
 #include <iostream>
 #include <map>

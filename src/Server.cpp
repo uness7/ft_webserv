@@ -1,15 +1,4 @@
-#include "../inc/Server.hpp"
-
-#include <fcntl.h>
-#include <sys/types.h>
-
-#include <algorithm>
-#include <csignal>
-#include <cstddef>
-#include <cstdlib>
-#include <cstring>
-#include <utility>
-#include <vector>
+#include "Server.hpp"
 
 static volatile bool stopListening = false;
 

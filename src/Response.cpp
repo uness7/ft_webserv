@@ -1,9 +1,4 @@
-#include "../inc/Response.hpp"
-
-#include <cstdio>
-#include <string>
-
-#include "../inc/CGIResponse.hpp"
+#include "Response.hpp"
 
 Response::Response() : _client(NULL) {}
 

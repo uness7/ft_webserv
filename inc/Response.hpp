@@ -3,7 +3,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
+#include <cstdio>
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
@@ -15,6 +15,7 @@
 #include "Client.hpp"
 #include "Config.hpp"
 #include "Request.hpp"
+#include "CGIResponse.hpp"
 
 struct STATUS_CODE {
 	unsigned short code;

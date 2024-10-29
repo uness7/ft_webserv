@@ -1,9 +1,4 @@
-#include "../inc/CGIResponse.hpp"
-
-#include <csignal>
-#include <cstdlib>
-#include <cstring>
-#include <iterator>
+#include "CGIResponse.hpp"
 
 CGIResponse::CGIResponse(Client *client, std::string &cgi_path)
     : _client(client),

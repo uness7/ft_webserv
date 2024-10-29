@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   TCPSocket.hpp                                      :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: yzioual <marvin@42.fr>                     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/02 14:54:34 by yzioual           #+#    #+#             */
-/*   Updated: 2024/09/02 14:55:16 by yzioual          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #pragma once
 
 #include <arpa/inet.h>
@@ -19,14 +7,14 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include <sstream>
 #include <algorithm>
 #include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <string>
 
-#include "../inc/Config.hpp"
+#include "Config.hpp"
 
 class TCPSocket {
        private:

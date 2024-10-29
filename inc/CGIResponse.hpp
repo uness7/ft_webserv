@@ -13,6 +13,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <iterator>
+#include <csignal> 
 
 #include "../inc/Client.hpp"
 #include "Config.hpp"

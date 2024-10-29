@@ -1,7 +1,4 @@
-#include "../inc/Client.hpp"
-
-#include <cstddef>
-#include <cstring>
+#include "Client.hpp"
 
 Client::Client(unsigned short fd, ServerConfig config)
     : _fd(fd), _dataSent(0), _request(config), _config(config) {

@@ -1,9 +1,8 @@
-#include "../inc/Config.hpp"
+#include "Config.hpp"
 
 Config::Config(const std::string &fileName) { parseConfigFile(fileName); }
 
 Config::~Config() {
-	//
 }
 
 void Config::parseConfigFile(const std::string &fileName) {

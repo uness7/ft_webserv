@@ -1,6 +1,8 @@
 #pragma once
-#include <sys/socket.h>
 
+#include <sys/socket.h>
+#include <cstddef>
+#include <cstring>
 #include <algorithm>
 #include <cctype>
 #include <fstream>

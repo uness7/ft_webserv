@@ -3,10 +3,10 @@
 #include <sys/socket.h>
 #include <sys/unistd.h>
 #include <unistd.h>
-
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <cstddef>
 
 #include "Config.hpp"
 #include "Request.hpp"

@@ -1,11 +1,4 @@
-#include "../inc/Request.hpp"
-
-#include <sys/socket.h>
-
-#include <cstddef>
-#include <cstring>
-#include <sstream>
-#include <vector>
+#include "Request.hpp"
 
 Request::Request(ServerConfig config)
     : _contentLength(0), _config(config), _statusCode(0) {}
