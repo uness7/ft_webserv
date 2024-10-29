@@ -15,32 +15,33 @@
 #include <string>
 
 #include "Config.hpp"
+#include <netdb.h>
 
-class TCPSocket {
-       private:
-	ServerConfig _serverConfig;
-	int _socketFD;
-	std::string _ipAddress;
-	int _port;
-	struct sockaddr_in _socketAddress;
-	unsigned int _socketAddressLength;
-	TCPSocket();
+class TCPSocket
+{
+	private:
+		ServerConfig 	_serverConfig;
+		int		_socketFD;
+		std::string 	_ipAddress;
+		int 		_port;
+		struct addrinfo 	*_socketAddress;
+		unsigned int 		_socketAddressLength;
+		TCPSocket();
 
        public:
-	TCPSocket(const ServerConfig &);
-	TCPSocket(const TCPSocket &);
-	TCPSocket &operator=(const TCPSocket &);
-	~TCPSocket();
-
-	void initSocket();
-	void closeServer() const;
-	int getSocketFD() const;
-	int getPort() const;
-	std::string getIpAddress() const;
-	struct sockaddr_in &getSocketAddress();
-	std::string getSocketAddressToString();
-	unsigned int &getSocketAddressLength();
-	ServerConfig &getServerConfig();
+		TCPSocket(const ServerConfig &);
+		TCPSocket(const TCPSocket &);
+		TCPSocket &operator=(const TCPSocket &);
+		~TCPSocket();
+		void	initSocket();
+		void 	closeServer() const;
+		int 	getSocketFD() const;
+		int 	getPort() const;
+		std::string getIpAddress() const;
+		struct sockaddr_in *getSocketAddress() const;
+		std::string getSocketAddressToString() const;
+		unsigned int &getSocketAddressLength();
+		ServerConfig &getServerConfig();
 
 	class SocketException : public std::exception {
 	       protected:

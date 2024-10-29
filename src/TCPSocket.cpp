@@ -1,82 +1,99 @@
-#include "TCPSocket.hpp"
+#include "../inc/TCPSocket.hpp"
+#include <netdb.h>
 
 TCPSocket::TCPSocket(const ServerConfig &serverConfig)
-    : _serverConfig(serverConfig),
-      _socketFD(-1),
-      _ipAddress(serverConfig.listen),
-      _port(serverConfig.port),
-      _socketAddress(),
-      _socketAddressLength(sizeof(_socketAddress)) {
-	_socketAddress.sin_family = AF_INET;
-	_socketAddress.sin_port = htons(_port);
-	_socketAddress.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
+    : _serverConfig(serverConfig), _socketFD(-1), _ipAddress(serverConfig.listen), _port(serverConfig.port), _socketAddress(), _socketAddressLength(0)
+{
+    struct addrinfo hints;
+    std::memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM; 
+    hints.ai_flags = AI_PASSIVE;
+
+    std::stringstream ss;
+    ss << _port;
+    if (getaddrinfo(_ipAddress.c_str(), ss.str().c_str(), &hints, &_socketAddress) != 0) {
+        throw SocketInitException("Failed to get address info for ", getSocketAddressToString());
+    }
+    _socketAddressLength = _socketAddress->ai_addrlen; // Longueur de l'adresse
 }
 
-TCPSocket::TCPSocket(const TCPSocket &cp) { *this = cp; }
-
-TCPSocket &TCPSocket::operator=(const TCPSocket &rhs) {
-	if (this != &rhs) {
-		_ipAddress = rhs._ipAddress;
-		_socketFD = rhs._socketFD;
-		_port = rhs._port;
-		_socketAddress = rhs._socketAddress;
-		_socketAddressLength = rhs._socketAddressLength;
-	}
-	return *this;
+TCPSocket::TCPSocket(const TCPSocket &cp)
+{
+    *this = cp;
 }
 
-TCPSocket::~TCPSocket() {
-	std::cout << "Server closed " << _port << std::endl;
-	closeServer();
+TCPSocket &TCPSocket::operator=(const TCPSocket &rhs)
+{
+    if (this != &rhs)
+    {
+        _ipAddress = rhs._ipAddress;
+        _socketFD = rhs._socketFD;
+        _port = rhs._port;
+        _socketAddress = rhs._socketAddress;
+        _socketAddressLength = rhs._socketAddressLength;
+    }
+    return *this;
 }
 
-int TCPSocket::getSocketFD() const { return this->_socketFD; }
-
-int TCPSocket::getPort() const { return this->_port; }
-
-std::string TCPSocket::getIpAddress() const { return this->_ipAddress; }
-
-std::string TCPSocket::getSocketAddressToString() {
-	std::ostringstream address;
-	address << getIpAddress() << "::" << getPort();
-	return address.str();
-}
-struct sockaddr_in &TCPSocket::getSocketAddress() {
-	return this->_socketAddress;
+TCPSocket::~TCPSocket()
+{
+    std::cout << "Server closed " << _port << std::endl;
+    closeServer();
+    freeaddrinfo(_socketAddress);
 }
 
-unsigned int &TCPSocket::getSocketAddressLength() {
-	return this->_socketAddressLength;
+int TCPSocket::getSocketFD() const { return _socketFD; }
+
+int TCPSocket::getPort() const { return _port; }
+
+std::string TCPSocket::getIpAddress() const { return _ipAddress; }
+
+ServerConfig &TCPSocket::getServerConfig()
+{
+    return _serverConfig;
 }
 
-ServerConfig &TCPSocket::getServerConfig() { return this->_serverConfig; }
 
-void TCPSocket::closeServer() const { close(_socketFD); }
-
-void TCPSocket::initSocket() {
-	_socketFD = socket(AF_INET, SOCK_STREAM, 0);
-	if (_socketFD < 0)
-		throw SocketInitException("Failed to create socket on address ",
-					  getSocketAddressToString());
-	int opt = 1;
-	if (setsockopt(_socketFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) <
-	    0)
-		throw SocketInitException("Impossible to reuse address ",
-					  getSocketAddressToString());
-
-	if (bind(_socketFD, (sockaddr *)&_socketAddress, _socketAddressLength) <
-	    0)
-		throw SocketInitException(
-		    "Impossible to bind socket to address ",
-		    getSocketAddressToString());
+std::string TCPSocket::getSocketAddressToString() const {
+    std::stringstream ss;
+    ss << _ipAddress << ":" << _port;
+   return ss.str(); 
 }
 
-std::vector<TCPSocket *> createSockets(
-    const std::vector<ServerConfig> &serverConfigs) {
-	std::vector<TCPSocket *> sockets;
-	for (std::vector<ServerConfig>::const_iterator it =
-		 serverConfigs.begin();
-	     it != serverConfigs.end(); ++it)
-		sockets.push_back(new TCPSocket(*it));
-	return sockets;
+struct sockaddr_in *TCPSocket::getSocketAddress() const {
+    return (struct sockaddr_in*)_socketAddress->ai_addr;
 }
+
+socklen_t &TCPSocket::getSocketAddressLength() {
+    return _socketAddressLength;
+}
+
+void TCPSocket::closeServer() const
+{
+    close(_socketFD);
+}
+
+void TCPSocket::initSocket()
+{
+    _socketFD = socket(_socketAddress->ai_family, _socketAddress->ai_socktype, _socketAddress->ai_protocol);
+    if (_socketFD < 0)
+        throw SocketInitException("Failed to create socket on address ", getSocketAddressToString());
+
+    int opt = 1;
+    if (setsockopt(_socketFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+        throw SocketInitException("Impossible to reuse address ", getSocketAddressToString());
+
+    if (bind(_socketFD, _socketAddress->ai_addr, _socketAddressLength) < 0)
+        throw SocketInitException("Impossible to bind socket to address ", getSocketAddressToString());
+}
+
+std::vector<TCPSocket *> createSockets(const std::vector<ServerConfig> &serverConfigs) {
+    std::vector<TCPSocket *> sockets;
+    for (size_t i = 0; i < serverConfigs.size(); ++i) {
+        sockets.push_back(new TCPSocket(serverConfigs[i]));
+    }
+    return sockets;
+}
+
+
