@@ -12,73 +12,76 @@
 
 #pragma once
 
-#include "../inc/Config.hpp"
-
-#include <algorithm>
 #include <arpa/inet.h>
-#include <cstdlib>
-#include <exception>
 #include <fcntl.h>
-#include <iostream>
 #include <netinet/in.h>
 #include <poll.h>
-#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-class TCPSocket
-{
-	private:
-		ServerConfig 	_serverConfig;
-		int		_socketFD;
-		std::string 	_ipAddress;
-		int 		_port;
-		struct sockaddr_in	_socketAddress;
-		unsigned int 		_socketAddressLength;
-		TCPSocket();
+#include <algorithm>
+#include <cstdlib>
+#include <exception>
+#include <iostream>
+#include <string>
 
-	public:
-		TCPSocket(const ServerConfig&);
-		TCPSocket(const TCPSocket &);
-		TCPSocket &operator=(const TCPSocket &);
-		~TCPSocket();
+#include "../inc/Config.hpp"
 
-		void	initSocket();
-		void 	closeServer() const;
-		int 	getSocketFD() const;
-		int 	getPort() const;
-		std::string getIpAddress() const;
-		struct sockaddr_in &getSocketAddress();
-		std::string getSocketAddressToString();
-		unsigned int &getSocketAddressLength();
-		ServerConfig &getServerConfig();
+class TCPSocket {
+       private:
+	ServerConfig _serverConfig;
+	int _socketFD;
+	std::string _ipAddress;
+	int _port;
+	struct sockaddr_in _socketAddress;
+	unsigned int _socketAddressLength;
+	TCPSocket();
 
-      class SocketException : public std::exception {
-                    protected:
-                        std::string	msg;
+       public:
+	TCPSocket(const ServerConfig &);
+	TCPSocket(const TCPSocket &);
+	TCPSocket &operator=(const TCPSocket &);
+	~TCPSocket();
 
-                    public:
-                        SocketException(const std::string& msg = "") : std::exception() {
-                            this->msg = msg;
-                        }
-                        virtual ~SocketException() throw() {}
-                        virtual const char	*what() const throw() {
-                            return this->msg.c_str();
-                        }
-      };
+	void initSocket();
+	void closeServer() const;
+	int getSocketFD() const;
+	int getPort() const;
+	std::string getIpAddress() const;
+	struct sockaddr_in &getSocketAddress();
+	std::string getSocketAddressToString();
+	unsigned int &getSocketAddressLength();
+	ServerConfig &getServerConfig();
 
+	class SocketException : public std::exception {
+	       protected:
+		std::string msg;
 
-      class SocketInitException: public SocketException {
-                    public:
-                         SocketInitException(std::string errorMessage, std::string address) : SocketException() {
-                            std::ostringstream ss;
+	       public:
+		SocketException(const std::string &msg = "")
+		    : std::exception() {
+			this->msg = msg;
+		}
+		virtual ~SocketException() throw() {}
+		virtual const char *what() const throw() {
+			return this->msg.c_str();
+		}
+	};
 
-                            ss << errorMessage << address;
+	class SocketInitException : public SocketException {
+	       public:
+		SocketInitException(std::string errorMessage,
+				    std::string address)
+		    : SocketException() {
+			std::ostringstream ss;
 
-                            this->msg = ss.str();
-                    }
-      };
+			ss << errorMessage << address;
+
+			this->msg = ss.str();
+		}
+	};
 };
 
-std::vector<TCPSocket*> createSockets(const std::vector<ServerConfig>& serverConfigs);
+std::vector<TCPSocket *> createSockets(
+    const std::vector<ServerConfig> &serverConfigs);
