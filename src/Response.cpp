@@ -29,6 +29,8 @@ void Response::updateResponse(unsigned short statusCode,
 }
 
 void Response::build(void) {
+	_buffer.clear();
+    _cookies.clear();
 	Request &request = _client->getRequest();
 	_target = request.getPathLocation();
 	std::string method = request.getMethod();

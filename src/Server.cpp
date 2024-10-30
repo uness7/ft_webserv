@@ -280,6 +280,7 @@ void Server::clearServer() {
 	for (size_t i = 0; i < _sockets.size(); i++) {
 		delete _sockets[i];
 	}
+	_sockets.clear();
 }
 
 void Server::removeClient(int keyFD) {

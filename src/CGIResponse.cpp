@@ -11,6 +11,8 @@ CGIResponse::CGIResponse(Client *client, std::string &cgi_path)
 	setArgv();
 }
 
+CGIResponse::~CGIResponse() { clear();}
+
 void CGIResponse::setArgv() {
 	_argv[0] = (char *)_cgiPath.c_str();
 	_argv[1] = (char *)_scriptPath.c_str();
@@ -46,15 +48,19 @@ char **mapToEnvArray(const std::map<std::string, std::string> &envMap) {
 }
 
 void CGIResponse::clear() {
-	close(_pipe_out[0]);
-	close(_pipe_out[1]);
-	close(_pipe_in[0]);
-	close(_pipe_in[1]);
-	if (_envp) {
-		for (size_t i = 0; _envp[i] != NULL; i++) free(_envp[i]);
-		delete[] _envp;
-		_envp = NULL;
-	}
+    close(_pipe_out[0]);
+    close(_pipe_out[1]);
+    close(_pipe_in[0]);
+    close(_pipe_in[1]);
+
+    if (_envp) {
+        for (size_t i = 0; _envp[i] != NULL; i++) {
+            free(_envp[i]);
+            _envp[i] = NULL;
+        }
+        delete[] _envp;
+        _envp = NULL;
+    }
 }
 
 void CGIResponse::runProcess() {

@@ -42,6 +42,7 @@ class CGIResponse {
 	std::string getScriptResult();
 
        public:
+	~CGIResponse();
 	CGIResponse(Client *client, std::string &cgi_path);
 
 	std::string exec(unsigned short &statusCode);

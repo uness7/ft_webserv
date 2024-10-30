@@ -20,13 +20,19 @@ Client &Client::operator=(const Client &rhs) {
 	return *this;
 }
 
-Client::~Client() {}
+Client::~Client() {
+    if (_response != NULL) {
+        delete _response;
+        _response = NULL;
+    }
+}
 
 void Client::clear() {
 	_request = Request(_config);
 	_dataSent = 0;
 	if (_response != NULL) {
 		delete _response;
+		_response = NULL;
 	}
 }
 
@@ -45,7 +51,10 @@ const std::string Client::getResponseToString() const {
 const Response *Client::getResponse() const { return _response; }
 
 void Client::sendResponse() {
-	long long bytesSent;
+	if (_response != NULL) {
+        delete _response;
+		_response = NULL;
+	}
     if (getDataSent() == 0) {
 	    _response = new Response(this);
     } else {
@@ -54,7 +63,7 @@ void Client::sendResponse() {
 
 	std::string response = getResponseToString();
 
-	bytesSent = send(getFd(), response.c_str() + getDataSent(),
+	long long bytesSent = send(getFd(), response.c_str() + getDataSent(),
 			 response.size() - getDataSent(), 0);
 
 	if (bytesSent <= 0)
