@@ -152,8 +152,6 @@ void Config::parseListen(const std::string &line, ServerConfig &serverConfig) {
 	portStr.erase(0, portStr.find_first_not_of(" \t\n\r\f\v"));
 	portStr.erase(portStr.find_last_not_of(" \t\n\r\f\v") + 1);
 	std::istringstream(portStr) >> serverConfig.port;
-	std::cout << "Parsed IP: " << serverConfig.listen
-		  << " Port: " << serverConfig.port << std::endl;
 }
 
 void Config::parseLocation(std::ifstream &configFile,
@@ -231,20 +229,10 @@ void Config::printConfigs(const std::vector<ServerConfig> &serverConfigs) {
 void Config::printServerConfig(const ServerConfig &serverConfig) {
 	std::cout << "Server listening on " << serverConfig.listen
 		  << " Port: " << serverConfig.port << std::endl;
-	if (!serverConfig.server_name.empty())
-		std::cout << "Server name: " << serverConfig.server_name
-			  << std::endl;
-	if (!serverConfig.error_page.empty())
-		std::cout << "Error page: " << serverConfig.error_page
-			  << std::endl;
-	if (serverConfig.client_max_body_size > 0)
-		std::cout << "Client max body size: "
-			  << serverConfig.client_max_body_size << std::endl
-			  << std::endl;
 	std::map<std::string, std::string>::const_iterator f;
 	for (f = serverConfig.fields.begin(); f != serverConfig.fields.end();
 	     f++)
-		std::cout << f->first << " " << f->second << std::endl;
+		std::cout << "\t" << f->first << " " << f->second << std::endl;
 	std::cout << std::endl;
 	for (std::map<std::string, LocationConfig>::const_iterator loc_it =
 		 serverConfig.locations.begin();
@@ -254,35 +242,12 @@ void Config::printServerConfig(const ServerConfig &serverConfig) {
 
 void Config::printLocationConfig(const std::string &locationPath,
 				 const LocationConfig &locationConfig) {
-	std::cout << "Location: " << locationPath << std::endl;
-	std::cout << "  Root: " << locationConfig.root << std::endl;
-	if (!locationConfig.index.empty())
-		std::cout << "  Index: " << locationConfig.index << std::endl;
-	std::cout << "  Autoindex: "
-		  << (locationConfig.autoindex ? "on" : "off") << std::endl;
-	if (!locationConfig.limit_except.empty()) {
-		std::cout << "  Limit except: ";
-		for (std::vector<std::string>::const_iterator method_it =
-			 locationConfig.limit_except.begin();
-		     method_it != locationConfig.limit_except.end();
-		     ++method_it)
-			std::cout << *method_it << " ";
-		std::cout << std::endl;
-	}
-	if (!locationConfig.upload_store.empty())
-		std::cout << "  Upload store: " << locationConfig.upload_store
-			  << std::endl;
-	if (!locationConfig.cgi_script.empty())
-		std::cout << " CGI Script : " << locationConfig.cgi_script
-			  << std::endl;
-	if (!locationConfig.redirect.empty())
-		std::cout << " redirect path : " << locationConfig.redirect
-			  << std::endl;
+	std::cout << "\tLocation: " << locationPath << std::endl;
 
 	std::map<std::string, std::string>::const_iterator f;
 	for (f = locationConfig.content.begin();
 	     f != locationConfig.content.end(); f++)
-		std::cout << f->first << " " << f->second << std::endl;
+		std::cout << "\t\t" << f->first << " " << f->second << std::endl;
 
 	std::cout << std::endl;
 }
