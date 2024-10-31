@@ -45,9 +45,10 @@ Request &Client::getRequest() { return this->_request; }
 long Client::readRequest() { return _request.read(getFd()); }
 
 const std::string Client::getResponseToString() const {
-	if (_response != NULL) {
-		return _response->getResponse();
+	if (_response == NULL) {
+        return "";
 	}
+	return _response->getResponse();
 }
 
 const Response *Client::getResponse() const { return _response; }
