@@ -228,15 +228,21 @@ void Server::handleClientRequest(int fd) {
 #if __linux__
 void Server::handleResponse(Client *client, struct epoll_event *ev) {
 	client->sendResponse();
+	if (client->getDataSent() < 0) {
+		removeClient(client->getFd());
+		return;
+	}
 	std::string connection =
 	    client->getRequest().getHeaderField("connection");
-	if (client->getDataSent() < 0 || connection != "keep-alive") {
+	if (connection != "keep-alive") {
 		removeClient(client->getFd());
 	} else if (client->getDataSent() == 0) {
 		ev->events = EPOLLIN;
-		if (epoll_ctl(_event_fd, EPOLL_CTL_MOD, client->getFd(), ev) ==
-		    -1)
+		if (epoll_ctl(_event_fd, EPOLL_CTL_MOD, client->getFd(), ev) == -1) {
 			log("epoll ctl mod to re send problem");
+			removeClient(client->getFd());
+			return;
+		}
 		client->clear();
 	}
 }

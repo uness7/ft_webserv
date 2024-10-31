@@ -54,7 +54,7 @@ const std::string Client::getResponseToString() const {
 const Response *Client::getResponse() const { return _response; }
 
 void Client::sendResponse() {
-	if (_response != NULL) {
+	if (_response != NULL && getDataSent() == 0) {
         delete _response;
 		_response = NULL;
 	}
@@ -65,14 +65,21 @@ void Client::sendResponse() {
     }
 
 	std::string response = getResponseToString();
+	if (response.empty()) {
+		std::cerr << "Erreur: réponse vide ou non initialisée." << std::endl;
+		setDataSent(-1);
+		return;
+	}
 
 	long long bytesSent = send(getFd(), response.c_str() + getDataSent(),
 			 response.size() - getDataSent(), 0);
 
-	if (bytesSent <= 0)
+	if (bytesSent < 0)
+	{
+        std::cerr << "Erreur d’envoi: échec de `send`" << std::endl;
 		setDataSent(-1);
-	else if (bytesSent + getDataSent() ==
-		 static_cast<long>(response.size()))
+	}
+	else if (bytesSent == 0 || bytesSent + getDataSent() >= static_cast<long>(response.size()))
 		setDataSent(0);
 	else
 		setDataSent(getDataSent() + bytesSent);
