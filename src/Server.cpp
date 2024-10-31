@@ -8,8 +8,7 @@ void handleSignal(int sig) {
 	if (sig == SIGINT) stopListening = true;
 }
 
-Server::Server(std::vector<TCPSocket *> s) : _sockets(s), _clients()
-{
+Server::Server(std::vector<TCPSocket *> s) : _sockets(s), _clients() {
 	std::signal(SIGINT, handleSignal);
 }
 Server::~Server() { clearServer(); }
@@ -22,10 +21,11 @@ TCPSocket *Server::getSocketByFD(int targetFD) const {
 }
 
 void Server::acceptConnection(TCPSocket *s) {
-  int newClient = accept(s->getSocketFD(), (sockaddr *)s->getSocketAddress(),
-                         &s->getSocketAddressLength());
-  if (newClient < 0 || fcntl(newClient, F_SETFL, O_NONBLOCK) < 0)
-    throw AcceptConnectionException(s->getSocketAddressToString());
+	int newClient =
+	    accept(s->getSocketFD(), (sockaddr *)s->getSocketAddress(),
+		   &s->getSocketAddressLength());
+	if (newClient < 0 || fcntl(newClient, F_SETFL, O_NONBLOCK) < 0)
+		throw AcceptConnectionException(s->getSocketAddressToString());
 
 	Client *n = new Client(newClient, s->getServerConfig());
 	_clients.insert(std::make_pair(newClient, n));
@@ -49,15 +49,17 @@ void Server::startToListenClients() {
 				    "Impossible to listen socket to address ",
 				    _sockets[i]->getSocketAddressToString());
 
-      std::ostringstream ss;
-      ss << "\n*** Listening on ADDRESS: "
-         << _sockets[i]->getSocketAddressToString()
-         << " ***\n";
-      log(ss.str());
-      if (fcntl(_sockets[i]->getSocketFD(), F_SETFL, O_NONBLOCK) < 0)
-        throw TCPSocket::SocketInitException(
-            "Failed to set non-blocking mode for client socket ",
-            _sockets[i]->getSocketAddressToString());
+			std::ostringstream ss;
+			ss << "\n*** Listening on ADDRESS: "
+			   << _sockets[i]->getSocketAddressToString()
+			   << " ***\n";
+			log(ss.str());
+			if (fcntl(_sockets[i]->getSocketFD(), F_SETFL,
+				  O_NONBLOCK) < 0)
+				throw TCPSocket::SocketInitException(
+				    "Failed to set non-blocking mode for "
+				    "client socket ",
+				    _sockets[i]->getSocketAddressToString());
 
 			struct epoll_event ev;
 			ev.events = EPOLLIN;
@@ -145,7 +147,8 @@ void Server::handleResponse(Client *client, struct epoll_event *ev) {
 		removeClient(client->getFd());
 	} else if (client->getDataSent() == 0) {
 		ev->events = EPOLLIN;
-		if (epoll_ctl(_event_fd, EPOLL_CTL_MOD, client->getFd(), ev) == -1) {
+		if (epoll_ctl(_event_fd, EPOLL_CTL_MOD, client->getFd(), ev) ==
+		    -1) {
 			log("epoll ctl mod to re send problem");
 			removeClient(client->getFd());
 			return;
@@ -161,7 +164,7 @@ void Server::clearServer() {
 		delete it->second;
 	}
 
-    _clients.clear();
+	_clients.clear();
 
 	for (size_t i = 0; i < _sockets.size(); i++) {
 		delete _sockets[i];
@@ -180,6 +183,6 @@ void Server::removeClient(int keyFD) {
 		  << element->second->getConfig().listen
 		  << "::" << element->second->getConfig().port << std::endl;
 	close(keyFD);
-    delete element->second;
+	delete element->second;
 	_clients.erase(element);
 }
