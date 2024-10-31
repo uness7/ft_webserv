@@ -60,10 +60,7 @@ void Client::sendResponse() {
 	}
     if (getDataSent() == 0) {
 	    _response = new Response(this);
-    } else {
-        std::cout << "Datasent: " << getDataSent() << " all -> " << getResponseToString().size() << std::endl;
     }
-
 	std::string response = getResponseToString();
 	if (response.empty()) {
 		std::cerr << "Erreur: réponse vide ou non initialisée." << std::endl;
