@@ -18,16 +18,13 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <sys/epoll.h>
 
 #include "Client.hpp"
 #include "Request.hpp"
 #include "TCPSocket.hpp"
 
-#if __linux__
-#include <sys/epoll.h>
-#elif __APPLE__
-#include <sys/event.h>
-#endif
+# define BLOCK_INDEF -1
 
 class Server {
        private:

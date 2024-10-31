@@ -1,16 +1,17 @@
 #include "Server.hpp"
 
-static volatile bool stopListening = false;
+static volatile bool shouldStopListening = false;
 
 void log(const std::string &message) { std::cout << message << std::endl; }
 
 void handleSignal(int sig) {
-	if (sig == SIGINT) stopListening = true;
+	if (sig == SIGINT) shouldStopListening = true;
 }
 
 Server::Server(std::vector<TCPSocket *> s) : _sockets(s), _clients() {
 	std::signal(SIGINT, handleSignal);
 }
+
 Server::~Server() { clearServer(); }
 
 TCPSocket *Server::getSocketByFD(int targetFD) const {
@@ -73,26 +74,38 @@ void Server::startToListenClients() {
 	}
 }
 
-void Server::runServers(void) {
-	const int MAX_EVENT = 1000;
-	struct epoll_event events[MAX_EVENT];
+
+/* *
+ *
+ * @params:
+ * 	- nfds (aka number_of_file_descriptors)
+ *	- int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
+ *
+ * */
+
+void	Server::runServers(void)
+{
+	const int 		MAX_EVENT = 1000;
+	struct epoll_event	events[MAX_EVENT];
+	int			fd_triggered;
+	int			nfds;
+	short			ev;
 
 	_event_fd = epoll_create(MAX_EVENT);
-	if (_event_fd == -1) throw std::runtime_error("Error with epoll_wait");
-
+	if (_event_fd == -1)
+		throw std::runtime_error("Error with epoll_wait");
 	startToListenClients();
-
 	while (true) {
-		if (stopListening) break;
-
-		int nfds = epoll_wait(_event_fd, events, MAX_EVENT, -1);
-		if (stopListening) break;
+		if (shouldStopListening)
+			break;
+		nfds = epoll_wait(_event_fd, events, MAX_EVENT, BLOCK_INDEF);
+		if (shouldStopListening)
+			break;
 		if (nfds == -1)
 			throw std::runtime_error("Error with epoll_wait");
-
 		for (int i = 0; i < nfds; i++) {
-			int fd_triggered = events[i].data.fd;
-			short ev = events[i].events;
+			fd_triggered = events[i].data.fd;
+			ev = events[i].events;
 			if (ev & EPOLLHUP || ev & EPOLLERR) {
 				this->removeClient(fd_triggered);
 			} else if (ev & EPOLLIN) {
@@ -101,21 +114,15 @@ void Server::runServers(void) {
 							    &events[i]);
 				} else {
 					try {
-						TCPSocket *server =
-						    getSocketByFD(fd_triggered);
+						TCPSocket *server = getSocketByFD(fd_triggered);
 						if (!server)
-							throw std::
-							    runtime_error(
-								"Server not "
-								"found");
+							throw std::runtime_error("Server not found");
 						acceptConnection(server);
 					} catch (std::exception &e) {
-						std::cerr << e.what()
-							  << std::endl;
+						std::cerr << e.what() << std::endl;
 					}
 				}
-			} else if (_clients.count(fd_triggered) &&
-				   ev & EPOLLOUT) {
+			} else if (_clients.count(fd_triggered) && ev & EPOLLOUT) {
 				Client *client = _clients.at(fd_triggered);
 				handleResponse(client, &events[i]);
 			}
