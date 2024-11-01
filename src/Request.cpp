@@ -178,17 +178,31 @@ void Request::readBody(unsigned int fd, Bytes &request, size_t index) {
 	if (this->getContentLength() > 0) {
 		while (static_cast<size_t>(getContentLength()) >
 		       request.size() - index) {
-			if (recv_time > 1000) {
+			if (recv_time > 3) {
 				_statusCode = 408;
 				return;
 			}
-			chunk = getNextChunk(fd);
-			if (chunk.empty()) {
-				recv_time++;
-				continue;
-			}
-			request.insert(request.end(), chunk.begin(),
-				       chunk.end());
+            fd_set read_fds;
+            struct timeval timeout = { .tv_sec = 2, .tv_usec = 0 };
+            FD_ZERO(&read_fds);
+            FD_SET(fd, &read_fds);
+            int activity = select(fd + 1, &read_fds, NULL, NULL, &timeout);
+            if (activity < 0) {
+				_statusCode = 501;
+				return;
+            } else if (activity == 0) {
+                recv_time++;
+                continue;
+            }
+            if (FD_ISSET(fd, &read_fds)) {
+                chunk = getNextChunk(fd);
+                if (chunk.empty()) {
+                    recv_time++;
+                    continue;
+                }
+                request.insert(request.end(), chunk.begin(),
+                           chunk.end());
+            }
 		}
 		return;
 	}
