@@ -27,29 +27,21 @@
 # define BLOCK_INDEF -1
 
 class Server {
-       private:
+	private:
 	std::vector<TCPSocket *> _sockets;
 	std::map<unsigned short, Client *> _clients;
 	int _event_fd;
 
 	void startToListenClients();
 	void acceptConnection(TCPSocket *s);
-#if __linux__
 	void handleResponse(Client *, struct epoll_event *ev);
-#elif __APPLE__
-	void handleResponse(Client *);
-#endif
-
 	void removeClient(int keyFD);
 	TCPSocket *getSocketByFD(int targetFD) const;
 	Server(void);
 
-#if __linux__
 	void handleClientRequest(int fd, struct epoll_event *ev);
-#elif __APPLE__
-	void handleClientRequest(int fd);
-#endif
-       public:
+
+	public:
 	Server(std::vector<TCPSocket *> sockets);
 	~Server();
 	void runServers();
