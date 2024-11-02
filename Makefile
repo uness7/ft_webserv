@@ -2,6 +2,7 @@ S = src
 BUILD = build
 SRCS = $(wildcard $(S)/*.cpp)  
 INCDIR = inc
+HXX = $(wildcard $(S)/*.hpp)
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR) -g
 
@@ -20,7 +21,7 @@ $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 	printf "$(GREEN)Compilation finished\n$(WHITE)"
 
-$(BUILD)/%.o: $(S)/%.cpp $(INCDIR) | $(BUILD)
+$(BUILD)/%.o: $(S)/%.cpp $(HXX) | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 	printf "$(BLUE)> $<$(WHITE)\n"
 
